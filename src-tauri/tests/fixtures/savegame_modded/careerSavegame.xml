@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<careerSavegame>
+  <settings>
+    <savegameName>Modded Save</savegameName>
+    <creationDate>2025-02-01</creationDate>
+    <mapId>MapUS</mapId>
+    <mapTitle>Riverbend Springs</mapTitle>
+    <saveDateFormatted>2025-03-20</saveDateFormatted>
+    <economicDifficulty>1</economicDifficulty>
+    <growthMode>1</growthMode>
+    <plannedDaysPerPeriod>3</plannedDaysPerPeriod>
+    <plowingRequiredEnabled>false</plowingRequiredEnabled>
+    <stonesEnabled>false</stonesEnabled>
+    <weedsEnabled>false</weedsEnabled>
+    <limeRequired>false</limeRequired>
+    <snowEnabled>false</snowEnabled>
+    <fuelUsage>1</fuelUsage>
+    <trafficEnabled>true</trafficEnabled>
+  </settings>
+  <statistics>
+    <money>500000</money>
+    <playTime>18000.000</playTime>
+  </statistics>
+  <farms>
+    <farm farmId="1" name="Modded Farm" money="500000.000000" />
+  </farms>
+</careerSavegame>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<careerSavegame>
+  <settings>
+    <savegameName>Partie 2</savegameName>
+    <mapTitle>Elm Creek</mapTitle>
+    <saveDateFormatted>2025-02-20</saveDateFormatted>
+    <economicDifficulty>1</economicDifficulty>
+  </settings>
+  <statistics money="50000.000000" playTime="600.0" />
+</careerSavegame>

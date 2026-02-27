@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<careerSavegame>
+  <settings>
+    <savegameName>Test Complete</savegameName>
+    <creationDate>2025-01-01</creationDate>
+    <mapId>MapUS</mapId>
+    <mapTitle>Riverbend Springs</mapTitle>
+    <saveDateFormatted>2025-03-15</saveDateFormatted>
+    <economicDifficulty>2</economicDifficulty>
+    <growthMode>1</growthMode>
+    <plannedDaysPerPeriod>3</plannedDaysPerPeriod>
+    <plowingRequiredEnabled>true</plowingRequiredEnabled>
+    <stonesEnabled>false</stonesEnabled>
+    <weedsEnabled>true</weedsEnabled>
+    <limeRequired>true</limeRequired>
+    <snowEnabled>true</snowEnabled>
+    <fuelUsage>2</fuelUsage>
+    <trafficEnabled>true</trafficEnabled>
+  </settings>
+  <statistics money="1000000.000000" playTime="36000.500" fieldJobMissionCount="10" transportMissionCount="5" />
+  <farms>
+    <farm farmId="1" name="Test Farm" money="1000000.000000" />
+  </farms>
+</careerSavegame>

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<collectibles>
+  <collectible index="0" isCollected="true" />
+  <collectible index="1" isCollected="true" />
+  <collectible index="2" isCollected="true" />
+  <collectible index="3" isCollected="false" />
+  <collectible index="4" isCollected="true" />
+  <collectible index="5" isCollected="false" />
+  <collectible index="6" isCollected="false" />
+  <collectible index="7" isCollected="true" />
+  <collectible index="8" isCollected="true" />
+  <collectible index="9" isCollected="true" />
+  <collectible index="10" isCollected="true" />
+  <collectible index="11" isCollected="true" />
+  <collectible index="12" isCollected="false" />
+  <collectible index="13" isCollected="false" />
+  <collectible index="14" isCollected="false" />
+  <collectible index="15" isCollected="false" />
+  <collectible index="16" isCollected="false" />
+  <collectible index="17" isCollected="false" />
+  <collectible index="18" isCollected="true" />
+  <collectible index="19" isCollected="false" />
+  <collectible index="20" isCollected="true" />
+  <collectible index="21" isCollected="true" />
+  <collectible index="22" isCollected="false" />
+  <collectible index="23" isCollected="false" />
+  <collectible index="24" isCollected="false" />
+</collectibles>

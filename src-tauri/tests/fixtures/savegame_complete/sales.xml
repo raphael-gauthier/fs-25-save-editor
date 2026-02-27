@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<sales>
+  <item xmlFilename="data/vehicles/caseIH/caseIHMagnum380/caseIHMagnum380.xml" age="45" price="185000" damage="0.150000" wear="0.250000" operatingTime="320.500000" timeLeft="3" isGenerated="true">
+    <boughtConfigurations>
+      <boughtConfiguration name="design" id="1" />
+    </boughtConfigurations>
+  </item>
+  <item xmlFilename="data/vehicles/johnDeere/johnDeere6M/johnDeere6M.xml" age="20" price="95000" damage="0.050000" wear="0.100000" operatingTime="100.000000" timeLeft="5" isGenerated="false">
+    <boughtConfigurations>
+      <boughtConfiguration name="wheel" id="2" />
+      <boughtConfiguration name="color" id="1" />
+    </boughtConfigurations>
+  </item>
+</sales>

@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<farms>
+  <farm farmId="1" name="Modded Farm" color="1" loan="0.000000" money="500000.000000">
+    <players>
+      <player uniqueUserId="player1-uid" farmManager="true" lastNickname="ModPlayer" timeLastConnected="2025-03-20T12:00:00" buyVehicle="true" sellVehicle="true" buyPlaceable="true" sellPlaceable="true" manageContracts="true" tradeAnimals="true" createFields="true" landscaping="true" hireAssistant="true" resetVehicle="true" manageProductions="true" cutTrees="true" manageRights="true" transferMoney="true" updateFarm="true" manageContracting="true" />
+    </players>
+    <statistics traveledDistance="5000.0" fuelUsage="1000.0" seedUsage="500.0" sprayUsage="200.0" workedHectares="40.0" cultivatedHectares="30.0" sownHectares="25.0" sprayedHectares="20.0" threshedHectares="15.0" plowedHectares="10.0" baleCount="5" missionCount="2" playTime="18000.0" revenue="200000.0" expenses="100000.0" />
+    <finances></finances>
+  </farm>
+</farms>

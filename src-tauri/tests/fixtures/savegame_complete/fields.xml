@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<fields>
+    <field id="1" plannedFruit="FALLOW" fruitType="WHEAT" growthState="10" lastGrowthState="9" weedState="0" stoneLevel="0" groundType="HARVEST_READY" sprayType="NONE" sprayLevel="2" limeLevel="3" rollerLevel="0" plowLevel="1" stubbleShredLevel="0" waterLevel="0"/>
+    <field id="2" plannedFruit="BARLEY" fruitType="UNKNOWN" growthState="0" lastGrowthState="0" weedState="0" stoneLevel="0" groundType="CULTIVATED" sprayType="NONE" sprayLevel="1" limeLevel="1" rollerLevel="0" plowLevel="1" stubbleShredLevel="0" waterLevel="0"/>
+    <field id="3" plannedFruit="FALLOW" fruitType="CANOLA" growthState="6" lastGrowthState="5" weedState="5" stoneLevel="2" groundType="PLANTED" sprayType="NONE" sprayLevel="0" limeLevel="0" rollerLevel="0" plowLevel="0" stubbleShredLevel="0" waterLevel="0"/>
+    <field id="4" plannedFruit="FALLOW" fruitType="GRASS" growthState="4" lastGrowthState="4" weedState="0" stoneLevel="0" groundType="GRASS" sprayType="NONE" sprayLevel="2" limeLevel="2" rollerLevel="0" plowLevel="1" stubbleShredLevel="0" waterLevel="0"/>
+</fields>

@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<environment>
+    <dayTime>43200.000000</dayTime>
+    <currentDay>54</currentDay>
+    <currentMonotonicDay>54</currentMonotonicDay>
+    <realHourTimer>267370</realHourTimer>
+    <daysPerPeriod>3</daysPerPeriod>
+    <lighting>
+        <toneMapping slope="1.000000" toe="0.400000" shoulder="1.000000" blackClip="0.000000" whiteClip="0.040000"/>
+    </lighting>
+    <weather timeSinceLastRain="1243">
+        <forecast>
+            <instance typeName="SUN" season="SUMMER" variationIndex="3" startDay="54" startDayTime="10800000" duration="36000000"/>
+            <instance typeName="RAIN" season="SUMMER" variationIndex="2" startDay="54" startDayTime="46800000" duration="10800000"/>
+            <instance typeName="CLOUDY" season="AUTUMN" variationIndex="2" startDay="55" startDayTime="0" duration="25200000"/>
+            <instance typeName="TWISTER" season="SPRING" variationIndex="1" startDay="62" startDayTime="82800000" duration="10800000">
+                <twister startPosX="-113" startPosZ="-105" meterPerHour="150"/>
+            </instance>
+        </forecast>
+        <fog alpha="1.000000" visibilityAlpha="1.000000" duration="3600000.000000">
+            <target>
+                <groundFog coverageEdge0="0.156709" coverageEdge1="0.821203" extraHeight="10.975810" groundLevelDensity="0.020418" minValleyDepth="4.170414" startDayTimeMinutes="252" endDayTimeMinutes="480" weatherTypes="SUN CLOUDY"/>
+                <heightFog maxHeight="477.808777" groundLevelDensity="0.165498"/>
+            </target>
+            <last>
+                <groundFog coverageEdge0="0.152324" coverageEdge1="0.699623" extraHeight="7.919671" groundLevelDensity="0.047732" minValleyDepth="7.854157" startDayTimeMinutes="188" endDayTimeMinutes="490" weatherTypes="SUN CLOUDY"/>
+                <heightFog maxHeight="479.217010" groundLevelDensity="0.079603"/>
+            </last>
+        </fog>
+        <snow height="0.500000"/>
+        <ground wetness="0.300000"/>
+        <twister position="0.00 0.00 0.00" isSpawned="false" fadeDirection="0" fadeValue="0.000000" metersPerHour="0.000000"/>
+    </weather>
+    <snow physicalHeight="0.000000" height="0.000000"/>
+</environment>

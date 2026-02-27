@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<missions>
+  <mission id="1" type="harvest" status="1" reward="12000.000000" reimbursement="2000.000000" completion="0.450000" fieldId="12" fruitType="WHEAT" expectedLiters="50000.000000" depositedLiters="22500.000000">
+    <field fieldId="12" />
+  </mission>
+  <mission id="2" type="plow" status="0" reward="5000.000000" reimbursement="800.000000" completion="0.000000" fieldId="5">
+    <field fieldId="5" />
+  </mission>
+  <mission id="3" type="weed" status="2" reward="3500.000000" reimbursement="500.000000" completion="1.000000" fieldId="8">
+    <field fieldId="8" />
+  </mission>
+</missions>

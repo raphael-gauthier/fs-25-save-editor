@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<careerSavegame>
+  <settings>
+    <savegameName>Ma partie</savegameName>
+    <mapTitle>Riverbend Springs</mapTitle>
+    <saveDateFormatted>2025-01-15</saveDateFormatted>
+    <economicDifficulty>2</economicDifficulty>
+    <creationDate>2025-01-01</creationDate>
+    <mapId>MapUS</mapId>
+  </settings>
+  <statistics money="1000000.000000" playTime="12345.678" fieldJobMissionCount="5" transportMissionCount="3" />
+  <farms>
+    <farm farmId="1" name="My Farm" money="1000000.000000" />
+  </farms>
+</careerSavegame>
