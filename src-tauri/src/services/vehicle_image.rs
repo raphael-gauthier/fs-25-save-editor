@@ -1,5 +1,6 @@
 use std::collections::HashMap;
 use std::fs;
+use std::io::Read;
 use std::path::{Path, PathBuf};
 use std::sync::{Arc, Mutex};
 
@@ -23,11 +24,12 @@ impl VehicleImageService {
         })
     }
 
-    /// Extract the image path from a vehicle XML's <storeData><image> text content.
-    /// FS25 format: `<storeData><image>$data/vehicles/brand/model/store_model.png</image></storeData>`
-    fn extract_image_tag(xml_path: &Path) -> Option<String> {
-        let content = fs::read_to_string(xml_path).ok()?;
-        let mut reader = Reader::from_str(&content);
+    /// Extract the image path from vehicle XML content.
+    /// Handles two formats:
+    /// - Direct: `<storeData><image>$data/.../store_x.png</image></storeData>`
+    /// - ParentFile set: `<set path="vehicle.storeData.image" value="path/store_x.png"/>`
+    fn extract_image_from_xml(xml_content: &str) -> Option<String> {
+        let mut reader = Reader::from_str(xml_content);
 
         let mut in_store_data = false;
         let mut in_image = false;
@@ -43,11 +45,36 @@ impl VehicleImageService {
                         in_image = true;
                     }
                 }
+                Ok(Event::Empty(ref e)) => {
+                    // Handle <set path="vehicle.storeData.image" value="..."/> in parentFile mods
+                    if e.name().as_ref() == b"set" {
+                        let mut path_val = String::new();
+                        let mut value_val = String::new();
+                        for attr in e.attributes().flatten() {
+                            match attr.key.as_ref() {
+                                b"path" => {
+                                    path_val =
+                                        String::from_utf8_lossy(&attr.value).to_string();
+                                }
+                                b"value" => {
+                                    value_val =
+                                        String::from_utf8_lossy(&attr.value).to_string();
+                                }
+                                _ => {}
+                            }
+                        }
+                        if path_val == "vehicle.storeData.image" && !value_val.is_empty() {
+                            return Some(value_val);
+                        }
+                    }
+                }
                 Ok(Event::Text(ref text)) => {
                     if in_image {
-                        let value = text.unescape().ok()?.trim().to_string();
-                        if !value.is_empty() {
-                            return Some(value);
+                        if let Ok(value) = text.unescape() {
+                            let trimmed = value.trim().to_string();
+                            if !trimmed.is_empty() {
+                                return Some(trimmed);
+                            }
                         }
                     }
                 }
@@ -68,7 +95,7 @@ impl VehicleImageService {
         None
     }
 
-    /// Resolve $data/ prefix to the actual game data path, and fix extension.
+    /// Resolve $data/ prefix to the actual game data path, and fix .png → .dds extension.
     fn resolve_dds_path(game_path: &Path, image_ref: &str) -> PathBuf {
         let resolved = if image_ref.starts_with("$data/") {
             let relative = &image_ref[6..]; // strip "$data/"
@@ -77,7 +104,6 @@ impl VehicleImageService {
             game_path.join(image_ref.replace('/', "\\"))
         };
 
-        // FS25 references .png in XML but actual files are .dds
         if resolved.extension().and_then(|e| e.to_str()) == Some("png") {
             resolved.with_extension("dds")
         } else {
@@ -85,10 +111,9 @@ impl VehicleImageService {
         }
     }
 
-    /// Convert a DDS file to a 256x256 PNG.
-    fn convert_dds_to_png(dds_path: &Path, png_path: &Path) -> Result<(), AppError> {
-        let dds_data = fs::read(dds_path)?;
-        let dds = image_dds::ddsfile::Dds::read(&mut std::io::Cursor::new(&dds_data)).map_err(
+    /// Convert raw DDS bytes to a 256×256 PNG file.
+    fn convert_dds_bytes_to_png(dds_data: &[u8], png_path: &Path) -> Result<(), AppError> {
+        let dds = image_dds::ddsfile::Dds::read(&mut std::io::Cursor::new(dds_data)).map_err(
             |e| AppError::ImageError {
                 message: format!("DDS parse error: {}", e),
             },
@@ -112,15 +137,11 @@ impl VehicleImageService {
     pub fn resolve_image(
         &self,
         game_path: &Path,
+        mods_dir: &Path,
         vehicle_filename: &str,
     ) -> Result<Option<PathBuf>, AppError> {
-        // Skip modded vehicles, DLC vehicles, and non-vehicle objects
-        if vehicle_filename.starts_with("mods/")
-            || vehicle_filename.starts_with("mods\\")
-            || vehicle_filename.contains("$moddir$")
-            || vehicle_filename.contains("$pdlcdir$")
-            || vehicle_filename.contains("$dlcdir$")
-        {
+        // Skip encrypted DLC vehicles (no way to extract)
+        if vehicle_filename.contains("$pdlcdir$") || vehicle_filename.contains("$dlcdir$") {
             return Ok(None);
         }
 
@@ -132,7 +153,11 @@ impl VehicleImageService {
             }
         }
 
-        let result = self.resolve_image_inner(game_path, vehicle_filename);
+        let result = if vehicle_filename.contains("$moddir$") {
+            self.resolve_mod_image(mods_dir, vehicle_filename)
+        } else {
+            self.resolve_base_game_image(game_path, vehicle_filename)
+        };
 
         // Store in cache regardless of result
         let cache_value = match &result {
@@ -147,58 +172,134 @@ impl VehicleImageService {
         result
     }
 
-    fn resolve_image_inner(
+    /// Resolve image for a base game vehicle (files on disk).
+    fn resolve_base_game_image(
         &self,
         game_path: &Path,
         vehicle_filename: &str,
     ) -> Result<Option<PathBuf>, AppError> {
-        // Build a cache key from the filename (replace path separators)
         let cache_key = vehicle_filename
             .replace(['/', '\\'], "_")
             .replace(".xml", ".png");
         let png_path = self.cache_dir.join(&cache_key);
 
-        // If PNG already exists in disk cache, return it
         if png_path.exists() {
             return Ok(Some(png_path));
         }
 
-        // Find the vehicle XML in the game folder
         // Savegame filenames are like "data/vehicles/brand/model/model.xml"
         let xml_path = game_path.join(vehicle_filename.replace('/', "\\"));
         if !xml_path.exists() {
             return Ok(None);
         }
 
-        // Extract image reference from XML
-        let image_ref = match Self::extract_image_tag(&xml_path) {
+        let xml_content = fs::read_to_string(&xml_path).map_err(|_| AppError::ImageError {
+            message: format!("Cannot read {}", xml_path.display()),
+        })?;
+
+        let image_ref = match Self::extract_image_from_xml(&xml_content) {
             Some(r) => r,
             None => return Ok(None),
         };
 
-        // Resolve to actual DDS file
         let dds_path = Self::resolve_dds_path(game_path, &image_ref);
         if !dds_path.exists() {
             return Ok(None);
         }
 
-        // Convert DDS to PNG
-        match Self::convert_dds_to_png(&dds_path, &png_path) {
+        let dds_data = fs::read(&dds_path)?;
+        match Self::convert_dds_bytes_to_png(&dds_data, &png_path) {
             Ok(()) => Ok(Some(png_path)),
             Err(_) => Ok(None),
         }
+    }
+
+    /// Resolve image for a mod vehicle (files inside a .zip).
+    /// Filename format: `$moddir$ModName/path/to/vehicle.xml`
+    fn resolve_mod_image(
+        &self,
+        mods_dir: &Path,
+        vehicle_filename: &str,
+    ) -> Result<Option<PathBuf>, AppError> {
+        let cache_key = vehicle_filename
+            .replace(['/', '\\', '$'], "_")
+            .replace(".xml", ".png");
+        let png_path = self.cache_dir.join(&cache_key);
+
+        if png_path.exists() {
+            return Ok(Some(png_path));
+        }
+
+        // Parse "$moddir$ModName/internal/path.xml"
+        let after_prefix = vehicle_filename
+            .strip_prefix("$moddir$")
+            .unwrap_or(vehicle_filename);
+        let (mod_name, internal_xml_path) = match after_prefix.split_once('/') {
+            Some((name, path)) => (name, path),
+            None => return Ok(None),
+        };
+
+        let zip_path = mods_dir.join(format!("{}.zip", mod_name));
+        if !zip_path.exists() {
+            return Ok(None);
+        }
+
+        // Read the vehicle XML from the zip
+        let xml_content = match Self::read_file_from_zip(&zip_path, internal_xml_path) {
+            Some(data) => String::from_utf8_lossy(&data).to_string(),
+            None => return Ok(None),
+        };
+
+        let image_ref = match Self::extract_image_from_xml(&xml_content) {
+            Some(r) => r,
+            None => return Ok(None),
+        };
+
+        // Image path in mod XMLs is relative to the zip root, fix .png → .dds
+        let dds_internal_path = if image_ref.ends_with(".png") {
+            format!("{}.dds", &image_ref[..image_ref.len() - 4])
+        } else {
+            image_ref.clone()
+        };
+
+        let dds_data = match Self::read_file_from_zip(&zip_path, &dds_internal_path) {
+            Some(data) => data,
+            None => return Ok(None),
+        };
+
+        match Self::convert_dds_bytes_to_png(&dds_data, &png_path) {
+            Ok(()) => Ok(Some(png_path)),
+            Err(_) => Ok(None),
+        }
+    }
+
+    /// Read a file from inside a zip archive. Returns None if not found.
+    fn read_file_from_zip(zip_path: &Path, internal_path: &str) -> Option<Vec<u8>> {
+        let file = fs::File::open(zip_path).ok()?;
+        let mut archive = zip::ZipArchive::new(file).ok()?;
+
+        let normalized = internal_path.replace('\\', "/");
+        let mut entry = match archive.by_name(&normalized) {
+            Ok(e) => e,
+            Err(_) => return None,
+        };
+
+        let mut buf = Vec::new();
+        entry.read_to_end(&mut buf).ok()?;
+        Some(buf)
     }
 
     /// Resolve images for a batch of vehicles. Errors on individual vehicles return None.
     pub fn resolve_images_batch(
         &self,
         game_path: &Path,
+        mods_dir: &Path,
         filenames: &[String],
     ) -> Vec<(String, Option<PathBuf>)> {
         filenames
             .iter()
             .map(|f| {
-                let result = self.resolve_image(game_path, f).unwrap_or(None);
+                let result = self.resolve_image(game_path, mods_dir, f).unwrap_or(None);
                 (f.clone(), result)
             })
             .collect()

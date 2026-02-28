@@ -6,6 +6,15 @@ use tauri::State;
 use crate::error::AppError;
 use crate::services::vehicle_image::VehicleImageService;
 
+/// Get the FS25 user profile mods directory.
+fn get_mods_dir() -> PathBuf {
+    dirs::document_dir()
+        .unwrap_or_default()
+        .join("My Games")
+        .join("FarmingSimulator2025")
+        .join("mods")
+}
+
 /// Detect the FS25 game installation path by checking common Steam locations.
 #[tauri::command]
 pub async fn detect_game_path() -> Result<Option<String>, AppError> {
@@ -73,7 +82,8 @@ pub async fn get_vehicle_images_batch(
     let service = state.inner().clone();
     tauri::async_runtime::spawn_blocking(move || {
         let path = PathBuf::from(&game_path);
-        let results = service.resolve_images_batch(&path, &vehicle_filenames);
+        let mods_dir = get_mods_dir();
+        let results = service.resolve_images_batch(&path, &mods_dir, &vehicle_filenames);
         Ok(results
             .into_iter()
             .map(|(filename, image_path)| VehicleImageResult {
