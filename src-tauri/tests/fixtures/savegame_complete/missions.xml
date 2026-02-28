@@ -1,12 +1,27 @@
-<?xml version="1.0" encoding="utf-8"?>
-<missions>
-  <mission id="1" type="harvest" status="1" reward="12000.000000" reimbursement="2000.000000" completion="0.450000" fieldId="12" fruitType="WHEAT" expectedLiters="50000.000000" depositedLiters="22500.000000">
-    <field fieldId="12" />
-  </mission>
-  <mission id="2" type="plow" status="0" reward="5000.000000" reimbursement="800.000000" completion="0.000000" fieldId="5">
-    <field fieldId="5" />
-  </mission>
-  <mission id="3" type="weed" status="2" reward="3500.000000" reimbursement="500.000000" completion="1.000000" fieldId="8">
-    <field fieldId="8" />
-  </mission>
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<missions version="0">
+    <meta>
+        <destructibleRockMission nextDay="60"/>
+    </meta>
+    <harvestMission uniqueId="mission_harvest_001" status="CREATED" finishState="NONE">
+        <harvest fruitType="WHEAT" expectedLiters="50000.000000" depositedLiters="0.000000" sellingStationPlaceableUniqueId="placeable001" unloadingStationIndex="1"/>
+        <info reward="8000" reimbursement="1200.000000" completion="0.000000"/>
+        <vehicles spawned="false" group="64"/>
+        <endDate endDay="54" endDayTime="86399999"/>
+        <field id="9"/>
+    </harvestMission>
+    <plowMission uniqueId="mission_plow_002" status="RUNNING" finishState="NONE" farmId="1" activeId="2">
+        <info reward="5000" reimbursement="800.000000" completion="0.350000"/>
+        <vehicles spawned="true" group="7">
+            <vehicle uniqueId="vehicle001"/>
+        </vehicles>
+        <endDate endDay="54" endDayTime="86399999"/>
+        <field id="5"/>
+    </plowMission>
+    <cultivateMission uniqueId="mission_cultivate_003" status="CREATED" finishState="NONE">
+        <info reward="3500" reimbursement="500.000000" completion="0.000000"/>
+        <vehicles spawned="false" group="5"/>
+        <endDate endDay="54" endDayTime="86399999"/>
+        <field id="8"/>
+    </cultivateMission>
 </missions>

@@ -474,7 +474,26 @@
     "expectedLiters": "Expected liters",
     "depositedLiters": "Deposited liters",
     "empty": "No mission in this savegame.",
-    "noMatch": "No mission matches the filters."
+    "noMatch": "No mission matches the filters.",
+    "types": {
+      "harvest": "Harvest",
+      "plow": "Plow",
+      "cultivate": "Cultivate",
+      "herbicide": "Herbicide",
+      "fertilize": "Fertilize",
+      "sow": "Sow",
+      "mow": "Mow",
+      "tedder": "Tedder",
+      "stonePick": "Stone picking",
+      "lime": "Liming",
+      "wrap": "Wrapping",
+      "baleWrap": "Bale wrapping",
+      "treeTransport": "Tree transport",
+      "deadwood": "Deadwood",
+      "spread": "Spreading",
+      "destructibleRock": "Destructible rock",
+      "subsoiler": "Subsoiling"
+    }
   },
   "collectible": {
     "title": "Collectibles",

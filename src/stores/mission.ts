@@ -275,10 +275,10 @@ export const useMissionStore = defineStore("mission", () => {
 function missionStatusToString(status: Mission["status"]): string {
   switch (status) {
     case "Created":
-      return "0";
+      return "CREATED";
     case "Running":
-      return "1";
+      return "RUNNING";
     case "Completed":
-      return "2";
+      return "COMPLETED";
   }
 }

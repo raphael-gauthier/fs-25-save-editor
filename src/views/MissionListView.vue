@@ -124,7 +124,7 @@ function formatCompletion(completion: number): string {
             <TableCell>
               <div class="flex items-center gap-2">
                 <ClipboardList class="size-4 text-muted-foreground" />
-                <span>{{ m.missionType }}</span>
+                <span>{{ t(`mission.types.${m.missionType}`, m.missionType) }}</span>
                 <span v-if="m.fruitType" class="text-xs text-muted-foreground">
                   ({{ t(`fillTypes.${m.fruitType}`, m.fruitType) }})
                 </span>

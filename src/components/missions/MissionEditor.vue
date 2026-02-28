@@ -110,7 +110,7 @@ function statusLabel(status: Mission["status"]): string {
         <SheetHeader>
           <SheetTitle class="flex items-center gap-2">
             <ClipboardList class="size-5" />
-            {{ mission.missionType }}
+            {{ t(`mission.types.${mission.missionType}`, mission.missionType) }}
             <template v-if="mission.fruitType">
               ({{ t(`fillTypes.${mission.fruitType}`, mission.fruitType) }})
             </template>

@@ -33,6 +33,14 @@ fn attr_str_opt(e: &quick_xml::events::BytesStart, key: &str) -> Option<String> 
     if s.is_empty() { None } else { Some(s) }
 }
 
+fn is_mission_tag(tag: &str) -> bool {
+    tag.ends_with("Mission") && tag != "missions"
+}
+
+fn extract_mission_type(tag: &str) -> String {
+    tag.strip_suffix("Mission").unwrap_or(tag).to_string()
+}
+
 pub fn parse_missions(path: &Path) -> Result<Vec<Mission>, AppError> {
     let xml_path = path.join("missions.xml");
     let content = std::fs::read_to_string(&xml_path).map_err(|e| AppError::IoError {
@@ -42,27 +50,92 @@ pub fn parse_missions(path: &Path) -> Result<Vec<Mission>, AppError> {
     let mut reader = Reader::from_str(&content);
     let mut missions: Vec<Mission> = Vec::new();
 
+    // State for the mission currently being parsed
+    let mut current_mission: Option<Mission> = None;
+    let mut current_tag: Option<String> = None;
+
     loop {
         match reader.read_event() {
-            Ok(Event::Start(ref e)) | Ok(Event::Empty(ref e)) => {
+            Ok(Event::Start(ref e)) => {
                 let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
-                if tag == "mission" {
-                    let unique_id = attr_str(e, "id");
+                if is_mission_tag(&tag) {
+                    let unique_id = attr_str(e, "uniqueId");
                     if unique_id.is_empty() {
                         continue;
                     }
-                    missions.push(Mission {
+                    current_tag = Some(tag.clone());
+                    current_mission = Some(Mission {
                         unique_id,
-                        mission_type: attr_str(e, "type"),
+                        mission_type: extract_mission_type(&tag),
                         status: MissionStatus::from_str(&attr_str(e, "status")),
-                        reward: attr_f64(e, "reward"),
-                        reimbursement: attr_f64(e, "reimbursement"),
-                        completion: attr_f64(e, "completion"),
-                        field_id: attr_u32_opt(e, "fieldId"),
-                        fruit_type: attr_str_opt(e, "fruitType"),
-                        expected_liters: attr_f64_opt(e, "expectedLiters"),
-                        deposited_liters: attr_f64_opt(e, "depositedLiters"),
+                        reward: 0.0,
+                        reimbursement: 0.0,
+                        completion: 0.0,
+                        field_id: None,
+                        fruit_type: None,
+                        expected_liters: None,
+                        deposited_liters: None,
                     });
+                } else if current_mission.is_some() {
+                    // Child elements of a mission (non-empty, like <vehicles> with children)
+                    match tag.as_str() {
+                        "info" => {
+                            if let Some(ref mut m) = current_mission {
+                                m.reward = attr_f64(e, "reward");
+                                m.reimbursement = attr_f64(e, "reimbursement");
+                                m.completion = attr_f64(e, "completion");
+                            }
+                        }
+                        "harvest" => {
+                            if let Some(ref mut m) = current_mission {
+                                m.fruit_type = attr_str_opt(e, "fruitType");
+                                m.expected_liters = attr_f64_opt(e, "expectedLiters");
+                                m.deposited_liters = attr_f64_opt(e, "depositedLiters");
+                            }
+                        }
+                        "field" => {
+                            if let Some(ref mut m) = current_mission {
+                                m.field_id = attr_u32_opt(e, "id");
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+            }
+            Ok(Event::Empty(ref e)) => {
+                if current_mission.is_some() {
+                    let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                    match tag.as_str() {
+                        "info" => {
+                            if let Some(ref mut m) = current_mission {
+                                m.reward = attr_f64(e, "reward");
+                                m.reimbursement = attr_f64(e, "reimbursement");
+                                m.completion = attr_f64(e, "completion");
+                            }
+                        }
+                        "harvest" => {
+                            if let Some(ref mut m) = current_mission {
+                                m.fruit_type = attr_str_opt(e, "fruitType");
+                                m.expected_liters = attr_f64_opt(e, "expectedLiters");
+                                m.deposited_liters = attr_f64_opt(e, "depositedLiters");
+                            }
+                        }
+                        "field" => {
+                            if let Some(ref mut m) = current_mission {
+                                m.field_id = attr_u32_opt(e, "id");
+                            }
+                        }
+                        _ => {}
+                    }
+                }
+            }
+            Ok(Event::End(ref e)) => {
+                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                if Some(&tag) == current_tag.as_ref() {
+                    if let Some(mission) = current_mission.take() {
+                        missions.push(mission);
+                    }
+                    current_tag = None;
                 }
             }
             Ok(Event::Eof) => break,
@@ -95,13 +168,14 @@ mod tests {
         let missions = parse_missions(&path).unwrap();
         assert_eq!(missions.len(), 3);
 
-        let harvest = missions.iter().find(|m| m.unique_id == "1").unwrap();
-        assert_eq!(harvest.mission_type, "harvest");
-        assert_eq!(harvest.status, MissionStatus::Running);
-        assert!((harvest.reward - 12000.0).abs() < 0.01);
-        assert!((harvest.completion - 0.45).abs() < 0.01);
-        assert_eq!(harvest.field_id, Some(12));
+        let harvest = missions.iter().find(|m| m.mission_type == "harvest").unwrap();
+        assert_eq!(harvest.status, MissionStatus::Created);
+        assert!((harvest.reward - 8000.0).abs() < 0.01);
+        assert!((harvest.completion - 0.0).abs() < 0.01);
+        assert_eq!(harvest.field_id, Some(9));
         assert_eq!(harvest.fruit_type.as_deref(), Some("WHEAT"));
+        assert_eq!(harvest.expected_liters, Some(50000.0));
+        assert_eq!(harvest.deposited_liters, Some(0.0));
     }
 
     #[test]
@@ -109,11 +183,33 @@ mod tests {
         let path = fixtures_path().join("savegame_complete");
         let missions = parse_missions(&path).unwrap();
 
-        let created = missions.iter().find(|m| m.status == MissionStatus::Created);
-        assert!(created.is_some());
+        let created = missions.iter().filter(|m| m.status == MissionStatus::Created).count();
+        assert!(created >= 1);
 
-        let completed = missions.iter().find(|m| m.status == MissionStatus::Completed);
-        assert!(completed.is_some());
+        let running = missions.iter().find(|m| m.status == MissionStatus::Running);
+        assert!(running.is_some());
+    }
+
+    #[test]
+    fn test_parse_missions_types() {
+        let path = fixtures_path().join("savegame_complete");
+        let missions = parse_missions(&path).unwrap();
+
+        let types: Vec<&str> = missions.iter().map(|m| m.mission_type.as_str()).collect();
+        assert!(types.contains(&"harvest"));
+        assert!(types.contains(&"plow"));
+    }
+
+    #[test]
+    fn test_parse_missions_child_elements() {
+        let path = fixtures_path().join("savegame_complete");
+        let missions = parse_missions(&path).unwrap();
+
+        // Check that info child element was parsed
+        let plow = missions.iter().find(|m| m.mission_type == "plow").unwrap();
+        assert!((plow.reward - 5000.0).abs() < 0.01);
+        assert!((plow.reimbursement - 800.0).abs() < 0.01);
+        assert_eq!(plow.field_id, Some(5));
     }
 
     #[test]

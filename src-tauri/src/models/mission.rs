@@ -10,17 +10,17 @@ pub enum MissionStatus {
 impl MissionStatus {
     pub fn from_str(s: &str) -> Self {
         match s {
-            "1" => MissionStatus::Running,
-            "2" => MissionStatus::Completed,
+            "RUNNING" | "1" => MissionStatus::Running,
+            "COMPLETED" | "2" => MissionStatus::Completed,
             _ => MissionStatus::Created,
         }
     }
 
     pub fn to_xml_str(&self) -> &str {
         match self {
-            MissionStatus::Created => "0",
-            MissionStatus::Running => "1",
-            MissionStatus::Completed => "2",
+            MissionStatus::Created => "CREATED",
+            MissionStatus::Running => "RUNNING",
+            MissionStatus::Completed => "COMPLETED",
         }
     }
 }

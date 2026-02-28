@@ -474,7 +474,26 @@
     "expectedLiters": "Litres attendus",
     "depositedLiters": "Litres déposés",
     "empty": "Aucune mission dans cette sauvegarde.",
-    "noMatch": "Aucune mission ne correspond aux filtres."
+    "noMatch": "Aucune mission ne correspond aux filtres.",
+    "types": {
+      "harvest": "Récolte",
+      "plow": "Labour",
+      "cultivate": "Culture",
+      "herbicide": "Herbicide",
+      "fertilize": "Fertilisation",
+      "sow": "Semis",
+      "mow": "Fauchage",
+      "tedder": "Fanage",
+      "stonePick": "Ramassage de pierres",
+      "lime": "Chaulage",
+      "wrap": "Enrubannage",
+      "baleWrap": "Enrubannage de balles",
+      "treeTransport": "Transport de bois",
+      "deadwood": "Bois mort",
+      "spread": "Épandage",
+      "destructibleRock": "Roche destructible",
+      "subsoiler": "Sous-solage"
+    }
   },
   "collectible": {
     "title": "Collectibles",
