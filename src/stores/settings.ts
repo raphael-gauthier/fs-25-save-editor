@@ -13,6 +13,7 @@ export const useSettingsStore = defineStore("settings", () => {
   const disclaimerAccepted = ref(false);
   const defaultPath = ref<string>("");
   const maxBackups = ref(10);
+  const gamePath = ref<string | null>(null);
 
   const { initTheme, setTheme: applyTheme } = useTheme();
 
@@ -25,6 +26,7 @@ export const useSettingsStore = defineStore("settings", () => {
       const savedDisclaimer = await store.get<boolean>("disclaimerAccepted");
       const savedPath = await store.get<string>("defaultPath");
       const savedMaxBackups = await store.get<number>("maxBackups");
+      const savedGamePath = await store.get<string | null>("gamePath");
 
       if (savedLocale) {
         locale.value = savedLocale;
@@ -39,6 +41,7 @@ export const useSettingsStore = defineStore("settings", () => {
       disclaimerAccepted.value = savedDisclaimer ?? false;
       defaultPath.value = savedPath ?? "";
       maxBackups.value = savedMaxBackups ?? 10;
+      gamePath.value = savedGamePath ?? null;
 
       // Apply locale and theme
       i18n.global.locale.value = locale.value as "fr" | "en";
@@ -61,6 +64,7 @@ export const useSettingsStore = defineStore("settings", () => {
       await store.set("disclaimerAccepted", disclaimerAccepted.value);
       await store.set("defaultPath", defaultPath.value);
       await store.set("maxBackups", maxBackups.value);
+      await store.set("gamePath", gamePath.value);
       await store.save();
     } catch {
       // Silently fail — settings are still in memory
@@ -104,6 +108,11 @@ export const useSettingsStore = defineStore("settings", () => {
     await persist();
   }
 
+  async function setGamePath(path: string | null) {
+    gamePath.value = path;
+    await persist();
+  }
+
   return {
     locale,
     theme,
@@ -111,6 +120,7 @@ export const useSettingsStore = defineStore("settings", () => {
     disclaimerAccepted,
     defaultPath,
     maxBackups,
+    gamePath,
     loadSettings,
     setLocale,
     setTheme,
@@ -119,5 +129,6 @@ export const useSettingsStore = defineStore("settings", () => {
     acceptDisclaimer,
     setDefaultPath,
     setMaxBackups,
+    setGamePath,
   };
 });
