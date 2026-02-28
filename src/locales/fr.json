@@ -162,6 +162,9 @@
     "state": "État",
     "price": "Prix",
     "hours": "Heures",
+    "condition": "État",
+    "damage": "Dégâts",
+    "wear": "Usure",
     "noMatch": "Aucun véhicule ne correspond aux filtres.",
     "empty": "Aucun véhicule dans cette sauvegarde.",
     "notFound": "Véhicule introuvable. Il a peut-être été supprimé.",
@@ -294,6 +297,7 @@
   "propertyStates": {
     "Owned": "Possédé",
     "Rented": "Loué",
+    "Mission": "Mission",
     "None": "Aucun"
   },
   "difficulty": {

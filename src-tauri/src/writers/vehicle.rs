@@ -45,7 +45,7 @@ pub fn write_vehicle_changes(
 
                 match tag.as_str() {
                     "vehicle" => {
-                        let id = attr_str(e, "id");
+                        let id = attr_str(e, "uniqueId");
                         if let Some(change) = change_map.get(id.as_str()) {
                             if change.delete {
                                 skip_until_vehicle_end = true;
@@ -68,6 +68,18 @@ pub fn write_vehicle_changes(
                         in_fill_unit = true;
                         write_event(&mut writer, &xml_path, Event::Start(e.clone().into_owned()))?;
                     }
+                    "wearable" if current_vehicle_id.is_some() => {
+                        if let Some(vid) = &current_vehicle_id {
+                            if let Some(change) = change_map.get(vid.as_str()) {
+                                if change.damage.is_some() {
+                                    let elem = patch_wearable_start(e, change);
+                                    write_event(&mut writer, &xml_path, Event::Start(elem))?;
+                                    continue;
+                                }
+                            }
+                        }
+                        write_event(&mut writer, &xml_path, Event::Start(e.clone().into_owned()))?;
+                    }
                     _ => {
                         write_event(&mut writer, &xml_path, Event::Start(e.clone().into_owned()))?;
                     }
@@ -87,6 +99,31 @@ pub fn write_vehicle_changes(
                             let elem = patch_fill_unit(e, fc);
                             write_event(&mut writer, &xml_path, Event::Empty(elem))?;
                             continue;
+                        }
+                    }
+                }
+
+                if tag == "wearNode" {
+                    if let Some(vid) = &current_vehicle_id {
+                        if let Some(change) = change_map.get(vid.as_str()) {
+                            if change.wear.is_some() {
+                                let elem = patch_wear_node(e, change);
+                                write_event(&mut writer, &xml_path, Event::Empty(elem))?;
+                                continue;
+                            }
+                        }
+                    }
+                }
+
+                if tag == "wearable" {
+                    // Self-closing <wearable .../> fallback
+                    if let Some(vid) = &current_vehicle_id {
+                        if let Some(change) = change_map.get(vid.as_str()) {
+                            if change.damage.is_some() || change.wear.is_some() {
+                                let elem = patch_wearable(e, change);
+                                write_event(&mut writer, &xml_path, Event::Empty(elem))?;
+                                continue;
+                            }
                         }
                     }
                 }
@@ -155,12 +192,13 @@ fn attr_str(e: &BytesStart, key: &str) -> String {
         .unwrap_or_default()
 }
 
-fn property_state_to_u8(state: &str) -> &str {
+fn property_state_to_xml(state: &str) -> &str {
     match state {
-        "Owned" => "1",
-        "Rented" => "2",
-        "None" => "0",
-        _ => "0",
+        "Owned" => "OWNED",
+        "Rented" => "RENTED",
+        "Mission" => "MISSION",
+        "None" => "NONE",
+        _ => "NONE",
     }
 }
 
@@ -181,7 +219,7 @@ fn patch_vehicle_start(e: &BytesStart, change: &VehicleChange) -> BytesStart<'st
             "propertyState" if change.property_state.is_some() => {
                 elem.push_attribute((
                     "propertyState",
-                    property_state_to_u8(change.property_state.as_ref().unwrap()),
+                    property_state_to_xml(change.property_state.as_ref().unwrap()),
                 ));
             }
             "operatingTime" if change.operating_time.is_some() => {
@@ -189,6 +227,66 @@ fn patch_vehicle_start(e: &BytesStart, change: &VehicleChange) -> BytesStart<'st
                     "operatingTime",
                     format!("{:.6}", change.operating_time.unwrap() * 60.0).as_str(),
                 ));
+            }
+            _ => {
+                elem.push_attribute((
+                    key.as_str(),
+                    String::from_utf8_lossy(&attr.value).as_ref(),
+                ));
+            }
+        }
+    }
+    elem
+}
+
+fn patch_wearable(e: &BytesStart, change: &VehicleChange) -> BytesStart<'static> {
+    let mut elem = BytesStart::new("wearable");
+    for attr in e.attributes().flatten() {
+        let key = String::from_utf8_lossy(attr.key.as_ref()).to_string();
+        match key.as_str() {
+            "damage" if change.damage.is_some() => {
+                elem.push_attribute(("damage", format!("{:.6}", change.damage.unwrap()).as_str()));
+            }
+            "wear" if change.wear.is_some() => {
+                elem.push_attribute(("wear", format!("{:.6}", change.wear.unwrap()).as_str()));
+            }
+            _ => {
+                elem.push_attribute((
+                    key.as_str(),
+                    String::from_utf8_lossy(&attr.value).as_ref(),
+                ));
+            }
+        }
+    }
+    elem
+}
+
+fn patch_wearable_start(e: &BytesStart, change: &VehicleChange) -> BytesStart<'static> {
+    let mut elem = BytesStart::new("wearable");
+    for attr in e.attributes().flatten() {
+        let key = String::from_utf8_lossy(attr.key.as_ref()).to_string();
+        match key.as_str() {
+            "damage" if change.damage.is_some() => {
+                elem.push_attribute(("damage", format!("{:.6}", change.damage.unwrap()).as_str()));
+            }
+            _ => {
+                elem.push_attribute((
+                    key.as_str(),
+                    String::from_utf8_lossy(&attr.value).as_ref(),
+                ));
+            }
+        }
+    }
+    elem
+}
+
+fn patch_wear_node(e: &BytesStart, change: &VehicleChange) -> BytesStart<'static> {
+    let mut elem = BytesStart::new("wearNode");
+    for attr in e.attributes().flatten() {
+        let key = String::from_utf8_lossy(attr.key.as_ref()).to_string();
+        match key.as_str() {
+            "amount" if change.wear.is_some() => {
+                elem.push_attribute(("amount", format!("{:.6}", change.wear.unwrap()).as_str()));
             }
             _ => {
                 elem.push_attribute((
@@ -260,18 +358,20 @@ mod tests {
     fn test_write_vehicle_price() {
         let save = setup_fixture("price");
         let changes = vec![VehicleChange {
-            unique_id: "1".to_string(),
+            unique_id: "vehicle0001".to_string(),
             delete: false,
             age: None,
             price: Some(999999.0),
             farm_id: None,
             property_state: None,
             operating_time: None,
+            damage: None,
+            wear: None,
             fill_units: None,
         }];
         write_vehicle_changes(&save, &changes).unwrap();
         let vehicles = parse_vehicles(&save).unwrap();
-        let v = vehicles.iter().find(|v| v.unique_id == "1").unwrap();
+        let v = vehicles.iter().find(|v| v.unique_id == "vehicle0001").unwrap();
         assert!((v.price - 999999.0).abs() < 0.01);
         let _ = std::fs::remove_dir_all(&save);
     }
@@ -280,18 +380,20 @@ mod tests {
     fn test_write_vehicle_age() {
         let save = setup_fixture("age");
         let changes = vec![VehicleChange {
-            unique_id: "1".to_string(),
+            unique_id: "vehicle0001".to_string(),
             delete: false,
             age: Some(0.0),
             price: None,
             farm_id: None,
             property_state: None,
             operating_time: Some(0.0), // 0 hours
+            damage: None,
+            wear: None,
             fill_units: None,
         }];
         write_vehicle_changes(&save, &changes).unwrap();
         let vehicles = parse_vehicles(&save).unwrap();
-        let v = vehicles.iter().find(|v| v.unique_id == "1").unwrap();
+        let v = vehicles.iter().find(|v| v.unique_id == "vehicle0001").unwrap();
         assert!((v.age - 0.0).abs() < 0.01);
         assert!((v.operating_time - 0.0).abs() < 0.01); // 0 hours
         let _ = std::fs::remove_dir_all(&save);
@@ -301,13 +403,15 @@ mod tests {
     fn test_write_vehicle_fill_level() {
         let save = setup_fixture("fill");
         let changes = vec![VehicleChange {
-            unique_id: "1".to_string(),
+            unique_id: "vehicle0001".to_string(),
             delete: false,
             age: None,
             price: None,
             farm_id: None,
             property_state: None,
             operating_time: None,
+            damage: None,
+            wear: None,
             fill_units: Some(vec![FillUnitChange {
                 index: 0,
                 fill_level: 500.0,
@@ -315,7 +419,7 @@ mod tests {
         }];
         write_vehicle_changes(&save, &changes).unwrap();
         let vehicles = parse_vehicles(&save).unwrap();
-        let v = vehicles.iter().find(|v| v.unique_id == "1").unwrap();
+        let v = vehicles.iter().find(|v| v.unique_id == "vehicle0001").unwrap();
         let unit = v.fill_units.iter().find(|u| u.index == 0).unwrap();
         assert!((unit.fill_level - 500.0).abs() < 0.01);
         let _ = std::fs::remove_dir_all(&save);
@@ -325,13 +429,15 @@ mod tests {
     fn test_write_vehicle_delete() {
         let save = setup_fixture("delete");
         let changes = vec![VehicleChange {
-            unique_id: "2".to_string(),
+            unique_id: "vehicle0002".to_string(),
             delete: true,
             age: None,
             price: None,
             farm_id: None,
             property_state: None,
             operating_time: None,
+            damage: None,
+            wear: None,
             fill_units: None,
         }];
         write_vehicle_changes(&save, &changes).unwrap();
@@ -346,26 +452,28 @@ mod tests {
         let save = setup_fixture("preserve");
         let before = parse_vehicles(&save).unwrap();
         let changes = vec![VehicleChange {
-            unique_id: "1".to_string(),
+            unique_id: "vehicle0001".to_string(),
             delete: false,
             age: None,
             price: Some(1.0),
             farm_id: None,
             property_state: None,
             operating_time: None,
+            damage: None,
+            wear: None,
             fill_units: None,
         }];
         write_vehicle_changes(&save, &changes).unwrap();
         let after = parse_vehicles(&save).unwrap();
 
         // Vehicle 2 and 3 should be untouched
-        let before_v2 = before.iter().find(|v| v.unique_id == "2").unwrap();
-        let after_v2 = after.iter().find(|v| v.unique_id == "2").unwrap();
+        let before_v2 = before.iter().find(|v| v.unique_id == "vehicle0002").unwrap();
+        let after_v2 = after.iter().find(|v| v.unique_id == "vehicle0002").unwrap();
         assert!((before_v2.price - after_v2.price).abs() < 0.01);
         assert_eq!(before_v2.fill_units.len(), after_v2.fill_units.len());
 
         // Vehicle 1 should have modified price but preserved other fields
-        let after_v1 = after.iter().find(|v| v.unique_id == "1").unwrap();
+        let after_v1 = after.iter().find(|v| v.unique_id == "vehicle0001").unwrap();
         assert!((after_v1.price - 1.0).abs() < 0.01);
         assert_eq!(after_v1.configurations.len(), 2);
         assert_eq!(after_v1.fill_units.len(), 2);
@@ -380,13 +488,15 @@ mod tests {
 
         // Modify then re-read
         let changes = vec![VehicleChange {
-            unique_id: "1".to_string(),
+            unique_id: "vehicle0001".to_string(),
             delete: false,
             age: Some(99.0),
             price: Some(123456.0),
             farm_id: None,
             property_state: None,
             operating_time: Some(999.0), // 999 hours, writer converts to 59940 minutes in XML
+            damage: None,
+            wear: None,
             fill_units: Some(vec![
                 FillUnitChange { index: 0, fill_level: 111.0 },
                 FillUnitChange { index: 1, fill_level: 22.0 },
@@ -395,7 +505,7 @@ mod tests {
         write_vehicle_changes(&save, &changes).unwrap();
         let after = parse_vehicles(&save).unwrap();
 
-        let v = after.iter().find(|v| v.unique_id == "1").unwrap();
+        let v = after.iter().find(|v| v.unique_id == "vehicle0001").unwrap();
         assert!((v.age - 99.0).abs() < 0.01);
         assert!((v.price - 123456.0).abs() < 0.01);
         assert!((v.operating_time - 999.0).abs() < 0.01);
@@ -403,8 +513,8 @@ mod tests {
         assert!((v.fill_units[1].fill_level - 22.0).abs() < 0.01);
 
         // Untouched vehicles remain the same
-        let before_v3 = before.iter().find(|v| v.unique_id == "3").unwrap();
-        let after_v3 = after.iter().find(|v| v.unique_id == "3").unwrap();
+        let before_v3 = before.iter().find(|v| v.unique_id == "vehicle0003").unwrap();
+        let after_v3 = after.iter().find(|v| v.unique_id == "vehicle0003").unwrap();
         assert!((before_v3.price - after_v3.price).abs() < 0.01);
 
         let _ = std::fs::remove_dir_all(&save);
@@ -415,33 +525,37 @@ mod tests {
         let save = setup_fixture("multi");
         let changes = vec![
             VehicleChange {
-                unique_id: "1".to_string(),
+                unique_id: "vehicle0001".to_string(),
                 delete: false,
                 age: None,
                 price: Some(100.0),
                 farm_id: None,
                 property_state: None,
                 operating_time: None,
+                damage: None,
+                wear: None,
                 fill_units: None,
             },
             VehicleChange {
-                unique_id: "3".to_string(),
+                unique_id: "vehicle0003".to_string(),
                 delete: false,
                 age: Some(0.0),
                 price: None,
                 farm_id: None,
                 property_state: None,
                 operating_time: None,
+                damage: None,
+                wear: None,
                 fill_units: None,
             },
         ];
         write_vehicle_changes(&save, &changes).unwrap();
         let vehicles = parse_vehicles(&save).unwrap();
 
-        let v1 = vehicles.iter().find(|v| v.unique_id == "1").unwrap();
+        let v1 = vehicles.iter().find(|v| v.unique_id == "vehicle0001").unwrap();
         assert!((v1.price - 100.0).abs() < 0.01);
 
-        let v3 = vehicles.iter().find(|v| v.unique_id == "3").unwrap();
+        let v3 = vehicles.iter().find(|v| v.unique_id == "vehicle0003").unwrap();
         assert!((v3.age - 0.0).abs() < 0.01);
 
         let _ = std::fs::remove_dir_all(&save);

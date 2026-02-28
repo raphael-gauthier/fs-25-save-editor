@@ -162,6 +162,9 @@
     "state": "State",
     "price": "Price",
     "hours": "Hours",
+    "condition": "Condition",
+    "damage": "Damage",
+    "wear": "Wear",
     "noMatch": "No vehicle matches the filters.",
     "empty": "No vehicle in this savegame.",
     "notFound": "Vehicle not found. It may have been deleted.",
@@ -294,6 +297,7 @@
   "propertyStates": {
     "Owned": "Owned",
     "Rented": "Rented",
+    "Mission": "Mission",
     "None": "None"
   },
   "difficulty": {

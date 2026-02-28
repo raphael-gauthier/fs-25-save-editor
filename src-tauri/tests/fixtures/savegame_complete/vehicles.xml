@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
 <vehicles>
-  <vehicle filename="data/vehicles/fendt/fendt942Vario/fendt942Vario.xml" id="1" farmId="1" propertyState="1" age="25.000000" price="348000.000000" operatingTime="150.500000">
+  <vehicle filename="data/vehicles/fendt/fendt942Vario/fendt942Vario.xml" uniqueId="vehicle0001" farmId="1" propertyState="OWNED" age="25.000000" price="348000.000000" operatingTime="150.500000">
     <component index="1">
       <sentTranslation x="120.5" y="0.0" z="-45.3" />
       <sentRotation x="0.0" y="1.57" z="0.0" />
@@ -9,28 +9,37 @@
       <boughtConfiguration name="design" id="2" />
       <boughtConfiguration name="wheel" id="3" />
     </boughtConfigurations>
+    <wearable damage="0.050000">
+      <wearNode amount="0.120000"/>
+    </wearable>
     <fillUnit>
       <unit index="0" fillType="DIESEL" fillLevel="250.000000" capacity="500.000000" />
       <unit index="1" fillType="DEF" fillLevel="15.000000" capacity="30.000000" />
     </fillUnit>
     <attacherJoints>
-      <attachedVehicle jointIndex="1" attachedVehicleUniqueId="3" moveDown="true" />
+      <attachedVehicle jointIndex="1" attachedVehicleUniqueId="vehicle0003" moveDown="true" />
     </attacherJoints>
   </vehicle>
-  <vehicle filename="data/vehicles/krone/kroneBigX1180/kroneBigX1180.xml" id="2" farmId="1" propertyState="1" age="10.000000" price="520000.000000" operatingTime="80.250000">
+  <vehicle filename="data/vehicles/krone/kroneBigX1180/kroneBigX1180.xml" uniqueId="vehicle0002" farmId="1" propertyState="OWNED" age="10.000000" price="520000.000000" operatingTime="80.250000">
     <component index="1">
       <sentTranslation x="200.0" y="0.0" z="-100.0" />
       <sentRotation x="0.0" y="0.0" z="0.0" />
     </component>
+    <wearable damage="0.000000">
+      <wearNode amount="0.000000"/>
+    </wearable>
     <fillUnit>
       <unit index="0" fillType="DIESEL" fillLevel="400.000000" capacity="800.000000" />
     </fillUnit>
   </vehicle>
-  <vehicle filename="data/vehicles/krampe/krampeBandit750/krampeBandit750.xml" id="3" farmId="1" propertyState="2" age="5.000000" price="45000.000000" operatingTime="50.000000">
+  <vehicle filename="data/vehicles/krampe/krampeBandit750/krampeBandit750.xml" uniqueId="vehicle0003" farmId="1" propertyState="RENTED" age="5.000000" price="45000.000000" operatingTime="50.000000">
     <component index="1">
       <sentTranslation x="125.0" y="0.0" z="-44.0" />
       <sentRotation x="0.0" y="1.57" z="0.0" />
     </component>
+    <wearable damage="0.020000">
+      <wearNode amount="0.350000"/>
+    </wearable>
     <fillUnit>
       <unit index="0" fillType="WHEAT" fillLevel="12000.000000" capacity="24000.000000" />
     </fillUnit>

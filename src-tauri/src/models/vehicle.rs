@@ -15,6 +15,8 @@ pub struct Vehicle {
     pub operating_time: f64,
     pub position: Option<Position>,
     pub rotation: Option<Rotation>,
+    pub damage: f64,
+    pub wear: f64,
     pub configurations: Vec<VehicleConfiguration>,
     pub fill_units: Vec<FillUnit>,
     pub attached_implements: Vec<AttachedImplement>,
@@ -25,13 +27,15 @@ pub enum PropertyState {
     None,
     Owned,
     Rented,
+    Mission,
 }
 
 impl PropertyState {
-    pub fn from_u8(val: u8) -> Self {
+    pub fn from_str(val: &str) -> Self {
         match val {
-            1 => PropertyState::Owned,
-            2 => PropertyState::Rented,
+            "OWNED" | "1" => PropertyState::Owned,
+            "RENTED" | "2" => PropertyState::Rented,
+            "MISSION" => PropertyState::Mission,
             _ => PropertyState::None,
         }
     }

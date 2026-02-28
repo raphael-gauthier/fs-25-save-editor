@@ -34,6 +34,8 @@ pub struct VehicleChange {
     pub farm_id: Option<u8>,
     pub property_state: Option<String>,
     pub operating_time: Option<f64>,
+    pub damage: Option<f64>,
+    pub wear: Option<f64>,
     pub fill_units: Option<Vec<FillUnitChange>>,
 }
 

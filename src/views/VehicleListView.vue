@@ -68,6 +68,8 @@ function propertyStateBadgeVariant(state: string) {
       return "default";
     case "Rented":
       return "secondary";
+    case "Mission":
+      return "secondary";
     default:
       return "outline";
   }
@@ -151,6 +153,7 @@ const typeOptions = computed(() =>
           <SelectItem value="all">{{ t("vehicle.allStates") }}</SelectItem>
           <SelectItem value="Owned">{{ t("propertyStates.Owned") }}</SelectItem>
           <SelectItem value="Rented">{{ t("propertyStates.Rented") }}</SelectItem>
+          <SelectItem value="Mission">{{ t("propertyStates.Mission") }}</SelectItem>
         </SelectContent>
       </Select>
 
@@ -192,13 +195,14 @@ const typeOptions = computed(() =>
             <TableHead>{{ t("vehicle.state") }}</TableHead>
             <TableHead class="text-right">{{ t("vehicle.price") }}</TableHead>
             <TableHead class="text-right">{{ t("vehicle.hours") }}</TableHead>
+            <TableHead class="text-right">{{ t("vehicle.condition") }}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           <TableRow
             v-if="filteredCount === 0"
           >
-            <TableCell :colspan="6" class="text-center py-8 text-muted-foreground">
+            <TableCell :colspan="7" class="text-center py-8 text-muted-foreground">
               <template v-if="hasFilters">
                 {{ t("vehicle.noMatch") }}
               </template>
@@ -210,16 +214,17 @@ const typeOptions = computed(() =>
           <TableRow
             v-for="vehicle in store.filteredVehicles"
             :key="vehicle.uniqueId"
-            class="cursor-pointer"
-            @click="navigateToVehicle(vehicle.uniqueId)"
           >
-            <TableCell @click.stop>
+            <TableCell>
               <Checkbox
                 :model-value="store.selectedVehicleIds.has(vehicle.uniqueId)"
                 @update:model-value="store.toggleSelection(vehicle.uniqueId)"
               />
             </TableCell>
-            <TableCell class="font-medium">
+            <TableCell
+              class="cursor-pointer font-medium hover:underline"
+              @click="navigateToVehicle(vehicle.uniqueId)"
+            >
               {{ vehicle.displayName }}
             </TableCell>
             <TableCell class="text-muted-foreground">
@@ -235,6 +240,13 @@ const typeOptions = computed(() =>
             </TableCell>
             <TableCell class="text-right font-mono">
               {{ formatOperatingTime(vehicle.operatingTime) }}
+            </TableCell>
+            <TableCell class="text-right">
+              <Badge
+                :variant="vehicle.wear < 0.3 ? 'default' : vehicle.wear < 0.7 ? 'secondary' : 'destructive'"
+              >
+                {{ Math.round((1 - vehicle.wear) * 100) }}%
+              </Badge>
             </TableCell>
           </TableRow>
         </TableBody>

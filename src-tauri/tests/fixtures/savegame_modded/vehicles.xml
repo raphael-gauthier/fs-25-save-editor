@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
 <vehicles>
-  <vehicle filename="data/vehicles/fendt/fendt942Vario/fendt942Vario.xml" id="1" farmId="1" propertyState="1" age="10.000000" price="348000.000000" operatingTime="80.000000" modCustomFlag="superTractor" modTier="3">
+  <vehicle filename="data/vehicles/fendt/fendt942Vario/fendt942Vario.xml" uniqueId="vehiclemod0001" farmId="1" propertyState="OWNED" age="10.000000" price="348000.000000" operatingTime="80.000000" modCustomFlag="superTractor" modTier="3">
     <component index="1">
       <sentTranslation x="50.0" y="0.0" z="-20.0" />
       <sentRotation x="0.0" y="1.0" z="0.0" />
@@ -14,7 +14,7 @@
     </fillUnit>
     <modAutoSteer active="false" sensitivity="0.8" />
   </vehicle>
-  <vehicle filename="mods/FS25_SuperTrailer/superTrailer.xml" id="2" farmId="1" propertyState="1" age="2.000000" price="75000.000000" operatingTime="20.000000">
+  <vehicle filename="mods/FS25_SuperTrailer/superTrailer.xml" uniqueId="vehiclemod0002" farmId="1" propertyState="OWNED" age="2.000000" price="75000.000000" operatingTime="20.000000">
     <component index="1">
       <sentTranslation x="55.0" y="0.0" z="-19.0" />
       <sentRotation x="0.0" y="1.0" z="0.0" />

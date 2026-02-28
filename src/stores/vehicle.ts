@@ -10,6 +10,8 @@ export interface VehicleChangePayload {
   farmId?: number;
   propertyState?: string;
   operatingTime?: number;
+  damage?: number;
+  wear?: number;
   fillUnits?: { index: number; fillLevel: number }[];
 }
 
@@ -94,6 +96,8 @@ export const useVehicleStore = defineStore("vehicle", () => {
       if (v.operatingTime !== orig.operatingTime) count++;
       if (v.age !== orig.age) count++;
       if (v.propertyState !== orig.propertyState) count++;
+      if (Math.abs(v.damage - orig.damage) > 0.001) count++;
+      if (Math.abs(v.wear - orig.wear) > 0.001) count++;
       for (const unit of v.fillUnits) {
         const origUnit = orig.fillUnits.find((u) => u.index === unit.index);
         if (origUnit && Math.abs(unit.fillLevel - origUnit.fillLevel) > 0.001) count++;
@@ -247,6 +251,8 @@ export const useVehicleStore = defineStore("vehicle", () => {
       if (v.price !== orig.price) change.price = v.price;
       if (v.operatingTime !== orig.operatingTime) change.operatingTime = v.operatingTime;
       if (v.propertyState !== orig.propertyState) change.propertyState = v.propertyState;
+      if (Math.abs(v.damage - orig.damage) > 0.001) change.damage = v.damage;
+      if (Math.abs(v.wear - orig.wear) > 0.001) change.wear = v.wear;
 
       // Check fill unit changes
       const fillChanges: { index: number; fillLevel: number }[] = [];
@@ -305,30 +311,24 @@ export const useVehicleStore = defineStore("vehicle", () => {
 
 function vehicleTypeFromFilename(filename: string): string {
   const parts = filename.replace(/\\/g, "/").toLowerCase().split("/");
-  const knownTypes = [
-    "tractors",
-    "harvesters",
-    "trailers",
-    "tools",
-    "cars",
-    "trucks",
-    "cutters",
-    "forageharvesters",
-    "loaders",
-    "telehandlers",
-    "wheelloaders",
-    "sprayers",
-    "mowers",
-    "balers",
-    "spreaders",
-    "cultivators",
-    "plows",
-    "seeders",
-    "weeders",
-    "rollers",
-  ];
+  const knownTypes = new Set([
+    "tractors", "harvesters", "trailers", "tools", "cars", "trucks",
+    "cutters", "forageharvesters", "loaders", "telehandlers", "wheelloaders",
+    "placeables", "sprayers", "mowers", "balers", "spreaders", "cultivators",
+    "plows", "seeders", "weeders", "rollers", "levelers", "forklifts",
+    "conveyors", "augerwagons", "mixerwagons", "animals", "pallets",
+  ]);
+  const caseMap: Record<string, string> = {
+    forageharvesters: "forageHarvesters",
+    telehandlers: "teleHandlers",
+    wheelloaders: "wheelLoaders",
+    augerwagons: "augerWagons",
+    mixerwagons: "mixerWagons",
+  };
   for (const part of parts) {
-    if (knownTypes.includes(part)) return part;
+    if (knownTypes.has(part)) {
+      return caseMap[part] ?? part;
+    }
   }
   return "other";
 }
@@ -338,7 +338,9 @@ function isVehicleModified(v: Vehicle, orig: Vehicle): boolean {
     v.price !== orig.price ||
     v.operatingTime !== orig.operatingTime ||
     v.age !== orig.age ||
-    v.propertyState !== orig.propertyState
+    v.propertyState !== orig.propertyState ||
+    Math.abs(v.damage - orig.damage) > 0.001 ||
+    Math.abs(v.wear - orig.wear) > 0.001
   ) {
     return true;
   }

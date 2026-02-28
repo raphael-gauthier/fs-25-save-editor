@@ -165,8 +165,10 @@ export interface Vehicle {
   age: number;
   price: number;
   farmId: number;
-  propertyState: "None" | "Owned" | "Rented";
+  propertyState: "None" | "Owned" | "Rented" | "Mission";
   operatingTime: number;
+  damage: number;
+  wear: number;
   position: Position | null;
   rotation: Rotation | null;
   configurations: VehicleConfiguration[];

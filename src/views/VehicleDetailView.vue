@@ -98,10 +98,24 @@ function handleOperatingTimeInput(event: Event) {
   }
 }
 
+function handleWearInput(event: Event) {
+  const value = parseFloat((event.target as HTMLInputElement).value);
+  if (!isNaN(value) && vehicle.value) {
+    store.updateVehicle(vehicle.value.uniqueId, { wear: Math.max(0, Math.min(100, value)) / 100 });
+  }
+}
+
+function handleDamageInput(event: Event) {
+  const value = parseFloat((event.target as HTMLInputElement).value);
+  if (!isNaN(value) && vehicle.value) {
+    store.updateVehicle(vehicle.value.uniqueId, { damage: Math.max(0, Math.min(100, value)) / 100 });
+  }
+}
+
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function handlePropertyStateChange(value: any) {
   if (vehicle.value) {
-    store.updateVehicle(vehicle.value.uniqueId, { propertyState: String(value) as "None" | "Owned" | "Rented" });
+    store.updateVehicle(vehicle.value.uniqueId, { propertyState: String(value) as "None" | "Owned" | "Rented" | "Mission" });
   }
 }
 
@@ -246,6 +260,34 @@ function handleRotationInput(axis: "x" | "y" | "z", event: Event) {
               />
             </div>
 
+            <!-- Wear -->
+            <div class="space-y-2" :class="modifiedClass('wear')">
+              <Label>{{ t("vehicle.wear") }} (%)</Label>
+              <Input
+                type="number"
+                :model-value="Math.round(vehicle.wear * 100)"
+                @input="handleWearInput"
+                class="font-mono"
+                min="0"
+                max="100"
+                step="1"
+              />
+            </div>
+
+            <!-- Damage -->
+            <div class="space-y-2" :class="modifiedClass('damage')">
+              <Label>{{ t("vehicle.damage") }} (%)</Label>
+              <Input
+                type="number"
+                :model-value="Math.round(vehicle.damage * 100)"
+                @input="handleDamageInput"
+                class="font-mono"
+                min="0"
+                max="100"
+                step="1"
+              />
+            </div>
+
             <!-- Property state -->
             <div class="space-y-2" :class="modifiedClass('propertyState')">
               <Label>{{ t("vehicle.propertyState") }}</Label>
@@ -259,6 +301,7 @@ function handleRotationInput(axis: "x" | "y" | "z", event: Event) {
                 <SelectContent>
                   <SelectItem value="Owned">{{ t("propertyStates.Owned") }}</SelectItem>
                   <SelectItem value="Rented">{{ t("propertyStates.Rented") }}</SelectItem>
+                  <SelectItem value="Mission">{{ t("propertyStates.Mission") }}</SelectItem>
                   <SelectItem value="None">{{ t("propertyStates.None") }}</SelectItem>
                 </SelectContent>
               </Select>

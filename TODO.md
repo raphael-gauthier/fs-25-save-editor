@@ -6,9 +6,9 @@
 - [x] In the Finance view, when advanced mode is enabled, all statistics display as zero and no history is shown.
 
 ### 2. Vehicles - Multiple selection and filter issues
-- [ ] **Row selection:** Clicking a single row in the vehicles table selects all rows instead of just the clicked one.
-- [ ] **Type filter incomplete:** The "Types" filter dropdown does not list all available vehicle types.
-- [ ] **Condition always "None":** The vehicle condition/state is always displayed as "None" — needs investigation to determine if this is a data issue or a display bug.
+- [x] **Row selection:** Clicking a single row in the vehicles table selects all rows instead of just the clicked one.
+- [x] **Type filter incomplete:** The "Types" filter dropdown does not list all available vehicle types.
+- [x] **Condition always "None":** The vehicle condition/state is always displayed as "None" — needs investigation to determine if this is a data issue or a display bug.
 
 ### 3. Missions - No data displayed
 - [ ] The Missions view shows no data. Needs investigation to determine whether this is a parsing issue, a data mapping problem, or expected behavior for certain savegames.
