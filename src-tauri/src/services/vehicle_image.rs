@@ -22,36 +22,39 @@ impl VehicleImageService {
         })
     }
 
-    /// Extract the image path from a vehicle XML's <storeData><image> tag.
+    /// Extract the image path from a vehicle XML's <storeData><image> text content.
+    /// FS25 format: `<storeData><image>$data/vehicles/brand/model/store_model.png</image></storeData>`
     fn extract_image_tag(xml_path: &Path) -> Option<String> {
         let content = fs::read_to_string(xml_path).ok()?;
         let mut reader = Reader::from_str(&content);
 
         let mut in_store_data = false;
+        let mut in_image = false;
         let mut buf = Vec::new();
 
         loop {
             match reader.read_event_into(&mut buf) {
-                Ok(Event::Start(ref e)) | Ok(Event::Empty(ref e)) => {
+                Ok(Event::Start(ref e)) => {
                     let tag = e.name();
                     if tag.as_ref() == b"storeData" {
                         in_store_data = true;
                     } else if in_store_data && tag.as_ref() == b"image" {
-                        // The image path is in the "filename" attribute
-                        if let Some(attr) = e
-                            .attributes()
-                            .flatten()
-                            .find(|a| a.key.as_ref() == b"filename")
-                        {
-                            let value = String::from_utf8_lossy(&attr.value).to_string();
-                            if !value.is_empty() {
-                                return Some(value);
-                            }
+                        in_image = true;
+                    }
+                }
+                Ok(Event::Text(ref text)) => {
+                    if in_image {
+                        let value = text.unescape().ok()?.trim().to_string();
+                        if !value.is_empty() {
+                            return Some(value);
                         }
                     }
                 }
                 Ok(Event::End(ref e)) => {
-                    if e.name().as_ref() == b"storeData" {
+                    let tag = e.name();
+                    if tag.as_ref() == b"image" {
+                        in_image = false;
+                    } else if tag.as_ref() == b"storeData" {
                         in_store_data = false;
                     }
                 }
@@ -110,8 +113,12 @@ impl VehicleImageService {
         game_path: &Path,
         vehicle_filename: &str,
     ) -> Result<Option<PathBuf>, AppError> {
-        // Skip modded vehicles
-        if vehicle_filename.starts_with("mods/") || vehicle_filename.starts_with("mods\\") {
+        // Skip modded vehicles, DLC vehicles, and non-vehicle objects
+        if vehicle_filename.starts_with("mods/")
+            || vehicle_filename.starts_with("mods\\")
+            || vehicle_filename.contains("$pdlcdir$")
+            || vehicle_filename.contains("$dlcdir$")
+        {
             return Ok(None);
         }
 
@@ -155,9 +162,8 @@ impl VehicleImageService {
         }
 
         // Find the vehicle XML in the game folder
-        let xml_path = game_path
-            .join("data")
-            .join(vehicle_filename.replace('/', "\\"));
+        // Savegame filenames are like "data/vehicles/brand/model/model.xml"
+        let xml_path = game_path.join(vehicle_filename.replace('/', "\\"));
         if !xml_path.exists() {
             return Ok(None);
         }
