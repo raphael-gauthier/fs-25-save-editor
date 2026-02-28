@@ -1,16 +1,17 @@
 use std::collections::HashMap;
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::sync::Mutex;
+use std::sync::{Arc, Mutex};
 
 use quick_xml::events::Event;
 use quick_xml::Reader;
 
 use crate::error::AppError;
 
+#[derive(Clone)]
 pub struct VehicleImageService {
     cache_dir: PathBuf,
-    index_cache: Mutex<HashMap<String, Option<PathBuf>>>,
+    index_cache: Arc<Mutex<HashMap<String, Option<PathBuf>>>>,
 }
 
 impl VehicleImageService {
@@ -18,7 +19,7 @@ impl VehicleImageService {
         fs::create_dir_all(&cache_dir)?;
         Ok(Self {
             cache_dir,
-            index_cache: Mutex::new(HashMap::new()),
+            index_cache: Arc::new(Mutex::new(HashMap::new())),
         })
     }
 

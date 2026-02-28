@@ -40,7 +40,6 @@ pub fn run() {
             commands::backup::restore_backup,
             commands::backup::delete_backup,
             commands::vehicle_image::detect_game_path,
-            commands::vehicle_image::get_vehicle_image,
             commands::vehicle_image::get_vehicle_images_batch,
             commands::vehicle_image::clear_image_cache,
             commands::vehicle_image::get_image_cache_size,

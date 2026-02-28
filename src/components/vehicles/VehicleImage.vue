@@ -11,10 +11,14 @@ const props = withDefaults(
   { size: "sm" },
 );
 
-const { getImageUrl } = useVehicleImages();
+const { imageCache, getImageUrl } = useVehicleImages();
 const hasError = ref(false);
 
-const imageUrl = computed(() => getImageUrl(props.filename));
+const imageUrl = computed(() => {
+  // Access imageCache.value to register reactive dependency
+  imageCache.value;
+  return getImageUrl(props.filename);
+});
 
 const sizeClass = computed(() => {
   switch (props.size) {
