@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { useVehicleImages } from "@/composables/useVehicleImages";
-import { Truck } from "lucide-vue-next";
+import { Truck, Loader2 } from "lucide-vue-next";
 
 const props = withDefaults(
   defineProps<{
@@ -11,13 +11,19 @@ const props = withDefaults(
   { size: "sm" },
 );
 
-const { imageCache, getImageUrl } = useVehicleImages();
+const { imageCache, pendingBatch, getImageUrl } = useVehicleImages();
 const hasError = ref(false);
 
 const imageUrl = computed(() => {
   // Access imageCache.value to register reactive dependency
   imageCache.value;
   return getImageUrl(props.filename);
+});
+
+const loading = computed(() => {
+  // Show skeleton if image not yet in cache and a batch is in progress
+  imageCache.value;
+  return !imageCache.value.has(props.filename) && pendingBatch.value;
 });
 
 const sizeClass = computed(() => {
@@ -61,6 +67,7 @@ function handleError() {
       class="size-full object-contain"
       @error="handleError"
     />
+    <Loader2 v-else-if="loading" :class="['text-muted-foreground animate-spin', iconSize]" />
     <Truck v-else :class="['text-muted-foreground', iconSize]" />
   </div>
 </template>

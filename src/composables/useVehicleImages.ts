@@ -11,6 +11,8 @@ interface VehicleImageResult {
 const imageCache = ref(new Map<string, string | null>());
 const pendingBatch = ref(false);
 
+const CHUNK_SIZE = 5;
+
 export function useVehicleImages() {
   async function loadBatch(gamePath: string, filenames: string[]) {
     // Filter out already cached filenames
@@ -18,31 +20,39 @@ export function useVehicleImages() {
     if (uncached.length === 0) return;
 
     pendingBatch.value = true;
-    try {
-      const results = await invoke<VehicleImageResult[]>(
-        "get_vehicle_images_batch",
-        {
-          gamePath,
-          vehicleFilenames: uncached,
-        },
-      );
-      for (const r of results) {
-        imageCache.value.set(
-          r.filename,
-          r.imagePath ? convertFileSrc(r.imagePath) : null,
+
+    // Yield to browser so Vue can mount components and paint skeletons
+    await new Promise((r) => setTimeout(r, 0));
+
+    // Split into chunks and load progressively
+    for (let i = 0; i < uncached.length; i += CHUNK_SIZE) {
+      const chunk = uncached.slice(i, i + CHUNK_SIZE);
+      try {
+        const results = await invoke<VehicleImageResult[]>(
+          "get_vehicle_images_batch",
+          {
+            gamePath,
+            vehicleFilenames: chunk,
+          },
         );
+        for (const r of results) {
+          imageCache.value.set(
+            r.filename,
+            r.imagePath ? convertFileSrc(r.imagePath) : null,
+          );
+        }
+      } catch {
+        // On error, mark chunk as null to avoid retrying
+        for (const f of chunk) {
+          imageCache.value.set(f, null);
+        }
       }
-      // Force Vue to detect Map mutations
+      // Force Vue to detect Map mutations and let browser paint between chunks
       triggerRef(imageCache);
-    } catch {
-      // On error, mark all as null to avoid retrying
-      for (const f of uncached) {
-        imageCache.value.set(f, null);
-      }
-      triggerRef(imageCache);
-    } finally {
-      pendingBatch.value = false;
+      await new Promise((r) => setTimeout(r, 0));
     }
+
+    pendingBatch.value = false;
   }
 
   function getImageUrl(filename: string): string | null {
