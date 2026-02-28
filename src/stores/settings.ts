@@ -14,6 +14,7 @@ export const useSettingsStore = defineStore("settings", () => {
   const defaultPath = ref<string>("");
   const maxBackups = ref(10);
   const gamePath = ref<string | null>(null);
+  const checkForUpdatesOnStartup = ref(true);
   const settingsLoaded = ref(false);
 
   const { initTheme, setTheme: applyTheme } = useTheme();
@@ -28,6 +29,7 @@ export const useSettingsStore = defineStore("settings", () => {
       const savedPath = await store.get<string>("defaultPath");
       const savedMaxBackups = await store.get<number>("maxBackups");
       const savedGamePath = await store.get<string | null>("gamePath");
+      const savedCheckForUpdates = await store.get<boolean>("checkForUpdatesOnStartup");
 
       if (savedLocale) {
         locale.value = savedLocale;
@@ -43,6 +45,7 @@ export const useSettingsStore = defineStore("settings", () => {
       defaultPath.value = savedPath ?? "";
       maxBackups.value = savedMaxBackups ?? 10;
       gamePath.value = savedGamePath ?? null;
+      checkForUpdatesOnStartup.value = savedCheckForUpdates ?? true;
 
       // Apply locale and theme
       i18n.global.locale.value = locale.value as "fr" | "en";
@@ -68,6 +71,7 @@ export const useSettingsStore = defineStore("settings", () => {
       await store.set("defaultPath", defaultPath.value);
       await store.set("maxBackups", maxBackups.value);
       await store.set("gamePath", gamePath.value);
+      await store.set("checkForUpdatesOnStartup", checkForUpdatesOnStartup.value);
       await store.save();
     } catch {
       // Silently fail — settings are still in memory
@@ -116,6 +120,11 @@ export const useSettingsStore = defineStore("settings", () => {
     await persist();
   }
 
+  async function setCheckForUpdatesOnStartup(value: boolean) {
+    checkForUpdatesOnStartup.value = value;
+    await persist();
+  }
+
   return {
     locale,
     theme,
@@ -125,6 +134,7 @@ export const useSettingsStore = defineStore("settings", () => {
     defaultPath,
     maxBackups,
     gamePath,
+    checkForUpdatesOnStartup,
     loadSettings,
     setLocale,
     setTheme,
@@ -134,5 +144,6 @@ export const useSettingsStore = defineStore("settings", () => {
     setDefaultPath,
     setMaxBackups,
     setGamePath,
+    setCheckForUpdatesOnStartup,
   };
 });

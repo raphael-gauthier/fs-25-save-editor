@@ -17,16 +17,22 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { FolderOpen, Search, Trash2 } from "lucide-vue-next";
+import { FolderOpen, Search, Trash2, RefreshCw } from "lucide-vue-next";
+import { getVersion } from "@tauri-apps/api/app";
+import { useUpdateChecker } from "@/composables/useUpdateChecker";
 
 const { t } = useI18n();
 const settings = useSettingsStore();
 const { detectGamePath, clearDiskCache, getCacheSize } = useVehicleImages();
+const { isChecking, checkForUpdates } = useUpdateChecker();
 
 const cacheSize = ref(0);
+const checkResult = ref<"up-to-date" | "error" | null>(null);
+const appVersion = ref("");
 
 onMounted(async () => {
   cacheSize.value = await getCacheSize();
+  appVersion.value = await getVersion();
 });
 
 function formatBytes(bytes: number): string {
@@ -70,6 +76,20 @@ async function browsePath() {
   });
   if (selected) {
     settings.setDefaultPath(selected);
+  }
+}
+
+async function onManualCheck() {
+  checkResult.value = null;
+  try {
+    const result = await checkForUpdates();
+    if (!result) {
+      checkResult.value = "up-to-date";
+    }
+    // If result !== null, the composable updates updateAvailable
+    // and UpdateDialog shows automatically
+  } catch {
+    checkResult.value = "error";
   }
 }
 
@@ -222,6 +242,50 @@ function handleMaxBackupsInput(event: Event) {
               {{ t("settings.clearCache") }}
             </Button>
           </div>
+        </CardContent>
+      </Card>
+      <!-- Updates -->
+      <Card>
+        <CardHeader>
+          <CardTitle class="text-base">{{ t("settings.updates") }}</CardTitle>
+          <CardDescription>{{ t("settings.updatesDesc") }}</CardDescription>
+        </CardHeader>
+        <CardContent class="space-y-4">
+          <div class="flex items-center justify-between">
+            <div class="space-y-0.5">
+              <Label>{{ t("settings.autoCheckUpdates") }}</Label>
+              <p class="text-muted-foreground text-sm">
+                {{ t("settings.autoCheckUpdatesDesc") }}
+              </p>
+            </div>
+            <Switch
+              :checked="settings.checkForUpdatesOnStartup"
+              @update:checked="settings.setCheckForUpdatesOnStartup"
+            />
+          </div>
+
+          <div class="flex items-center gap-3">
+            <Button
+              variant="outline"
+              size="sm"
+              :disabled="isChecking"
+              @click="onManualCheck"
+            >
+              <RefreshCw v-if="isChecking" class="mr-2 h-4 w-4 animate-spin" />
+              <RefreshCw v-else class="mr-2 h-4 w-4" />
+              {{ t("settings.checkNow") }}
+            </Button>
+            <span v-if="checkResult === 'up-to-date'" class="text-sm text-green-600 dark:text-green-400">
+              {{ t("settings.upToDate") }}
+            </span>
+            <span v-if="checkResult === 'error'" class="text-sm text-red-600 dark:text-red-400">
+              {{ t("settings.checkFailed") }}
+            </span>
+          </div>
+
+          <p class="text-muted-foreground text-xs">
+            {{ t("settings.currentVersion", { version: appVersion }) }}
+          </p>
         </CardContent>
       </Card>
     </div>

@@ -17,6 +17,9 @@ pub enum AppError {
 
     #[error("Image processing error: {message}")]
     ImageError { message: String },
+
+    #[error("{0}")]
+    Generic(String),
 }
 
 impl Serialize for AppError {
@@ -59,6 +62,13 @@ impl Serialize for AppError {
             }
             AppError::ImageError { message } => {
                 state.serialize_field("code", "errors.imageError")?;
+                state.serialize_field(
+                    "params",
+                    &std::collections::HashMap::from([("message", message.as_str())]),
+                )?;
+            }
+            AppError::Generic(message) => {
+                state.serialize_field("code", "errors.unknown")?;
                 state.serialize_field(
                     "params",
                     &std::collections::HashMap::from([("message", message.as_str())]),

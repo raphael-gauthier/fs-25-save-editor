@@ -386,7 +386,15 @@
     "gamePathNotFound": "Could not detect the game path automatically",
     "imageCache": "Image cache",
     "clearCache": "Clear cache",
-    "cacheClearedMsg": "Cache cleared ({size})"
+    "cacheClearedMsg": "Cache cleared ({size})",
+    "updates": "Updates",
+    "updatesDesc": "Application update management",
+    "autoCheckUpdates": "Automatic check",
+    "autoCheckUpdatesDesc": "Check for updates when the application starts",
+    "checkNow": "Check now",
+    "upToDate": "The application is up to date",
+    "checkFailed": "Unable to check for updates",
+    "currentVersion": "Current version: {version}"
   },
   "field": {
     "title": "Fields",
@@ -561,6 +569,13 @@
     "backupAdvice": "It is strongly recommended to create a backup before making any changes.",
     "accept": "I understand and accept the risks",
     "continue": "Continue"
+  },
+  "update": {
+    "title": "Update available",
+    "description": "Version {version} is available. Here's what's new:",
+    "download": "Download",
+    "later": "Later",
+    "changelog": "Release notes"
   },
   "errors": {
     "unexpected": "An unexpected error occurred",

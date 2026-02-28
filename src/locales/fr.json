@@ -386,7 +386,15 @@
     "gamePathNotFound": "Impossible de détecter le chemin du jeu automatiquement",
     "imageCache": "Cache des images",
     "clearCache": "Vider le cache",
-    "cacheClearedMsg": "Cache vidé ({size})"
+    "cacheClearedMsg": "Cache vidé ({size})",
+    "updates": "Mises à jour",
+    "updatesDesc": "Gestion des mises à jour de l'application",
+    "autoCheckUpdates": "Vérification automatique",
+    "autoCheckUpdatesDesc": "Vérifier les mises à jour au démarrage de l'application",
+    "checkNow": "Vérifier maintenant",
+    "upToDate": "L'application est à jour",
+    "checkFailed": "Impossible de vérifier les mises à jour",
+    "currentVersion": "Version actuelle : {version}"
   },
   "field": {
     "title": "Champs",
@@ -561,6 +569,13 @@
     "backupAdvice": "Il est fortement recommandé de créer un backup avant toute modification.",
     "accept": "Je comprends et j'accepte les risques",
     "continue": "Continuer"
+  },
+  "update": {
+    "title": "Mise à jour disponible",
+    "description": "La version {version} est disponible. Voici les nouveautés :",
+    "download": "Télécharger",
+    "later": "Plus tard",
+    "changelog": "Notes de version"
   },
   "errors": {
     "unexpected": "Une erreur inattendue est survenue",
