@@ -18,6 +18,7 @@ const routes = [
       { path: 'vehicles',   component: VehicleListView },
       { path: 'vehicles/:id', component: VehicleDetailView },
       { path: 'sales',      component: SaleListView },
+      { path: 'sales/add',  component: SaleAddView },
       { path: 'fields',     component: FieldListView },      // Phase 2
       { path: 'world',      component: WorldView },           // Phase 2
       { path: 'buildings',  component: BuildingListView },    // Phase 2
@@ -146,16 +147,19 @@ interface VehicleStore {
 interface SaleStore {
   // State
   items: SaleItem[]
+  addedItems: SaleAdditionPayload[]
   isDirty: boolean
+  changeCount: number
 
   // Actions
   updateItem(index: number, changes: Partial<SaleItem>): void
+  addItem(payload: SaleAdditionPayload): void  // Add a new vehicle to the market
   resetToNew(index: number): void          // wear=0, damage=0, age=0
   setDiscountPrice(index: number): void    // Price at 10%
   extendSale(index: number, days: number): void
   deleteItem(index: number): void
   resetChanges(): void
-  getChanges(): SaleChanges | null
+  getChanges(): { sales: SaleChange[] | null, saleAdditions: SaleAdditionPayload[] | null }
 }
 ```
 

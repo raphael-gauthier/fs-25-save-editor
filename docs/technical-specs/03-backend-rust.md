@@ -66,6 +66,21 @@ The Rust backend is responsible for:
 - **Parameters:** `savegame_path: String`, `backup_name: String`
 - **Returns:** `Result<()>`
 
+### Vehicle Catalog
+
+#### `get_vehicle_catalog`
+- **Parameters:** `game_path: String`
+- **Returns:** `Vec<CatalogVehicle>`
+- **State:** `CatalogState` (cached by `game_path`)
+- **Behavior:**
+  - Scans `{game_path}/data/vehicles/` recursively for base game vehicles
+  - Scans `{game_path}/pdlc/*/data/vehicles/` recursively for DLC vehicles
+  - Scans mod zips in `~/Documents/My Games/FarmingSimulator2025/mods/` for mod vehicles
+  - Parses `<storeData>` sections to extract name, brand, category, and price
+  - Filters out vehicles with price 0 (debug/internal vehicles)
+  - Results are cached per `game_path` to avoid repeated filesystem scans
+  - Returns sorted by brand then name
+
 ### Settings
 
 #### `get_settings`
@@ -127,6 +142,20 @@ backup/
 - Naming convention: `backup_YYYY-MM-DD_HHhMMmSSs/`
 - The copy is recursive and includes **all** files (XML + binaries) to ensure a complete restoration
 - `cleanup_old_backups` flags backups beyond the limit but does not delete them automatically
+
+### `services/catalog.rs` — Vehicle Catalog Scanner
+
+Scans the game installation directory and mod archives to build a vehicle catalog:
+
+```
+pub fn scan_vehicle_catalog(game_path: &Path, mods_dir: &Path) -> Vec<CatalogVehicle>
+```
+
+- **Base game**: recursively scans `data/vehicles/` for XML files containing `<storeData>`
+- **DLCs**: recursively scans `pdlc/*/data/vehicles/` for DLC vehicle XMLs
+- **Mods**: opens `.zip` archives in the mods directory and parses XML files inside
+- XML filenames are stored as relative paths for base game/DLC (`data/vehicles/...`, `pdlc/...`) and as `$moddir$ModName/path.xml` for mods
+- Localized names (`$l10n_shopItem_...`) are cleaned to human-readable format
 
 ### `error.rs` — Error Handling
 

@@ -255,6 +255,49 @@ pub struct BoughtConfiguration {
 }
 ```
 
+## Vehicle Catalog (scanned from game files)
+
+```rust
+pub struct CatalogVehicle {
+    pub xml_filename: String,           // Relative path (base game/DLC) or $moddir$ path (mods)
+    pub name: String,
+    pub brand: String,
+    pub category: String,
+    pub price: u32,
+    pub source: VehicleSource,
+}
+
+pub enum VehicleSource {
+    BaseGame,
+    Mod(String),                        // Mod name (zip filename without extension)
+}
+```
+
+```typescript
+interface CatalogVehicle {
+  xmlFilename: string
+  name: string
+  brand: string
+  category: string
+  price: number
+  source: "baseGame" | { mod: string }
+}
+```
+
+## Sale Addition (`SaleAdditionPayload`)
+
+```rust
+pub struct SaleAdditionPayload {
+    pub xml_filename: String,
+    pub price: u32,
+    pub damage: f64,
+    pub wear: f64,
+    pub age: u32,
+    pub operating_time: f64,
+    pub time_left: u32,
+}
+```
+
 ## Field (`fields.xml`) — Phase 2
 
 ```rust
@@ -354,6 +397,7 @@ pub struct SavegameChanges {
     pub finance: Option<FinanceChanges>,
     pub vehicles: Option<Vec<VehicleChange>>,
     pub sales: Option<Vec<SaleChange>>,
+    pub sale_additions: Option<Vec<SaleAdditionPayload>>, // New vehicles added to market
     pub fields: Option<Vec<FieldChange>>,         // Phase 2
     pub environment: Option<EnvironmentChanges>,   // Phase 2
     pub missions: Option<Vec<MissionChange>>,      // Phase 2
