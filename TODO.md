@@ -11,7 +11,7 @@
 - [x] **Condition always "None":** The vehicle condition/state is always displayed as "None" — needs investigation to determine if this is a data issue or a display bug.
 
 ### 3. Missions - No data displayed
-- [ ] The Missions view shows no data. Needs investigation to determine whether this is a parsing issue, a data mapping problem, or expected behavior for certain savegames.
+- [x] The Missions view shows no data. Needs investigation to determine whether this is a parsing issue, a data mapping problem, or expected behavior for certain savegames.
 
 ## Features
 
@@ -20,5 +20,5 @@
 - [x] Source images from the game files.
 
 ### 5. Add vehicle to used market
-- [ ] Allow adding a vehicle to the used market (sale point) from the editor.
-- [ ] Use game file references to populate vehicle data (brand, model, category, price, etc.).
+- [x] Allow adding a vehicle to the used market (sale point) from the editor.
+- [x] Use game file references to populate vehicle data (brand, model, category, price, etc.).
