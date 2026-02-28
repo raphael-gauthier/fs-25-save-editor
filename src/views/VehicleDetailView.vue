@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, ref, watch } from "vue";
 import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { useVehicleStore } from "@/stores/vehicle";
 import { useSettingsStore } from "@/stores/settings";
 import { formatMoney, vehicleType } from "@/lib/utils";
+import { useVehicleImages } from "@/composables/useVehicleImages";
 import FillLevelSlider from "@/components/vehicles/FillLevelSlider.vue";
+import VehicleImage from "@/components/vehicles/VehicleImage.vue";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -58,9 +60,21 @@ const router = useRouter();
 const store = useVehicleStore();
 const settings = useSettingsStore();
 
+const { loadBatch } = useVehicleImages();
+
 const vehicleId = computed(() => route.params.id as string);
 const vehicle = computed(() => store.getVehicleById(vehicleId.value));
 const originalVehicle = computed(() => store.getOriginalVehicleById(vehicleId.value));
+
+watch(
+  vehicle,
+  (v) => {
+    if (v && settings.gamePath) {
+      loadBatch(settings.gamePath, [v.filename]);
+    }
+  },
+  { immediate: true },
+);
 
 function isFieldModified(field: keyof import("@/lib/types").Vehicle): boolean {
   if (!vehicle.value || !originalVehicle.value) return false;
@@ -175,9 +189,11 @@ function handleRotationInput(axis: "x" | "y" | "z", event: Event) {
         <Button variant="ghost" size="icon" @click="goBack">
           <ArrowLeft class="size-5" />
         </Button>
-        <div v-if="vehicle">
-          <h2 class="text-2xl font-semibold">{{ vehicle.displayName }}</h2>
-          <div class="flex items-center gap-2 text-sm text-muted-foreground">
+        <div v-if="vehicle" class="flex items-center gap-3">
+          <VehicleImage v-if="settings.gamePath" :filename="vehicle.filename" size="lg" />
+          <div>
+            <h2 class="text-2xl font-semibold">{{ vehicle.displayName }}</h2>
+            <div class="flex items-center gap-2 text-sm text-muted-foreground">
             <span>{{ t(`vehicleTypes.${vehicleType(vehicle.filename)}`) }}</span>
             <span>&middot;</span>
             <Badge
@@ -185,6 +201,7 @@ function handleRotationInput(axis: "x" | "y" | "z", event: Event) {
             >
               {{ t(`propertyStates.${vehicle.propertyState}`) }}
             </Badge>
+          </div>
           </div>
         </div>
       </div>

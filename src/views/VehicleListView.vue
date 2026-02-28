@@ -1,10 +1,13 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, watch } from "vue";
 import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { useVehicleStore } from "@/stores/vehicle";
+import { useSettingsStore } from "@/stores/settings";
 import { formatMoney, formatOperatingTime, vehicleType } from "@/lib/utils";
+import { useVehicleImages } from "@/composables/useVehicleImages";
 import VehicleBatchActions from "@/components/vehicles/VehicleBatchActions.vue";
+import VehicleImage from "@/components/vehicles/VehicleImage.vue";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -28,7 +31,22 @@ import { Search, RotateCcw } from "lucide-vue-next";
 
 const { t } = useI18n();
 const store = useVehicleStore();
+const settings = useSettingsStore();
 const router = useRouter();
+const { loadBatch } = useVehicleImages();
+
+watch(
+  () => store.playerVehicles,
+  (vehicles) => {
+    if (settings.gamePath && vehicles.length > 0) {
+      loadBatch(
+        settings.gamePath,
+        vehicles.map((v) => v.filename),
+      );
+    }
+  },
+  { immediate: true },
+);
 
 const totalCount = computed(() => store.playerVehicles.length);
 const filteredCount = computed(() => store.filteredVehicles.length);
@@ -190,6 +208,7 @@ const typeOptions = computed(() =>
                 @update:model-value="toggleSelectAll"
               />
             </TableHead>
+            <TableHead v-if="settings.gamePath" class="w-14" />
             <TableHead>{{ t("vehicle.name") }}</TableHead>
             <TableHead>{{ t("vehicle.type") }}</TableHead>
             <TableHead>{{ t("vehicle.state") }}</TableHead>
@@ -202,7 +221,7 @@ const typeOptions = computed(() =>
           <TableRow
             v-if="filteredCount === 0"
           >
-            <TableCell :colspan="7" class="text-center py-8 text-muted-foreground">
+            <TableCell :colspan="settings.gamePath ? 8 : 7" class="text-center py-8 text-muted-foreground">
               <template v-if="hasFilters">
                 {{ t("vehicle.noMatch") }}
               </template>
@@ -220,6 +239,9 @@ const typeOptions = computed(() =>
                 :model-value="store.selectedVehicleIds.has(vehicle.uniqueId)"
                 @update:model-value="store.toggleSelection(vehicle.uniqueId)"
               />
+            </TableCell>
+            <TableCell v-if="settings.gamePath">
+              <VehicleImage :filename="vehicle.filename" size="sm" />
             </TableCell>
             <TableCell
               class="cursor-pointer font-medium hover:underline"

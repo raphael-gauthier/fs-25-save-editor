@@ -1,10 +1,13 @@
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useSaleStore } from "@/stores/sale";
+import { useSettingsStore } from "@/stores/settings";
 import { formatMoney, formatOperatingTime } from "@/lib/utils";
+import { useVehicleImages } from "@/composables/useVehicleImages";
 import type { SaleItem } from "@/lib/types";
 import SaleItemEditor from "@/components/sales/SaleItemEditor.vue";
+import VehicleImage from "@/components/vehicles/VehicleImage.vue";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -18,6 +21,21 @@ import {
 
 const { t } = useI18n();
 const store = useSaleStore();
+const settings = useSettingsStore();
+const { loadBatch } = useVehicleImages();
+
+watch(
+  () => store.items,
+  (items) => {
+    if (settings.gamePath && items.length > 0) {
+      loadBatch(
+        settings.gamePath,
+        items.map((s) => s.xmlFilename),
+      );
+    }
+  },
+  { immediate: true },
+);
 
 const selectedItem = ref<SaleItem | null>(null);
 const editorOpen = ref(false);
@@ -52,6 +70,7 @@ function formatPercent(value: number): string {
       <Table>
         <TableHeader>
           <TableRow>
+            <TableHead v-if="settings.gamePath" class="w-14" />
             <TableHead>{{ t("sale.name") }}</TableHead>
             <TableHead class="text-right">{{ t("sale.price") }}</TableHead>
             <TableHead class="text-right">{{ t("sale.wear") }}</TableHead>
@@ -63,7 +82,7 @@ function formatPercent(value: number): string {
         </TableHeader>
         <TableBody>
           <TableRow v-if="itemCount === 0">
-            <TableCell :colspan="7" class="py-8 text-center text-muted-foreground">
+            <TableCell :colspan="settings.gamePath ? 8 : 7" class="py-8 text-center text-muted-foreground">
               {{ t("sale.empty") }}
             </TableCell>
           </TableRow>
@@ -73,6 +92,9 @@ function formatPercent(value: number): string {
             class="cursor-pointer"
             @click="openEditor(item)"
           >
+            <TableCell v-if="settings.gamePath">
+              <VehicleImage :filename="item.xmlFilename" size="sm" />
+            </TableCell>
             <TableCell class="font-medium">
               {{ item.displayName }}
             </TableCell>
