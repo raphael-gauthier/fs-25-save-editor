@@ -15,8 +15,8 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import logo from "@/assets/logo.png";
 import {
-  Tractor,
   FolderOpen,
   AlertCircle,
   SearchX,
@@ -56,11 +56,12 @@ function formatDifficulty(code: string): string {
   <main class="flex min-h-screen flex-col items-center px-4 py-12">
     <div class="w-full max-w-2xl space-y-8">
       <!-- Header -->
-      <div class="text-center space-y-2">
-        <div class="flex items-center justify-center gap-3">
-          <Tractor class="size-8 text-primary" />
-          <h1 class="text-3xl font-bold tracking-tight">{{ t("common.appName") }}</h1>
-        </div>
+      <div class="text-center space-y-3">
+        <img
+          :src="logo"
+          :alt="t('common.appName')"
+          class="mx-auto h-24 w-auto dark:drop-shadow-[0_0_0.5px_rgba(255,255,255,0.8)] dark:brightness-110"
+        />
         <p class="text-muted-foreground">
           {{ t("savegame.selectSubtitle") }}
         </p>
