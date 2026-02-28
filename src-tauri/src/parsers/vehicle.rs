@@ -119,7 +119,7 @@ pub fn parse_vehicles(path: &Path) -> Result<Vec<Vehicle>, AppError> {
                         }
                         "unit" if in_fill_unit => {
                             let fill_type = attr_str(e, "fillType");
-                            if !fill_type.is_empty() {
+                            if !fill_type.is_empty() && fill_type != "UNKNOWN" {
                                 vb.fill_units.push(FillUnit {
                                     index: attr_u32(e, "index"),
                                     fill_type,

@@ -117,6 +117,7 @@ impl VehicleImageService {
         // Skip modded vehicles, DLC vehicles, and non-vehicle objects
         if vehicle_filename.starts_with("mods/")
             || vehicle_filename.starts_with("mods\\")
+            || vehicle_filename.contains("$moddir$")
             || vehicle_filename.contains("$pdlcdir$")
             || vehicle_filename.contains("$dlcdir$")
         {
