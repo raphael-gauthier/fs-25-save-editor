@@ -41,21 +41,58 @@ pub struct FarmPlayer {
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]
 #[serde(rename_all = "camelCase")]
 pub struct FarmStatistics {
+    // Distances
     pub traveled_distance: f64,
+    pub tractor_distance: f64,
+    pub car_distance: f64,
+    pub truck_distance: f64,
+    pub horse_distance: f64,
+    // Consumption
     pub fuel_usage: f64,
     pub seed_usage: f64,
     pub spray_usage: f64,
+    // Hectares
     pub worked_hectares: f64,
     pub cultivated_hectares: f64,
     pub sown_hectares: f64,
     pub sprayed_hectares: f64,
     pub threshed_hectares: f64,
     pub plowed_hectares: f64,
+    pub harvested_grapes: f64,
+    pub harvested_olives: f64,
+    // Time spent (minutes)
+    pub worked_time: f64,
+    pub cultivated_time: f64,
+    pub sown_time: f64,
+    pub sprayed_time: f64,
+    pub threshed_time: f64,
+    pub plowed_time: f64,
+    // Counts
     pub bale_count: u32,
+    pub wrapped_bales: u32,
+    pub sold_cotton_bales: u32,
     pub mission_count: u32,
-    pub play_time: f64,
+    pub repair_vehicle_count: u32,
+    pub repaint_vehicle_count: u32,
+    // Animals
+    pub breed_cows_count: u32,
+    pub breed_sheep_count: u32,
+    pub breed_pigs_count: u32,
+    pub breed_chicken_count: u32,
+    pub breed_horses_count: u32,
+    pub breed_goats_count: u32,
+    pub breed_water_buffalo_count: u32,
+    pub pet_dog_count: u32,
+    pub horse_jump_count: u32,
+    // Trees & wood
+    pub planted_tree_count: u32,
+    pub cut_tree_count: u32,
+    pub wood_tons_sold: f64,
+    // Finance (game internal - not reliable totals)
     pub revenue: f64,
     pub expenses: f64,
+    // Play time
+    pub play_time: f64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, Default)]

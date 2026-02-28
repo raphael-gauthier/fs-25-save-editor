@@ -4,10 +4,97 @@
     <players>
       <player uniqueUserId="player1-uid" farmManager="true" lastNickname="TestPlayer" timeLastConnected="2025-03-15T10:00:00" buyVehicle="true" sellVehicle="true" buyPlaceable="true" sellPlaceable="true" manageContracts="true" tradeAnimals="true" createFields="true" landscaping="true" hireAssistant="true" resetVehicle="true" manageProductions="true" cutTrees="true" manageRights="true" transferMoney="true" updateFarm="true" manageContracting="true" />
     </players>
-    <statistics traveledDistance="15234.5" fuelUsage="3200.0" seedUsage="1500.0" sprayUsage="800.0" workedHectares="120.5" cultivatedHectares="90.3" sownHectares="85.0" sprayedHectares="60.0" threshedHectares="75.0" plowedHectares="50.0" baleCount="42" missionCount="8" playTime="36000.0" revenue="850000.0" expenses="420000.0" />
+    <statistics>
+      <traveledDistance>15234.500000</traveledDistance>
+      <fuelUsage>3200.000000</fuelUsage>
+      <seedUsage>1500.000000</seedUsage>
+      <sprayUsage>800.000000</sprayUsage>
+      <workedHectares>120.500000</workedHectares>
+      <cultivatedHectares>90.300000</cultivatedHectares>
+      <sownHectares>85.000000</sownHectares>
+      <sprayedHectares>60.000000</sprayedHectares>
+      <threshedHectares>75.000000</threshedHectares>
+      <plowedHectares>50.000000</plowedHectares>
+      <harvestedGrapes>0.000000</harvestedGrapes>
+      <harvestedOlives>0.000000</harvestedOlives>
+      <workedTime>500.000000</workedTime>
+      <baleCount>42</baleCount>
+      <missionCount>8</missionCount>
+      <revenue>850000.000000</revenue>
+      <expenses>420000.000000</expenses>
+      <playTime>36000.000000</playTime>
+    </statistics>
     <finances>
-      <dailyFinance day="1" newVehiclesCost="150000.0" soldVehicles="0.0" newAnimalsCost="0.0" soldAnimals="0.0" constructionCost="25000.0" soldBuildings="0.0" fieldPurchase="80000.0" soldFields="0.0" vehicleRunningCost="1200.0" vehicleLeasingCost="0.0" propertyMaintenance="500.0" propertyIncome="3000.0" productionCosts="800.0" soldProducts="12000.0" harvestIncome="45000.0" missionIncome="8000.0" wagePayment="2500.0" loanInterest="150.0" otherIncome="0.0" otherExpenses="0.0" />
-      <dailyFinance day="2" newVehiclesCost="0.0" soldVehicles="25000.0" newAnimalsCost="0.0" soldAnimals="0.0" constructionCost="0.0" soldBuildings="0.0" fieldPurchase="0.0" soldFields="0.0" vehicleRunningCost="800.0" vehicleLeasingCost="0.0" propertyMaintenance="500.0" propertyIncome="3000.0" productionCosts="600.0" soldProducts="8000.0" harvestIncome="32000.0" missionIncome="5000.0" wagePayment="1800.0" loanInterest="150.0" otherIncome="500.0" otherExpenses="200.0" />
+      <stats day="1">
+        <newVehiclesCost>-150000.000000</newVehiclesCost>
+        <soldVehicles>0.000000</soldVehicles>
+        <newHandtoolsCost>0.000000</newHandtoolsCost>
+        <soldHandtools>0.000000</soldHandtools>
+        <newAnimalsCost>0.000000</newAnimalsCost>
+        <soldAnimals>0.000000</soldAnimals>
+        <constructionCost>-25000.000000</constructionCost>
+        <soldBuildings>0.000000</soldBuildings>
+        <fieldPurchase>-80000.000000</fieldPurchase>
+        <fieldSelling>0.000000</fieldSelling>
+        <vehicleRunningCost>-1200.000000</vehicleRunningCost>
+        <vehicleLeasingCost>0.000000</vehicleLeasingCost>
+        <propertyMaintenance>-500.000000</propertyMaintenance>
+        <propertyIncome>3000.000000</propertyIncome>
+        <productionCosts>-800.000000</productionCosts>
+        <soldWood>0.000000</soldWood>
+        <soldBales>0.000000</soldBales>
+        <soldWool>0.000000</soldWool>
+        <soldMilk>0.000000</soldMilk>
+        <soldProducts>12000.000000</soldProducts>
+        <purchaseFuel>0.000000</purchaseFuel>
+        <purchaseSeeds>-500.000000</purchaseSeeds>
+        <purchaseFertilizer>0.000000</purchaseFertilizer>
+        <purchaseSaplings>0.000000</purchaseSaplings>
+        <purchaseWater>-200.000000</purchaseWater>
+        <purchaseBales>0.000000</purchaseBales>
+        <purchasePallets>0.000000</purchasePallets>
+        <harvestIncome>45000.000000</harvestIncome>
+        <incomeBga>0.000000</incomeBga>
+        <missionIncome>8000.000000</missionIncome>
+        <wagePayment>-2500.000000</wagePayment>
+        <other>0.000000</other>
+        <loanInterest>-150.000000</loanInterest>
+      </stats>
+      <stats day="2">
+        <newVehiclesCost>0.000000</newVehiclesCost>
+        <soldVehicles>25000.000000</soldVehicles>
+        <newHandtoolsCost>0.000000</newHandtoolsCost>
+        <soldHandtools>0.000000</soldHandtools>
+        <newAnimalsCost>0.000000</newAnimalsCost>
+        <soldAnimals>0.000000</soldAnimals>
+        <constructionCost>0.000000</constructionCost>
+        <soldBuildings>0.000000</soldBuildings>
+        <fieldPurchase>0.000000</fieldPurchase>
+        <fieldSelling>0.000000</fieldSelling>
+        <vehicleRunningCost>-800.000000</vehicleRunningCost>
+        <vehicleLeasingCost>0.000000</vehicleLeasingCost>
+        <propertyMaintenance>-500.000000</propertyMaintenance>
+        <propertyIncome>3000.000000</propertyIncome>
+        <productionCosts>-600.000000</productionCosts>
+        <soldWood>0.000000</soldWood>
+        <soldBales>0.000000</soldBales>
+        <soldWool>0.000000</soldWool>
+        <soldMilk>0.000000</soldMilk>
+        <soldProducts>8000.000000</soldProducts>
+        <purchaseFuel>0.000000</purchaseFuel>
+        <purchaseSeeds>0.000000</purchaseSeeds>
+        <purchaseFertilizer>0.000000</purchaseFertilizer>
+        <purchaseSaplings>0.000000</purchaseSaplings>
+        <purchaseWater>0.000000</purchaseWater>
+        <purchaseBales>0.000000</purchaseBales>
+        <purchasePallets>0.000000</purchasePallets>
+        <harvestIncome>32000.000000</harvestIncome>
+        <incomeBga>0.000000</incomeBga>
+        <missionIncome>5000.000000</missionIncome>
+        <wagePayment>-1800.000000</wagePayment>
+        <other>500.000000</other>
+        <loanInterest>-150.000000</loanInterest>
+      </stats>
     </finances>
   </farm>
 </farms>

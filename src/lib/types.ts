@@ -68,21 +68,58 @@ export interface FarmPlayer {
 }
 
 export interface FarmStatistics {
+  // Distances
   traveledDistance: number;
+  tractorDistance: number;
+  carDistance: number;
+  truckDistance: number;
+  horseDistance: number;
+  // Consumption
   fuelUsage: number;
   seedUsage: number;
   sprayUsage: number;
+  // Hectares
   workedHectares: number;
   cultivatedHectares: number;
   sownHectares: number;
   sprayedHectares: number;
   threshedHectares: number;
   plowedHectares: number;
+  harvestedGrapes: number;
+  harvestedOlives: number;
+  // Time spent (minutes)
+  workedTime: number;
+  cultivatedTime: number;
+  sownTime: number;
+  sprayedTime: number;
+  threshedTime: number;
+  plowedTime: number;
+  // Counts
   baleCount: number;
+  wrappedBales: number;
+  soldCottonBales: number;
   missionCount: number;
-  playTime: number;
+  repairVehicleCount: number;
+  repaintVehicleCount: number;
+  // Animals
+  breedCowsCount: number;
+  breedSheepCount: number;
+  breedPigsCount: number;
+  breedChickenCount: number;
+  breedHorsesCount: number;
+  breedGoatsCount: number;
+  breedWaterBuffaloCount: number;
+  petDogCount: number;
+  horseJumpCount: number;
+  // Trees & wood
+  plantedTreeCount: number;
+  cutTreeCount: number;
+  woodTonsSold: number;
+  // Finance (game internal)
   revenue: number;
   expenses: number;
+  // Play time
+  playTime: number;
 }
 
 export interface DailyFinance {

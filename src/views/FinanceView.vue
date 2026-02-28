@@ -4,19 +4,12 @@ import { useI18n } from "vue-i18n";
 import { useFinanceStore } from "@/stores/finance";
 import { useSettingsStore } from "@/stores/settings";
 import { formatMoney } from "@/lib/utils";
+import type { DailyFinance } from "@/lib/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -62,11 +55,39 @@ function handleLoanInput(event: Event) {
   }
 }
 
-const statKeys = [
-  "traveledDistance", "fuelUsage", "seedUsage", "sprayUsage",
-  "workedHectares", "cultivatedHectares", "sownHectares", "sprayedHectares",
-  "threshedHectares", "plowedHectares", "baleCount", "missionCount",
-  "playTime", "revenue", "expenses",
+const statGroups = [
+  {
+    key: "distances",
+    fields: ["traveledDistance", "tractorDistance", "truckDistance", "carDistance", "horseDistance"],
+  },
+  {
+    key: "consumption",
+    fields: ["fuelUsage", "seedUsage", "sprayUsage"],
+  },
+  {
+    key: "hectares",
+    fields: ["workedHectares", "cultivatedHectares", "sownHectares", "sprayedHectares", "threshedHectares", "plowedHectares", "harvestedGrapes", "harvestedOlives"],
+  },
+  {
+    key: "timeSpent",
+    fields: ["workedTime", "cultivatedTime", "sownTime", "sprayedTime", "threshedTime", "plowedTime"],
+  },
+  {
+    key: "counts",
+    fields: ["baleCount", "wrappedBales", "soldCottonBales", "missionCount", "repairVehicleCount", "repaintVehicleCount"],
+  },
+  {
+    key: "animals",
+    fields: ["breedCowsCount", "breedSheepCount", "breedPigsCount", "breedChickenCount", "breedHorsesCount", "breedGoatsCount", "breedWaterBuffaloCount", "petDogCount", "horseJumpCount"],
+  },
+  {
+    key: "trees",
+    fields: ["plantedTreeCount", "cutTreeCount", "woodTonsSold"],
+  },
+  {
+    key: "general",
+    fields: ["playTime"],
+  },
 ] as const;
 
 const financeKeys = [
@@ -78,11 +99,53 @@ const financeKeys = [
 ] as const;
 
 function formatStatValue(key: string, value: number): string {
-  if (key === "playTime") return `${(value / 60).toFixed(1)}h`;
-  if (key === "revenue" || key === "expenses") return `${formatMoney(value)} $`;
-  if (key === "baleCount" || key === "missionCount") return value.toString();
+  if (key === "playTime" || key.endsWith("Time")) return `${(value / 60).toFixed(1)}h`;
+  if (key === "woodTonsSold") return `${value.toFixed(1)}t`;
+  if (key.endsWith("Distance") || key.endsWith("Usage") || key.endsWith("Hectares") || key === "harvestedGrapes" || key === "harvestedOlives") return value.toFixed(1);
+  if (Number.isInteger(value)) return value.toString();
   return value.toFixed(1);
 }
+
+const totalRevenue = computed(() => {
+  return finance.dailyFinances.reduce((sum, df) => {
+    const record = df as unknown as Record<string, number>;
+    return sum + financeKeys.reduce((daySum, key) => {
+      const val = record[key] ?? 0;
+      return daySum + (val > 0 ? val : 0);
+    }, 0);
+  }, 0);
+});
+
+const totalExpenses = computed(() => {
+  return finance.dailyFinances.reduce((sum, df) => {
+    const record = df as unknown as Record<string, number>;
+    return sum + financeKeys.reduce((daySum, key) => {
+      const val = record[key] ?? 0;
+      return daySum + (val < 0 ? val : 0);
+    }, 0);
+  }, 0);
+});
+
+function getDayTotal(df: DailyFinance): number {
+  const record = df as unknown as Record<string, number>;
+  return financeKeys.reduce((sum, key) => sum + (record[key] ?? 0), 0);
+}
+
+function getNonZeroEntries(df: DailyFinance): { key: string; value: number }[] {
+  const record = df as unknown as Record<string, number>;
+  return financeKeys
+    .filter((key) => Math.abs(record[key] ?? 0) > 0.01)
+    .map((key) => ({ key, value: record[key] ?? 0 }));
+}
+
+function formatDayLabel(day: number): string {
+  if (day === 0) return t("finance.today");
+  return `J-${day}`;
+}
+
+const sortedDailyFinances = computed(() =>
+  [...finance.dailyFinances].sort((a, b) => a.day - b.day),
+);
 </script>
 
 <template>
@@ -230,33 +293,57 @@ function formatStatValue(key: string, value: number): string {
       </TabsContent>
 
       <!-- Statistics tab (advanced) -->
-      <TabsContent v-if="settings.advancedMode" value="stats">
-        <Card>
-          <CardHeader>
-            <CardTitle class="text-base">{{ t("finance.farmStats") }}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div
-              v-if="finance.statistics"
-              class="grid grid-cols-1 gap-3 sm:grid-cols-2"
-            >
-              <div
-                v-for="key in statKeys"
-                :key="key"
-                class="flex items-center justify-between rounded-md border px-3 py-2"
-              >
-                <span class="text-sm text-muted-foreground">{{ t(`finance.stats.${key}`) }}</span>
-                <span class="font-mono text-sm">
-                  {{
-                    formatStatValue(
-                      key,
-                      (finance.statistics as Record<string, number>)[key] ?? 0,
-                    )
-                  }}
-                </span>
+      <TabsContent v-if="settings.advancedMode" value="stats" class="space-y-4">
+        <!-- Revenue/Expenses summary from daily finances -->
+        <div v-if="finance.dailyFinances.length > 0" class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          <Card>
+            <CardContent class="flex items-center justify-between pt-6">
+              <span class="text-sm font-medium">{{ t("finance.stats.totalRevenue") }}</span>
+              <span class="font-mono text-lg text-green-600 dark:text-green-400">
+                +{{ formatMoney(totalRevenue) }} $
+              </span>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardContent class="flex items-center justify-between pt-6">
+              <span class="text-sm font-medium">{{ t("finance.stats.totalExpenses") }}</span>
+              <span class="font-mono text-lg text-red-600 dark:text-red-400">
+                {{ formatMoney(totalExpenses) }} $
+              </span>
+            </CardContent>
+          </Card>
+        </div>
+
+        <!-- Stats by group -->
+        <template v-if="finance.statistics">
+          <Card v-for="group in statGroups" :key="group.key">
+            <CardHeader class="pb-3">
+              <CardTitle class="text-base">{{ t(`finance.statGroups.${group.key}`) }}</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <div
+                  v-for="key in group.fields"
+                  :key="key"
+                  class="flex items-center justify-between rounded-md border px-3 py-1.5"
+                >
+                  <span class="text-sm text-muted-foreground">{{ t(`finance.stats.${key}`) }}</span>
+                  <span class="font-mono text-sm">
+                    {{
+                      formatStatValue(
+                        key,
+                        (finance.statistics as Record<string, number>)[key] ?? 0,
+                      )
+                    }}
+                  </span>
+                </div>
               </div>
-            </div>
-            <p v-else class="text-sm text-muted-foreground">
+            </CardContent>
+          </Card>
+        </template>
+        <Card v-else>
+          <CardContent class="pt-6">
+            <p class="text-sm text-muted-foreground">
               {{ t("finance.noStats") }}
             </p>
           </CardContent>
@@ -265,47 +352,44 @@ function formatStatValue(key: string, value: number): string {
 
       <!-- Daily finances tab (advanced) -->
       <TabsContent v-if="settings.advancedMode" value="history">
-        <Card>
-          <CardHeader>
-            <CardTitle class="text-base">{{ t("finance.dailyHistory") }}</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div v-if="finance.dailyFinances.length > 0" class="overflow-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead class="w-16">{{ t("finance.day") }}</TableHead>
-                    <TableHead
-                      v-for="key in financeKeys"
-                      :key="key"
-                      class="min-w-24 text-right"
-                    >
-                      {{ t(`finance.categories.${key}`) }}
-                    </TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  <TableRow
-                    v-for="df in finance.dailyFinances"
-                    :key="df.day"
+        <div v-if="finance.dailyFinances.length > 0" class="space-y-4">
+          <Card
+            v-for="df in sortedDailyFinances"
+            :key="df.day"
+          >
+            <CardHeader class="pb-3">
+              <CardTitle class="flex items-center justify-between text-base">
+                <span>{{ formatDayLabel(df.day) }}</span>
+                <span
+                  class="font-mono text-sm"
+                  :class="getDayTotal(df) >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'"
+                >
+                  {{ getDayTotal(df) >= 0 ? '+' : '' }}{{ formatMoney(getDayTotal(df)) }} $
+                </span>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div class="grid grid-cols-1 gap-2 sm:grid-cols-2">
+                <div
+                  v-for="entry in getNonZeroEntries(df)"
+                  :key="entry.key"
+                  class="flex items-center justify-between rounded-md border px-3 py-1.5"
+                >
+                  <span class="text-sm text-muted-foreground">{{ t(`finance.categories.${entry.key}`) }}</span>
+                  <span
+                    class="font-mono text-sm"
+                    :class="entry.value >= 0 ? 'text-green-600 dark:text-green-400' : 'text-red-600 dark:text-red-400'"
                   >
-                    <TableCell class="font-mono">{{ df.day }}</TableCell>
-                    <TableCell
-                      v-for="key in financeKeys"
-                      :key="key"
-                      class="text-right font-mono"
-                    >
-                      {{
-                        formatMoney(
-                          (df as unknown as Record<string, number>)[key] ?? 0,
-                        )
-                      }}
-                    </TableCell>
-                  </TableRow>
-                </TableBody>
-              </Table>
-            </div>
-            <p v-else class="text-sm text-muted-foreground">
+                    {{ entry.value >= 0 ? '+' : '' }}{{ formatMoney(entry.value) }} $
+                  </span>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+        <Card v-else>
+          <CardContent class="pt-6">
+            <p class="text-sm text-muted-foreground">
               {{ t("finance.noHistory") }}
             </p>
           </CardContent>

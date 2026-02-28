@@ -60,7 +60,7 @@ onMounted(async () => {
     <AppSidebar />
     <SidebarInset>
       <AppHeader />
-      <main class="flex-1 overflow-auto p-6">
+      <main class="min-w-0 flex-1 overflow-y-auto p-6">
         <!-- Loading state -->
         <div v-if="store.isLoading" class="space-y-4">
           <Skeleton class="h-8 w-64" />

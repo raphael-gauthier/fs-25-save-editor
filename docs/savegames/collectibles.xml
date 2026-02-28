@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<collectibles isComplete="false">
+    <collectible index="20" collected="false"/>
+    <collectible index="5" collected="false"/>
+    <collectible index="7" collected="false"/>
+    <collectible index="3" collected="false"/>
+    <collectible index="11" collected="false"/>
+</collectibles>

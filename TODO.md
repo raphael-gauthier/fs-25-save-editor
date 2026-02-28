@@ -3,7 +3,7 @@
 ## Bug Fixes
 
 ### 1. Finance - Advanced mode stats all zero with no history
-- [ ] In the Finance view, when advanced mode is enabled, all statistics display as zero and no history is shown.
+- [x] In the Finance view, when advanced mode is enabled, all statistics display as zero and no history is shown.
 
 ### 2. Vehicles - Multiple selection and filter issues
 - [ ] **Row selection:** Clicking a single row in the vehicles table selects all rows instead of just the clicked one.

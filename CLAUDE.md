@@ -168,3 +168,4 @@ Version is tracked in `package.json` and `src-tauri/Cargo.toml`.
 
 `docs/functional-specs/` — Functional specifications
 `docs/technical-specs/` — Technical architecture docs
+`docs/savegames/` — Reference XML files from real FS25 savegames (sanitized, no user data). Use these to understand the actual XML structure when writing parsers/writers.

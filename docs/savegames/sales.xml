@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<sales>
+    <item timeLeft="23" isGenerated="true" xmlFilename="data/vehicles/macDon/pw8/pw8.xml" age="13" price="28102" damage="0.528496" wear="0.513879" operatingTime="34825.230469">
+        <boughtConfiguration name="rimColor" id="2"/>
+    </item>
+    <item timeLeft="26" isGenerated="true" xmlFilename="data/vehicles/case/axialFlow150/axialFlow150.xml" age="10" price="136550" damage="0.329460" wear="0.616881" operatingTime="36730.875000">
+        <boughtConfiguration name="designColor2" id="DEUTZ_GREEN5"/>
+    </item>
+</sales>

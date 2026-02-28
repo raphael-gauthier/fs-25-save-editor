@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!-- Truncated: only showing representative vehicle entries -->
+<vehicles>
+    <!-- NPC vehicle (farmId=0) -->
+    <vehicle filename="data/vehicles/train/wagonGrainEU/wagonGrainEU.xml" uniqueId="vehicle3d6e1229ede327de87b52439b8bcc584" age="48.000000" price="1.000000" farmId="0" propertyState="NONE" operatingTime="23146.345703">
+        <component index="1" position="-1413.178 59.247 -990.452" rotation="-0.44 -58.42 0.00"/>
+        <configuration name="fillUnit" id="1" isActive="true"/>
+        <configuration name="fillVolume" id="1" isActive="true"/>
+        <configuration name="trailer" id="1" isActive="true"/>
+        <configuration name="cover" id="1" isActive="true"/>
+        <configuration name="wheel" id="1" isActive="true"/>
+        <wheels lastConfigId="1"/>
+        <attacherJoints comboDirection="-1">
+            <attachedImplement jointIndex="1" moveDown="false" attachedVehicleUniqueId="vehicle06af3faba1b59ddd6324108f9a7b42a8" inputJointIndex="1"/>
+        </attacherJoints>
+        <attachable isDetachingBlocked="false"/>
+        <fillUnit>
+            <unit index="1" fillType="UNKNOWN" fillLevel="0.000000"/>
+        </fillUnit>
+        <dischargeable isAllowed="true"/>
+        <trailer doorState="false" tipAnimationTime="0.000000" tipState="0"/>
+        <cover state="1"/>
+    </vehicle>
+    <!-- Player-owned vehicle (farmId=1) -->
+    <vehicle filename="data/vehicles/albutt/frontloaderPalletFork/frontloaderPalletFork.xml" uniqueId="vehicle6dea7dcff87683012c65074ec244424e" age="48.000000" price="1700.000000" farmId="1" propertyState="OWNED" operatingTime="9271.747070">
+        <component index="1" position="-736.347 47.023 151.039" rotation="3.56 -90.00 0.00"/>
+        <washable dirtAmount="0.000000" dirtDuration="0.000000"/>
+        <wearable damage="0.000000" lastRepairDay="-1" lastRepaintDay="-1" wear="0.000000" repairWear="0.000000" paintWear="0.000000" totalRepairCount="0" totalRepaintCount="0"/>
+    </vehicle>
+</vehicles>

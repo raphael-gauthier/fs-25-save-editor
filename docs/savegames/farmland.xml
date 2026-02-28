@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<farmlands>
+    <farmland id="1" farmId="1"/>
+    <farmland id="2" farmId="1"/>
+    <farmland id="3" farmId="1"/>
+    <farmland id="4" farmId="1"/>
+    <farmland id="5" farmId="1"/>
+    <farmland id="6" farmId="0"/>
+    <farmland id="7" farmId="0"/>
+    <farmland id="8" farmId="1"/>
+    <farmland id="255" farmId="0"/>
+</farmlands>
