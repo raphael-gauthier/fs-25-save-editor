@@ -6,6 +6,7 @@ use tauri::State;
 use crate::error::AppError;
 use crate::models::catalog::CatalogVehicle;
 use crate::services::catalog::scan_vehicle_catalog;
+use crate::validators::path::validate_game_path;
 
 pub struct CatalogState {
     cache: Mutex<Option<(String, Vec<CatalogVehicle>)>>,
@@ -43,18 +44,10 @@ pub async fn get_vehicle_catalog(
         }
     }
 
-    let game_path_clone = game_path.clone();
-    let catalog = tauri::async_runtime::spawn_blocking(move || {
-        let path = PathBuf::from(&game_path_clone);
-        let vehicles_dir = path.join("data").join("vehicles");
-        if !vehicles_dir.exists() {
-            return Err(AppError::IoError {
-                message: format!("Vehicles directory not found: {}", vehicles_dir.display()),
-            });
-        }
-
+    let validated_path = validate_game_path(&game_path)?;
+    let catalog = tauri::async_runtime::spawn_blocking(move || -> Result<Vec<CatalogVehicle>, AppError> {
         let mods_dir = get_mods_dir();
-        Ok(scan_vehicle_catalog(&path, &mods_dir))
+        Ok(scan_vehicle_catalog(&validated_path, &mods_dir))
     })
     .await
     .map_err(|e| AppError::IoError {

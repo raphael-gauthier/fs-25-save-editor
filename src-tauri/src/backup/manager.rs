@@ -25,12 +25,16 @@ fn backups_dir(savegame_path: &Path) -> PathBuf {
 }
 
 /// Calculates the total size of a directory recursively.
+/// Skips symlinks to avoid following links outside the directory.
 fn dir_size(path: &Path) -> Result<u64, AppError> {
     let mut total: u64 = 0;
     if path.is_dir() {
         for entry in std::fs::read_dir(path)? {
             let entry = entry?;
             let ft = entry.file_type()?;
+            if ft.is_symlink() {
+                continue;
+            }
             if ft.is_dir() {
                 total += dir_size(&entry.path())?;
             } else {
@@ -117,9 +121,21 @@ pub fn list_backups(savegame_path: &Path) -> Result<Vec<BackupInfo>, AppError> {
     Ok(infos)
 }
 
+/// Validates that a backup name matches the expected format and contains no path traversal.
+fn validate_backup_name(name: &str) -> Result<(), AppError> {
+    let re = regex_lite::Regex::new(r"^backup_\d{4}-\d{2}-\d{2}_\d{2}h\d{2}m\d{2}s$").unwrap();
+    if !re.is_match(name) {
+        return Err(AppError::BackupError {
+            message: format!("Invalid backup name: {}", name),
+        });
+    }
+    Ok(())
+}
+
 /// Restores a backup by replacing the savegame content.
 /// Creates a safety backup first, then replaces.
 pub fn restore_backup(savegame_path: &Path, backup_name: &str) -> Result<(), AppError> {
+    validate_backup_name(backup_name)?;
     let backups = backups_dir(savegame_path);
     let backup_path = backups.join(backup_name);
 
@@ -132,11 +148,15 @@ pub fn restore_backup(savegame_path: &Path, backup_name: &str) -> Result<(), App
     // Create a safety backup first
     create_backup(savegame_path)?;
 
-    // Remove current savegame contents
+    // Remove current savegame contents (skip symlinks for safety)
     for entry in std::fs::read_dir(savegame_path)? {
         let entry = entry?;
+        let ft = entry.file_type()?;
+        if ft.is_symlink() {
+            continue;
+        }
         let path = entry.path();
-        if path.is_dir() {
+        if ft.is_dir() {
             std::fs::remove_dir_all(&path)?;
         } else {
             std::fs::remove_file(&path)?;
@@ -163,6 +183,7 @@ pub fn restore_backup(savegame_path: &Path, backup_name: &str) -> Result<(), App
 
 /// Deletes a specific backup.
 pub fn delete_backup(savegame_path: &Path, backup_name: &str) -> Result<(), AppError> {
+    validate_backup_name(backup_name)?;
     let backups = backups_dir(savegame_path);
     let backup_path = backups.join(backup_name);
 

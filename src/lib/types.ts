@@ -430,10 +430,39 @@ export interface UpdateInfo {
   published_at: string | null;
 }
 
+export interface VehicleChangePayload {
+  uniqueId: string;
+  delete: boolean;
+  age?: number;
+  price?: number;
+  farmId?: number;
+  propertyState?: string;
+  operatingTime?: number;
+  damage?: number;
+  wear?: number;
+  fillUnits?: FillUnitChangePayload[];
+}
+
+export interface FillUnitChangePayload {
+  index: number;
+  fillLevel: number;
+}
+
+export interface SaleChangePayload {
+  index: number;
+  delete: boolean;
+  price?: number;
+  damage?: number;
+  wear?: number;
+  age?: number;
+  operatingTime?: number;
+  timeLeft?: number;
+}
+
 export interface SavegameChanges {
   finance?: FinanceChanges;
-  vehicles?: unknown[];
-  sales?: unknown[];
+  vehicles?: VehicleChangePayload[];
+  sales?: SaleChangePayload[];
   saleAdditions?: SaleAdditionPayload[];
   fields?: FieldChangePayload[];
   farmlands?: FarmlandChangePayload[];

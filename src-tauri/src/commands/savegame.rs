@@ -16,6 +16,7 @@ use crate::parsers::contract::parse_contract_settings;
 use crate::parsers::mission::parse_missions;
 use crate::parsers::placeable::parse_placeables;
 use crate::parsers::vehicle::parse_vehicles;
+use crate::validators::path::{validate_savegame_path, validate_savegames_base_path};
 use crate::validators::savegame::validate_savegame;
 use crate::writers;
 
@@ -55,7 +56,7 @@ fn default_savegame_path() -> Result<PathBuf, AppError> {
 #[tauri::command]
 pub fn list_savegames(custom_path: Option<String>) -> Result<Vec<SavegameSummary>, AppError> {
     let base_path = match custom_path {
-        Some(p) => PathBuf::from(p),
+        Some(p) => validate_savegames_base_path(&p)?,
         None => default_savegame_path()?,
     };
 
@@ -103,7 +104,9 @@ pub fn list_savegames(custom_path: Option<String>) -> Result<Vec<SavegameSummary
 
 #[tauri::command]
 pub fn load_savegame(path: String) -> Result<SavegameData, AppError> {
-    let save_path = PathBuf::from(&path);
+    let save_path = validate_savegame_path(&path).map_err(|_| AppError::SavegameNotFound {
+        path: path.clone(),
+    })?;
 
     if !save_path.exists() {
         return Err(AppError::SavegameNotFound { path });
@@ -250,7 +253,9 @@ pub fn load_savegame(path: String) -> Result<SavegameData, AppError> {
 
 #[tauri::command]
 pub fn save_changes(path: String, changes: SavegameChanges) -> Result<SaveResult, AppError> {
-    let save_path = PathBuf::from(&path);
+    let save_path = validate_savegame_path(&path).map_err(|_| AppError::SavegameNotFound {
+        path: path.clone(),
+    })?;
 
     if !save_path.exists() {
         return Err(AppError::SavegameNotFound { path });
@@ -492,11 +497,6 @@ pub fn save_changes(path: String, changes: SavegameChanges) -> Result<SaveResult
         files_modified,
         errors,
     })
-}
-
-#[tauri::command]
-pub fn greet(name: &str) -> String {
-    format!("Hello, {}! You've been greeted from Rust!", name)
 }
 
 #[cfg(test)]

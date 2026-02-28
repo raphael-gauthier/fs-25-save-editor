@@ -18,7 +18,6 @@ pub fn run() {
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
         .plugin(tauri_plugin_opener::init())
-        .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_store::Builder::default().build())
         .setup(|app| {
             let cache_dir = app
@@ -34,7 +33,6 @@ pub fn run() {
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
-            commands::savegame::greet,
             commands::savegame::list_savegames,
             commands::savegame::load_savegame,
             commands::savegame::save_changes,

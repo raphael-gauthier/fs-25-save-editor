@@ -40,13 +40,21 @@ pub async fn check_for_updates(app: AppHandle) -> Result<Option<UpdateInfo>, App
 
     // Semver comparison
     if is_newer_version(remote_version, &current_version) {
+        // Validate that the release URL points to GitHub to prevent open-redirect attacks
+        let expected_prefix = format!("https://github.com/{}/releases/", GITHUB_REPO);
+        let release_url = if release.html_url.starts_with(&expected_prefix) {
+            release.html_url
+        } else {
+            expected_prefix
+        };
+
         Ok(Some(UpdateInfo {
             version: remote_version.to_string(),
             name: release
                 .name
                 .unwrap_or_else(|| format!("v{}", remote_version)),
             body: release.body.unwrap_or_default(),
-            release_url: release.html_url,
+            release_url,
             published_at: release.published_at,
         }))
     } else {

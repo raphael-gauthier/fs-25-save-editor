@@ -10,7 +10,6 @@
     "fs:default",
     "opener:default",
     "opener:allow-open-path",
-    "shell:allow-open",
     "store:default",
     {
       "identifier": "fs:allow-exists",

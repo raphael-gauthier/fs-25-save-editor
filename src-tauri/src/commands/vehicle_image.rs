@@ -5,6 +5,7 @@ use tauri::State;
 
 use crate::error::AppError;
 use crate::services::vehicle_image::VehicleImageService;
+use crate::validators::path::validate_game_path;
 
 /// Get the FS25 user profile mods directory.
 fn get_mods_dir() -> PathBuf {
@@ -79,9 +80,10 @@ pub async fn get_vehicle_images_batch(
     vehicle_filenames: Vec<String>,
     state: State<'_, VehicleImageService>,
 ) -> Result<Vec<VehicleImageResult>, AppError> {
+    let validated_path = validate_game_path(&game_path)?;
     let service = state.inner().clone();
     tauri::async_runtime::spawn_blocking(move || {
-        let path = PathBuf::from(&game_path);
+        let path = validated_path;
         let mods_dir = get_mods_dir();
         let results = service.resolve_images_batch(&path, &mods_dir, &vehicle_filenames);
         Ok(results
