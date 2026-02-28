@@ -111,7 +111,7 @@ function handleOwnerChange(value: any) {
             {{ t("field.title") }} #{{ field.id }}
           </SheetTitle>
           <SheetDescription>
-            {{ field.fruitType !== "UNKNOWN" ? field.fruitType : t("field.none") }}
+            {{ field.fruitType !== "UNKNOWN" ? t(`fillTypes.${field.fruitType}`, field.fruitType) : t("field.none") }}
           </SheetDescription>
         </SheetHeader>
 
@@ -125,7 +125,7 @@ function handleOwnerChange(value: any) {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem v-for="fruit in FRUIT_TYPES" :key="fruit" :value="fruit">
-                  {{ fruit }}
+                  {{ t(`fillTypes.${fruit}`, fruit) }}
                 </SelectItem>
               </SelectContent>
             </Select>
@@ -140,7 +140,7 @@ function handleOwnerChange(value: any) {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem v-for="fruit in FRUIT_TYPES" :key="fruit" :value="fruit">
-                  {{ fruit }}
+                  {{ t(`fillTypes.${fruit}`, fruit) }}
                 </SelectItem>
               </SelectContent>
             </Select>
@@ -176,7 +176,7 @@ function handleOwnerChange(value: any) {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem v-for="gt in GROUND_TYPES" :key="gt" :value="gt">
-                  {{ gt }}
+                  {{ t(`groundTypes.${gt}`, gt) }}
                 </SelectItem>
               </SelectContent>
             </Select>

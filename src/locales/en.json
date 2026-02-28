@@ -288,7 +288,30 @@
     "COTTON": "Cotton",
     "RICE": "Rice",
     "OLIVE": "Olive",
-    "GRAPE": "Grape"
+    "GRAPE": "Grape",
+    "SORGHUM": "Sorghum",
+    "ONION": "Onion",
+    "CARROT": "Carrot",
+    "PARSNIP": "Parsnip",
+    "BEETROOT": "Beetroot",
+    "SPINACH": "Spinach",
+    "GREENBEAN": "Green bean",
+    "PEA": "Pea",
+    "MAIZE": "Silage corn",
+    "UNKNOWN": "Unknown",
+    "FALLOW": "Fallow",
+    "MUSTARD": "Mustard",
+    "LUZERNE": "Alfalfa"
+  },
+  "groundTypes": {
+    "PLOWED": "Plowed",
+    "CULTIVATED": "Cultivated",
+    "SOWN": "Sown",
+    "PLANTED": "Planted",
+    "GRASS": "Grass",
+    "HARVEST_READY": "Harvest ready",
+    "HARVEST_READY_OTHER": "Harvest ready (other)",
+    "RIDGE_SOWN": "Ridge sown"
   },
   "vehicleTypes": {
     "tractors": "Tractor",
@@ -538,7 +561,9 @@
       "deadwood": "Deadwood",
       "spread": "Spreading",
       "destructibleRock": "Destructible rock",
-      "subsoiler": "Subsoiling"
+      "subsoiler": "Subsoiling",
+      "bale": "Baling",
+      "hoe": "Hoeing"
     }
   },
   "collectible": {

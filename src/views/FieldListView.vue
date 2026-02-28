@@ -130,7 +130,7 @@ function toggleSelectAll() {
         <SelectContent>
           <SelectItem value="__all__">{{ t("field.allFruits") }}</SelectItem>
           <SelectItem v-for="fruit in store.availableFruits" :key="fruit" :value="fruit">
-            {{ fruit }}
+            {{ t(`fillTypes.${fruit}`, fruit) }}
           </SelectItem>
         </SelectContent>
       </Select>
@@ -214,13 +214,13 @@ function toggleSelectAll() {
             <TableCell>
               <div class="flex items-center gap-2">
                 <Sprout class="size-4 text-muted-foreground" />
-                <span>{{ field.fruitType !== "UNKNOWN" ? field.fruitType : t("field.none") }}</span>
+                <span>{{ field.fruitType !== "UNKNOWN" ? t(`fillTypes.${field.fruitType}`, field.fruitType) : t("field.none") }}</span>
                 <Badge
                   v-if="field.plannedFruit !== 'FALLOW' && field.plannedFruit !== field.fruitType"
                   variant="outline"
                   class="text-xs"
                 >
-                  {{ field.plannedFruit }}
+                  {{ t(`fillTypes.${field.plannedFruit}`, field.plannedFruit) }}
                 </Badge>
               </div>
             </TableCell>
@@ -240,7 +240,7 @@ function toggleSelectAll() {
               <span v-else class="text-muted-foreground">-</span>
             </TableCell>
             <TableCell>
-              <Badge variant="secondary" class="text-xs">{{ field.groundType }}</Badge>
+              <Badge variant="secondary" class="text-xs">{{ t(`groundTypes.${field.groundType}`, field.groundType) }}</Badge>
             </TableCell>
             <TableCell>
               <Badge
