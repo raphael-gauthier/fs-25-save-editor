@@ -16,8 +16,8 @@
 ## Features
 
 ### 4. Vehicle image previews
-- [ ] Add vehicle thumbnail/image previews in the **Vehicles** view and the **Used Market (Sales)** view.
-- [ ] Source images from the game files.
+- [x] Add vehicle thumbnail/image previews in the **Vehicles** view and the **Used Market (Sales)** view.
+- [x] Source images from the game files.
 
 ### 5. Add vehicle to used market
 - [ ] Allow adding a vehicle to the used market (sale point) from the editor.

@@ -95,6 +95,22 @@ impl VehicleImageService {
         None
     }
 
+    /// Try to convert an absolute mod path to $moddir$ format.
+    /// e.g. "C:/Users/.../mods/FS25_CaseAxialFlow/axialFlow150.xml"
+    ///    → "$moddir$FS25_CaseAxialFlow/axialFlow150.xml"
+    fn try_convert_absolute_mod_path(path: &str) -> Option<String> {
+        let normalized = path.replace('\\', "/");
+        // Look for "/mods/" segment in the path
+        let mods_idx = normalized.find("/mods/")?;
+        let after_mods = &normalized[mods_idx + 6..]; // skip "/mods/"
+        // after_mods is now "ModName/internal/path.xml"
+        if after_mods.contains('/') {
+            Some(format!("$moddir${}", after_mods))
+        } else {
+            None
+        }
+    }
+
     /// Resolve $data/ prefix to the actual game data path, and fix .png → .dds extension.
     fn resolve_dds_path(game_path: &Path, image_ref: &str) -> PathBuf {
         let resolved = if image_ref.starts_with("$data/") {
@@ -145,6 +161,12 @@ impl VehicleImageService {
             return Ok(None);
         }
 
+        // Skip absolute paths to PDLC/DLC directories
+        let lower = vehicle_filename.to_lowercase();
+        if lower.contains("/pdlc/") || lower.contains("\\pdlc\\") {
+            return Ok(None);
+        }
+
         // Check in-memory cache
         {
             let cache = self.index_cache.lock().unwrap();
@@ -154,7 +176,11 @@ impl VehicleImageService {
         }
 
         let result = if vehicle_filename.contains("$moddir$") {
-            self.resolve_mod_image(mods_dir, vehicle_filename)
+            self.resolve_mod_image(game_path, mods_dir, vehicle_filename)
+        } else if let Some(converted) = Self::try_convert_absolute_mod_path(vehicle_filename) {
+            // Sale items use absolute paths like "C:/.../mods/ModName/vehicle.xml"
+            // Convert to $moddir$ format so resolve_mod_image can handle it
+            self.resolve_mod_image(game_path, mods_dir, &converted)
         } else {
             self.resolve_base_game_image(game_path, vehicle_filename)
         };
@@ -218,6 +244,7 @@ impl VehicleImageService {
     /// Filename format: `$moddir$ModName/path/to/vehicle.xml`
     fn resolve_mod_image(
         &self,
+        game_path: &Path,
         mods_dir: &Path,
         vehicle_filename: &str,
     ) -> Result<Option<PathBuf>, AppError> {
@@ -255,7 +282,20 @@ impl VehicleImageService {
             None => return Ok(None),
         };
 
-        // Image path in mod XMLs is relative to the zip root, fix .png → .dds
+        // If image_ref starts with $data/, read from game directory (not the zip)
+        if image_ref.starts_with("$data/") {
+            let dds_path = Self::resolve_dds_path(game_path, &image_ref);
+            if !dds_path.exists() {
+                return Ok(None);
+            }
+            let dds_data = fs::read(&dds_path)?;
+            return match Self::convert_dds_bytes_to_png(&dds_data, &png_path) {
+                Ok(()) => Ok(Some(png_path)),
+                Err(_) => Ok(None),
+            };
+        }
+
+        // Image path is relative to the zip root, fix .png → .dds
         let dds_internal_path = if image_ref.ends_with(".png") {
             format!("{}.dds", &image_ref[..image_ref.len() - 4])
         } else {
