@@ -14,6 +14,9 @@ pub enum AppError {
 
     #[error("Savegame not found: {path}")]
     SavegameNotFound { path: String },
+
+    #[error("Image processing error: {message}")]
+    ImageError { message: String },
 }
 
 impl Serialize for AppError {
@@ -54,6 +57,13 @@ impl Serialize for AppError {
                     &std::collections::HashMap::from([("path", path.as_str())]),
                 )?;
             }
+            AppError::ImageError { message } => {
+                state.serialize_field("code", "errors.imageError")?;
+                state.serialize_field(
+                    "params",
+                    &std::collections::HashMap::from([("message", message.as_str())]),
+                )?;
+            }
         }
         state.end()
     }
@@ -62,6 +72,14 @@ impl Serialize for AppError {
 impl From<std::io::Error> for AppError {
     fn from(err: std::io::Error) -> Self {
         AppError::IoError {
+            message: err.to_string(),
+        }
+    }
+}
+
+impl From<image::ImageError> for AppError {
+    fn from(err: image::ImageError) -> Self {
+        AppError::ImageError {
             message: err.to_string(),
         }
     }
