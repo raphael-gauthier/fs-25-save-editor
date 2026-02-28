@@ -67,11 +67,12 @@ function isActive(itemRoute: string): boolean {
 <template>
   <Sidebar collapsible="icon">
     <SidebarHeader>
-      <div class="flex items-center gap-2 px-2 py-1 group-data-[collapsible=icon]:justify-center">
-        <Tractor class="size-5 shrink-0 text-primary" />
-        <span class="text-sm font-semibold group-data-[collapsible=icon]:hidden">
-          {{ t("common.appName") }}
-        </span>
+      <div class="flex items-center justify-center px-2 py-3">
+        <img
+          src="@/assets/logo.png"
+          :alt="t('common.appName')"
+          class="w-full max-w-[180px] h-auto group-data-[collapsible=icon]:max-w-[32px] dark:drop-shadow-[0_0_0.5px_rgba(255,255,255,0.8)] dark:brightness-110"
+        />
       </div>
     </SidebarHeader>
 
