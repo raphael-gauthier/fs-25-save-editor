@@ -32,6 +32,7 @@ import { RotateCcw, Tag, CalendarPlus, Trash2 } from "lucide-vue-next";
 
 interface Props {
   item: SaleItem | null;
+  catalogPrice: number | null;
   open: boolean;
 }
 
@@ -135,6 +136,18 @@ function handleDelete() {
         </SheetHeader>
 
         <div class="mt-6 space-y-6">
+          <!-- Catalog price info -->
+          <div v-if="catalogPrice != null" class="rounded-md bg-muted/50 p-3 space-y-1">
+            <div class="flex items-center justify-between text-sm">
+              <span class="text-muted-foreground">{{ t("sale.originalPrice") }}</span>
+              <span class="font-mono">{{ formatMoney(catalogPrice) }} $</span>
+            </div>
+            <div class="flex items-center justify-between text-sm">
+              <span class="text-muted-foreground">{{ t("sale.discount") }}</span>
+              <span class="font-mono">-{{ Math.round((1 - item.price / catalogPrice) * 100) }}%</span>
+            </div>
+          </div>
+
           <!-- Price -->
           <div class="space-y-2" :class="saleModifiedClass('price')">
             <Label>{{ t("sale.price") }}</Label>

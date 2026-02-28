@@ -263,6 +263,7 @@ pub fn save_changes(path: String, changes: SavegameChanges) -> Result<SaveResult
     let has_changes = changes.finance.is_some()
         || changes.vehicles.is_some()
         || changes.sales.is_some()
+        || changes.sale_additions.is_some()
         || changes.fields.is_some()
         || changes.farmlands.is_some()
         || changes.placeables.is_some()
@@ -344,6 +345,22 @@ pub fn save_changes(path: String, changes: SavegameChanges) -> Result<SaveResult
     // Apply sale changes
     if let Some(ref sale_changes) = changes.sales {
         match writers::sale::write_sale_changes(&save_path, sale_changes) {
+            Ok(()) => {
+                if !files_modified.contains(&"sales.xml".to_string()) {
+                    files_modified.push("sales.xml".to_string());
+                }
+            }
+            Err(e) => errors.push(
+                LocalizedMessage::new("errors.fileWriteError")
+                    .with_param("file", "sales.xml")
+                    .with_param("details", e),
+            ),
+        }
+    }
+
+    // Apply sale additions (new items)
+    if let Some(ref sale_additions) = changes.sale_additions {
+        match writers::sale::write_sale_additions(&save_path, sale_additions) {
             Ok(()) => {
                 if !files_modified.contains(&"sales.xml".to_string()) {
                     files_modified.push("sales.xml".to_string());
@@ -630,6 +647,7 @@ mod tests {
             }),
             vehicles: None,
             sales: None,
+            sale_additions: None,
             fields: None,
             farmlands: None,
             placeables: None,
@@ -655,6 +673,7 @@ mod tests {
             }),
             vehicles: None,
             sales: None,
+            sale_additions: None,
             fields: None,
             farmlands: None,
             placeables: None,
@@ -679,6 +698,7 @@ mod tests {
             finance: None,
             vehicles: None,
             sales: None,
+            sale_additions: None,
             fields: None,
             farmlands: None,
             placeables: None,
@@ -711,6 +731,7 @@ mod tests {
             }),
             vehicles: None,
             sales: None,
+            sale_additions: None,
             fields: None,
             farmlands: None,
             placeables: None,
@@ -746,6 +767,7 @@ mod tests {
             }),
             vehicles: None,
             sales: None,
+            sale_additions: None,
             fields: None,
             farmlands: None,
             placeables: None,
@@ -787,6 +809,7 @@ mod tests {
             }),
             vehicles: None,
             sales: None,
+            sale_additions: None,
             fields: None,
             farmlands: None,
             placeables: None,
@@ -870,6 +893,7 @@ mod tests {
             }),
             vehicles: None,
             sales: None,
+            sale_additions: None,
             fields: None,
             farmlands: None,
             placeables: None,

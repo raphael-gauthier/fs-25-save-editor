@@ -4,7 +4,7 @@ use quick_xml::events::{BytesStart, Event};
 use quick_xml::{Reader, Writer};
 
 use crate::error::AppError;
-use crate::models::changes::SaleChange;
+use crate::models::changes::{SaleAddition, SaleChange};
 
 /// Applies sale changes to sales.xml.
 /// Items are identified by their position index (0-based count of <item> elements).
@@ -146,6 +146,67 @@ fn write_event(
     })
 }
 
+/// Adds new sale items to sales.xml.
+/// If the file doesn't exist, creates it from scratch.
+pub fn write_sale_additions(
+    path: &Path,
+    additions: &[SaleAddition],
+) -> Result<(), AppError> {
+    if additions.is_empty() {
+        return Ok(());
+    }
+
+    let xml_path = path.join("sales.xml");
+
+    if !xml_path.exists() {
+        // Create sales.xml from scratch
+        let mut xml = String::from("<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"no\"?>\n<sales>\n");
+        for addition in additions {
+            xml.push_str(&format_sale_item(addition));
+        }
+        xml.push_str("</sales>\n");
+        std::fs::write(&xml_path, &xml)?;
+        return Ok(());
+    }
+
+    let content = std::fs::read_to_string(&xml_path).map_err(|e| AppError::IoError {
+        message: format!("{}: {}", xml_path.display(), e),
+    })?;
+
+    // Insert new items just before </sales>
+    let closing_tag = "</sales>";
+    let insert_pos = content.rfind(closing_tag).ok_or_else(|| AppError::XmlParseError {
+        file: xml_path.display().to_string(),
+        message: "Missing </sales> closing tag".to_string(),
+    })?;
+
+    let mut result = String::with_capacity(content.len() + additions.len() * 200);
+    result.push_str(&content[..insert_pos]);
+    for addition in additions {
+        result.push_str(&format_sale_item(addition));
+    }
+    result.push_str(&content[insert_pos..]);
+
+    let tmp_path = xml_path.with_extension("xml.tmp");
+    std::fs::write(&tmp_path, &result)?;
+    std::fs::rename(&tmp_path, &xml_path)?;
+
+    Ok(())
+}
+
+fn format_sale_item(addition: &SaleAddition) -> String {
+    format!(
+        "    <item xmlFilename=\"{}\" age=\"{}\" price=\"{}\" damage=\"{:.6}\" wear=\"{:.6}\" operatingTime=\"{:.6}\" timeLeft=\"{}\" isGenerated=\"false\"/>\n",
+        addition.xml_filename,
+        addition.age,
+        addition.price,
+        addition.damage,
+        addition.wear,
+        addition.operating_time * 60.0, // minutes → seconds
+        addition.time_left,
+    )
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -276,6 +337,134 @@ mod tests {
         assert_eq!(sales[0].age, 100);
         assert!((sales[0].operating_time - 500.0).abs() < 0.01);
         assert_eq!(sales[0].time_left, 20);
+
+        let _ = std::fs::remove_dir_all(&save);
+    }
+
+    #[test]
+    fn test_write_sale_add_item() {
+        let save = setup_fixture("sale_add");
+        let before = parse_sales(&save).unwrap();
+        let before_count = before.len();
+
+        let additions = vec![SaleAddition {
+            xml_filename: "data/vehicles/fendt/vario900/vario900.xml".to_string(),
+            price: 250000,
+            damage: 0.0,
+            wear: 0.0,
+            age: 0,
+            operating_time: 0.0,
+            time_left: 30,
+        }];
+        write_sale_additions(&save, &additions).unwrap();
+        let sales = parse_sales(&save).unwrap();
+
+        assert_eq!(sales.len(), before_count + 1);
+        let added = &sales[before_count];
+        assert_eq!(added.xml_filename, "data/vehicles/fendt/vario900/vario900.xml");
+        assert_eq!(added.price, 250000);
+        assert!((added.damage - 0.0).abs() < 0.001);
+        assert!((added.wear - 0.0).abs() < 0.001);
+        assert_eq!(added.age, 0);
+        assert_eq!(added.time_left, 30);
+        assert!(!added.is_generated);
+
+        let _ = std::fs::remove_dir_all(&save);
+    }
+
+    #[test]
+    fn test_write_sale_add_to_empty() {
+        let save = std::env::temp_dir().join("fs25_test_ws_sale_add_empty");
+        let _ = std::fs::remove_dir_all(&save);
+        std::fs::create_dir_all(&save).unwrap();
+        // No sales.xml exists
+
+        let additions = vec![SaleAddition {
+            xml_filename: "data/vehicles/claas/lexion8900/lexion8900.xml".to_string(),
+            price: 500000,
+            damage: 0.1,
+            wear: 0.2,
+            age: 10,
+            operating_time: 120.0, // minutes
+            time_left: 15,
+        }];
+        write_sale_additions(&save, &additions).unwrap();
+        let sales = parse_sales(&save).unwrap();
+
+        assert_eq!(sales.len(), 1);
+        assert_eq!(sales[0].xml_filename, "data/vehicles/claas/lexion8900/lexion8900.xml");
+        assert_eq!(sales[0].price, 500000);
+        assert!((sales[0].damage - 0.1).abs() < 0.001);
+        assert!((sales[0].wear - 0.2).abs() < 0.001);
+        assert_eq!(sales[0].age, 10);
+        // operating_time is in minutes in the model (converted from seconds in parser)
+        assert!((sales[0].operating_time - 120.0).abs() < 0.01);
+        assert_eq!(sales[0].time_left, 15);
+
+        let _ = std::fs::remove_dir_all(&save);
+    }
+
+    #[test]
+    fn test_write_sale_add_and_modify() {
+        let save = setup_fixture("sale_add_modify");
+
+        // First modify an existing item
+        let changes = vec![SaleChange {
+            index: 0,
+            delete: false,
+            price: Some(1),
+            damage: None,
+            wear: None,
+            age: None,
+            operating_time: None,
+            time_left: None,
+        }];
+        write_sale_changes(&save, &changes).unwrap();
+
+        // Then add a new item
+        let additions = vec![SaleAddition {
+            xml_filename: "data/vehicles/test/test.xml".to_string(),
+            price: 99999,
+            damage: 0.0,
+            wear: 0.0,
+            age: 0,
+            operating_time: 0.0,
+            time_left: 30,
+        }];
+        write_sale_additions(&save, &additions).unwrap();
+
+        let sales = parse_sales(&save).unwrap();
+        assert_eq!(sales.len(), 3); // 2 original + 1 added
+        assert_eq!(sales[0].price, 1); // modified
+        assert_eq!(sales[2].xml_filename, "data/vehicles/test/test.xml"); // added
+
+        let _ = std::fs::remove_dir_all(&save);
+    }
+
+    #[test]
+    fn test_write_sale_add_preserves_existing() {
+        let save = setup_fixture("sale_add_preserve");
+        let before = parse_sales(&save).unwrap();
+
+        let additions = vec![SaleAddition {
+            xml_filename: "data/vehicles/new/new.xml".to_string(),
+            price: 10000,
+            damage: 0.0,
+            wear: 0.0,
+            age: 0,
+            operating_time: 0.0,
+            time_left: 30,
+        }];
+        write_sale_additions(&save, &additions).unwrap();
+        let after = parse_sales(&save).unwrap();
+
+        // Existing items should be unchanged
+        for i in 0..before.len() {
+            assert_eq!(after[i].price, before[i].price);
+            assert_eq!(after[i].xml_filename, before[i].xml_filename);
+            assert!((after[i].damage - before[i].damage).abs() < 0.001);
+            assert!((after[i].wear - before[i].wear).abs() < 0.001);
+        }
 
         let _ = std::fs::remove_dir_all(&save);
     }

@@ -66,7 +66,25 @@ pub fn parse_sales(path: &Path) -> Result<Vec<SaleItem>, AppError> {
             }
             Ok(Event::Empty(ref e)) => {
                 let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
-                if let Some(ref mut item) = current_item {
+                if tag == "item" {
+                    // Self-closing <item .../> (no boughtConfigurations)
+                    let xml_filename = attr_str(e, "xmlFilename");
+                    let display_name = vehicle_display_name(&xml_filename);
+                    sales.push(SaleItem {
+                        index,
+                        xml_filename,
+                        display_name,
+                        age: attr_u32(e, "age"),
+                        price: attr_u32(e, "price"),
+                        damage: attr_f64(e, "damage"),
+                        wear: attr_f64(e, "wear"),
+                        operating_time: attr_f64(e, "operatingTime") / 60.0,
+                        time_left: attr_u32(e, "timeLeft"),
+                        is_generated: attr_str(e, "isGenerated") == "true",
+                        bought_configurations: Vec::new(),
+                    });
+                    index += 1;
+                } else if let Some(ref mut item) = current_item {
                     if tag == "boughtConfiguration" && in_bought_configs {
                         item.bought_configurations.push(BoughtConfiguration {
                             name: attr_str(e, "name"),

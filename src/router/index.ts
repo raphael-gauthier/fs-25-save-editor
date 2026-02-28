@@ -34,6 +34,11 @@ const router = createRouter({
           component: () => import("@/views/SaleListView.vue"),
         },
         {
+          path: "sales/add",
+          name: "sale-add",
+          component: () => import("@/views/SaleAddView.vue"),
+        },
+        {
           path: "fields",
           name: "fields",
           component: () => import("@/views/FieldListView.vue"),

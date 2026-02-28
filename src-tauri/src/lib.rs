@@ -9,6 +9,7 @@ mod writers;
 
 use tauri::Manager;
 
+use commands::catalog::CatalogState;
 use services::vehicle_image::VehicleImageService;
 
 #[cfg_attr(mobile, tauri::mobile_entry_point)]
@@ -28,6 +29,7 @@ pub fn run() {
             let service =
                 VehicleImageService::new(cache_dir).expect("failed to create image service");
             app.manage(service);
+            app.manage(CatalogState::new());
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -43,6 +45,7 @@ pub fn run() {
             commands::vehicle_image::get_vehicle_images_batch,
             commands::vehicle_image::clear_image_cache,
             commands::vehicle_image::get_image_cache_size,
+            commands::catalog::get_vehicle_catalog,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

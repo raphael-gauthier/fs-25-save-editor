@@ -1,6 +1,7 @@
 import { defineStore } from "pinia";
 import { computed, ref } from "vue";
-import type { SaleItem } from "@/lib/types";
+import type { SaleItem, SaleAdditionPayload } from "@/lib/types";
+import { vehicleDisplayName } from "@/lib/utils";
 
 export interface SaleChangePayload {
   index: number;
@@ -17,11 +18,13 @@ export const useSaleStore = defineStore("sale", () => {
   const items = ref<SaleItem[]>([]);
   const originalItems = ref<SaleItem[]>([]);
   const deletedIndices = ref<Set<number>>(new Set());
+  const addedItems = ref<SaleAdditionPayload[]>([]);
 
   const isDirty = computed(() => {
     if (deletedIndices.value.size > 0) return true;
-    if (items.value.length !== originalItems.value.length) return true;
+    if (addedItems.value.length > 0) return true;
     return items.value.some((item) => {
+      if (item.index < 0) return false; // added items tracked separately
       const orig = originalItems.value.find((o) => o.index === item.index);
       if (!orig) return true;
       return isItemModified(item, orig);
@@ -29,9 +32,10 @@ export const useSaleStore = defineStore("sale", () => {
   });
 
   const changeCount = computed(() => {
-    let count = deletedIndices.value.size;
+    let count = deletedIndices.value.size + addedItems.value.length;
     const origMap = new Map(originalItems.value.map((i) => [i.index, i]));
     for (const item of items.value) {
+      if (item.index < 0) continue; // added items already counted
       const orig = origMap.get(item.index);
       if (!orig) {
         count++;
@@ -56,6 +60,7 @@ export const useSaleStore = defineStore("sale", () => {
     items.value = JSON.parse(serialized);
     originalItems.value = JSON.parse(serialized);
     deletedIndices.value = new Set();
+    addedItems.value = [];
   }
 
   function updateItem(index: number, changes: Partial<SaleItem>) {
@@ -95,12 +100,32 @@ export const useSaleStore = defineStore("sale", () => {
     items.value = items.value.filter((i) => i.index !== index);
   }
 
+  function addItem(payload: SaleAdditionPayload) {
+    addedItems.value.push(payload);
+    // Create a temporary SaleItem for display with negative index
+    const tempIndex = -(addedItems.value.length);
+    items.value.push({
+      index: tempIndex,
+      xmlFilename: payload.xmlFilename,
+      displayName: vehicleDisplayName(payload.xmlFilename),
+      age: payload.age,
+      price: payload.price,
+      damage: payload.damage,
+      wear: payload.wear,
+      operatingTime: payload.operatingTime,
+      timeLeft: payload.timeLeft,
+      isGenerated: false,
+      boughtConfigurations: [],
+    });
+  }
+
   function resetChanges() {
     items.value = JSON.parse(JSON.stringify(originalItems.value));
     deletedIndices.value = new Set();
+    addedItems.value = [];
   }
 
-  function getChanges(): SaleChangePayload[] | null {
+  function getChanges(): { sales: SaleChangePayload[] | null; saleAdditions: SaleAdditionPayload[] | null } {
     const changes: SaleChangePayload[] = [];
 
     for (const idx of deletedIndices.value) {
@@ -109,6 +134,7 @@ export const useSaleStore = defineStore("sale", () => {
 
     const origMap = new Map(originalItems.value.map((i) => [i.index, i]));
     for (const item of items.value) {
+      if (item.index < 0) continue; // skip added items
       const orig = origMap.get(item.index);
       if (!orig || !isItemModified(item, orig)) continue;
 
@@ -123,21 +149,27 @@ export const useSaleStore = defineStore("sale", () => {
       changes.push(change);
     }
 
-    return changes.length > 0 ? changes : null;
+    return {
+      sales: changes.length > 0 ? changes : null,
+      saleAdditions: addedItems.value.length > 0 ? [...addedItems.value] : null,
+    };
   }
 
   function commitChanges() {
     originalItems.value = JSON.parse(JSON.stringify(items.value));
     deletedIndices.value = new Set();
+    addedItems.value = [];
   }
 
   return {
     items,
+    addedItems,
     isDirty,
     changeCount,
     getOriginalItem,
     hydrate,
     updateItem,
+    addItem,
     resetToNew,
     setDiscountPrice,
     extendSale,

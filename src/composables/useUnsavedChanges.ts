@@ -48,8 +48,9 @@ export function useUnsavedChanges() {
     if (financeChanges) changes.finance = financeChanges;
     const vehicleChanges = vehicleStore.getChanges();
     if (vehicleChanges) changes.vehicles = vehicleChanges;
-    const saleChanges = saleStore.getChanges();
-    if (saleChanges) changes.sales = saleChanges;
+    const saleResult = saleStore.getChanges();
+    if (saleResult.sales) changes.sales = saleResult.sales;
+    if (saleResult.saleAdditions) changes.saleAdditions = saleResult.saleAdditions;
     const fieldChanges = fieldStore.getChanges();
     if (fieldChanges) {
       if (fieldChanges.fields) changes.fields = fieldChanges.fields;

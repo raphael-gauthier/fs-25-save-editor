@@ -8,6 +8,7 @@ pub struct SavegameChanges {
     pub finance: Option<FinanceChanges>,
     pub vehicles: Option<Vec<VehicleChange>>,
     pub sales: Option<Vec<SaleChange>>,
+    pub sale_additions: Option<Vec<SaleAddition>>,
     pub fields: Option<Vec<FieldChange>>,
     pub farmlands: Option<Vec<FarmlandChange>>,
     pub placeables: Option<Vec<PlaceableChange>>,
@@ -57,6 +58,18 @@ pub struct SaleChange {
     pub age: Option<u32>,
     pub operating_time: Option<f64>,
     pub time_left: Option<u32>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SaleAddition {
+    pub xml_filename: String,
+    pub price: u32,
+    pub damage: f64,
+    pub wear: f64,
+    pub age: u32,
+    pub operating_time: f64,
+    pub time_left: u32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

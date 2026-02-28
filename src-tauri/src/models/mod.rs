@@ -1,5 +1,6 @@
 pub mod backup;
 pub mod career;
+pub mod catalog;
 pub mod changes;
 pub mod collectible;
 pub mod common;

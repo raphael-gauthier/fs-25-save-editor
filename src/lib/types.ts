@@ -402,10 +402,30 @@ export interface FinanceChanges {
   loan?: number;
 }
 
+export interface CatalogVehicle {
+  xmlFilename: string;
+  name: string;
+  brand: string;
+  category: string;
+  price: number;
+  source: "baseGame" | { mod: string };
+}
+
+export interface SaleAdditionPayload {
+  xmlFilename: string;
+  price: number;
+  damage: number;
+  wear: number;
+  age: number;
+  operatingTime: number;
+  timeLeft: number;
+}
+
 export interface SavegameChanges {
   finance?: FinanceChanges;
   vehicles?: unknown[];
   sales?: unknown[];
+  saleAdditions?: SaleAdditionPayload[];
   fields?: FieldChangePayload[];
   farmlands?: FarmlandChangePayload[];
   placeables?: PlaceableChangePayload[];
