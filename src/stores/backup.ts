@@ -75,6 +75,12 @@ export const useBackupStore = defineStore("backup", () => {
     await listBackups();
   }
 
+  async function openFolder() {
+    const path = currentPath();
+    if (!path) return;
+    await invokeCommand("open_backups_folder", { savegamePath: path });
+  }
+
   return {
     backups,
     isLoading,
@@ -84,5 +90,6 @@ export const useBackupStore = defineStore("backup", () => {
     create,
     restore,
     deleteBackup,
+    openFolder,
   };
 });

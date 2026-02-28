@@ -25,6 +25,7 @@ import {
 import {
   Archive,
   Download,
+  FolderOpen,
   Trash2,
   RotateCcw,
   Loader2,
@@ -72,6 +73,14 @@ function formatDate(iso: string): string {
     });
   } catch {
     return iso;
+  }
+}
+
+async function handleOpenFolder() {
+  try {
+    await store.openFolder();
+  } catch (e: unknown) {
+    toast.error(translateError(t, e));
   }
 }
 
@@ -141,11 +150,17 @@ async function executeConfirmAction() {
           {{ t("backup.subtitle") }}
         </p>
       </div>
-      <Button @click="handleCreate" :disabled="store.isCreating">
-        <Loader2 v-if="store.isCreating" class="size-4 animate-spin" />
-        <Download v-else class="size-4" />
-        {{ t("backup.create") }}
-      </Button>
+      <div class="flex gap-2">
+        <Button variant="outline" @click="handleOpenFolder" :disabled="store.backups.length === 0">
+          <FolderOpen class="size-4" />
+          {{ t("backup.openFolder") }}
+        </Button>
+        <Button @click="handleCreate" :disabled="store.isCreating">
+          <Loader2 v-if="store.isCreating" class="size-4 animate-spin" />
+          <Download v-else class="size-4" />
+          {{ t("backup.create") }}
+        </Button>
+      </div>
     </div>
 
     <!-- Loading -->

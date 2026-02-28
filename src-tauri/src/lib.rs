@@ -17,6 +17,7 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_dialog::init())
         .plugin(tauri_plugin_fs::init())
+        .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_shell::init())
         .plugin(tauri_plugin_store::Builder::default().build())
         .setup(|app| {
@@ -41,6 +42,7 @@ pub fn run() {
             commands::backup::create_backup,
             commands::backup::restore_backup,
             commands::backup::delete_backup,
+            commands::backup::open_backups_folder,
             commands::vehicle_image::detect_game_path,
             commands::vehicle_image::get_vehicle_images_batch,
             commands::vehicle_image::clear_image_cache,

@@ -354,6 +354,7 @@
     "actions": "Actions",
     "restore": "Restaurer",
     "delete": "Supprimer",
+    "openFolder": "Ouvrir le dossier",
     "spaceUsed": "Espace utilisé : {size} ({count} backup(s))"
   },
   "settings": {

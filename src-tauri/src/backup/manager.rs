@@ -6,6 +6,11 @@ use fs_extra::dir::{self, CopyOptions};
 use crate::error::AppError;
 use crate::models::backup::BackupInfo;
 
+/// Returns the backups directory path for a given savegame path (public API).
+pub fn backups_dir_for(savegame_path: &Path) -> PathBuf {
+    backups_dir(savegame_path)
+}
+
 /// Returns the backups directory for a given savegame path.
 /// For savegame1/, backups go in savegame1_backups/
 fn backups_dir(savegame_path: &Path) -> PathBuf {
