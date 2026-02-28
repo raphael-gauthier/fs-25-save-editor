@@ -9,6 +9,14 @@
     "dialog:allow-open",
     "fs:default",
     "shell:allow-open",
-    "store:default"
+    "store:default",
+    {
+      "identifier": "fs:allow-exists",
+      "allow": [{ "path": "$APPDATA/cache/**" }]
+    },
+    {
+      "identifier": "fs:allow-read-file",
+      "allow": [{ "path": "$APPDATA/cache/**" }]
+    }
   ]
 }
