@@ -32,5 +32,5 @@ thiserror = "2"
 dirs = "6"
 regex-lite = "0.1"
 image = { version = "0.25", default-features = false, features = ["png"] }
-image_dds = "0.4"
+image_dds = { version = "0.7", default-features = false, features = ["ddsfile", "image"] }
 

@@ -3,6 +3,7 @@ mod commands;
 mod error;
 mod models;
 mod parsers;
+mod services;
 mod validators;
 mod writers;
 
