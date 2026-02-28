@@ -41,6 +41,11 @@ A desktop application for editing Farming Simulator 25 savegames. Modify finance
 - Create savegame backups before editing
 - Restore or delete backups at any time
 
+### Automatic Update Check
+- Checks for new versions on GitHub Releases at startup (opt-out in settings)
+- Manual check button in settings
+- Update dialog with changelog and download link
+
 ### Settings
 - Language: French / English
 - Theme: Light / Dark / System
@@ -191,6 +196,7 @@ fs-25-save-editor/
 | `create_backup` | Create a backup of the current savegame |
 | `restore_backup` | Restore a savegame from a backup |
 | `delete_backup` | Delete an existing backup |
+| `check_for_updates` | Check GitHub Releases for a newer version |
 
 ## Development
 

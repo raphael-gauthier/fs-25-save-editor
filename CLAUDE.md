@@ -98,7 +98,7 @@ pnpm test:rust        # Rust tests (cargo test in src-tauri)
 - `src/components/ui/` — shadcn-vue base components
 - `src/components/layout/` — AppHeader, AppSidebar, EditorLayout
 - `src/stores/` — Pinia stores by domain (finance, vehicle, sale, field, building, mission, world, savegame, backup, settings)
-- `src/composables/` — useTheme, useTauri, useUnsavedChanges, useFieldTracking
+- `src/composables/` — useTheme, useTauri, useUnsavedChanges, useFieldTracking, useUpdateChecker
 - `src/plugins/i18n.ts` — vue-i18n config (legacy: false)
 - `src/locales/` — fr.json, en.json
 - `src/lib/types.ts` — TypeScript types mirroring Rust structs
@@ -107,8 +107,8 @@ pnpm test:rust        # Rust tests (cargo test in src-tauri)
 
 ### Backend Structure (src-tauri/src/)
 
-- `commands/` — Tauri command handlers (savegame.rs, backup.rs)
-- `models/` — Data structures (career, farm, vehicle, sale, field, environment, placeable, mission, collectible)
+- `commands/` — Tauri command handlers (savegame.rs, backup.rs, update.rs)
+- `models/` — Data structures (career, farm, vehicle, sale, field, environment, placeable, mission, collectible, update)
 - `parsers/` — XML → struct parsing
 - `writers/` — struct → XML writing
 - `validators/` — Data validation
@@ -121,7 +121,7 @@ pnpm test:rust        # Rust tests (cargo test in src-tauri)
 
 ### Tauri Commands
 
-`list_savegames`, `load_savegame`, `save_changes`, `list_backups`, `create_backup`, `restore_backup`, `delete_backup` — invoked via `useTauri` composable wrapping `@tauri-apps/api`.
+`list_savegames`, `load_savegame`, `save_changes`, `list_backups`, `create_backup`, `restore_backup`, `delete_backup`, `check_for_updates` — invoked via `useTauri` composable wrapping `@tauri-apps/api`.
 
 ## Key Conventions
 
