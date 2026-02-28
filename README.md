@@ -19,7 +19,10 @@ A desktop application for editing Farming Simulator 25 savegames. Modify finance
 - Batch actions on multiple vehicles
 
 ### Used Market / Sales
-- Manage items listed on the secondary market
+- View catalog price and discount percentage for each listed vehicle
+- Add vehicles from the game catalog (base game, DLCs, mods) with configurable price, discount, wear, and condition
+- Edit sale price, condition, and time remaining
+- Quick actions: reset to new, bargain price, extend sale
 
 ### Fields & Crops
 - View and edit field ownership, crop types, and growth states
@@ -159,6 +162,7 @@ fs-25-save-editor/
 │       ├── models/               # Data structures
 │       ├── parsers/              # XML → struct parsing
 │       ├── writers/              # struct → XML writing
+│       ├── services/             # Business logic (catalog scanner)
 │       ├── validators/           # Data validation
 │       ├── backup/               # Backup manager
 │       └── error.rs              # Error types
@@ -182,6 +186,7 @@ fs-25-save-editor/
 | `list_savegames` | Scan and list available FS25 savegames |
 | `load_savegame` | Parse and load a savegame |
 | `save_changes` | Write modifications back to XML files |
+| `get_vehicle_catalog` | Scan game files for the vehicle catalog (base game, DLCs, mods) |
 | `list_backups` | List existing backups |
 | `create_backup` | Create a backup of the current savegame |
 | `restore_backup` | Restore a savegame from a backup |
