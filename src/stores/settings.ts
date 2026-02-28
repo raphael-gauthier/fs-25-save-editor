@@ -14,6 +14,7 @@ export const useSettingsStore = defineStore("settings", () => {
   const defaultPath = ref<string>("");
   const maxBackups = ref(10);
   const gamePath = ref<string | null>(null);
+  const settingsLoaded = ref(false);
 
   const { initTheme, setTheme: applyTheme } = useTheme();
 
@@ -52,6 +53,8 @@ export const useSettingsStore = defineStore("settings", () => {
       locale.value = sysLang.startsWith("fr") ? "fr" : "en";
       i18n.global.locale.value = locale.value as "fr" | "en";
       initTheme("system");
+    } finally {
+      settingsLoaded.value = true;
     }
   }
 
@@ -118,6 +121,7 @@ export const useSettingsStore = defineStore("settings", () => {
     theme,
     advancedMode,
     disclaimerAccepted,
+    settingsLoaded,
     defaultPath,
     maxBackups,
     gamePath,

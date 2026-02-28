@@ -17,7 +17,9 @@ const { t } = useI18n();
 const settings = useSettingsStore();
 
 const accepted = ref(false);
-const open = computed(() => !settings.disclaimerAccepted);
+const open = computed(
+  () => settings.settingsLoaded && !settings.disclaimerAccepted,
+);
 
 function toggle() {
   accepted.value = !accepted.value;
