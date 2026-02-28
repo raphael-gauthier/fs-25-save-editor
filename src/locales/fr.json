@@ -348,7 +348,17 @@
     "defaultPathPlaceholder": "Chemin par défaut (auto-détection)",
     "browse": "Parcourir",
     "maxBackups": "Nombre max de backups",
-    "maxBackupsDesc": "Nombre maximum de backups conservés"
+    "maxBackupsDesc": "Nombre maximum de backups conservés",
+    "gamePath": "Fichiers du jeu",
+    "gamePathDesc": "Chemin d'installation de Farming Simulator 25 pour afficher les images des véhicules",
+    "gamePathPlaceholder": "Chemin non configuré",
+    "gamePathDialogTitle": "Sélectionner le dossier d'installation de FS25",
+    "detect": "Détecter",
+    "gamePathDetected": "Chemin du jeu détecté automatiquement",
+    "gamePathNotFound": "Impossible de détecter le chemin du jeu automatiquement",
+    "imageCache": "Cache des images",
+    "clearCache": "Vider le cache",
+    "cacheClearedMsg": "Cache vidé ({size})"
   },
   "field": {
     "title": "Champs",
@@ -531,6 +541,7 @@
     "xmlParseError": "Erreur XML : {file} — {message}",
     "backupError": "Erreur de backup : {message}",
     "savegameNotFound": "Sauvegarde introuvable : {path}",
+    "imageError": "Erreur d'image : {message}",
     "fileUnreadable": "Fichier {file} absent ou illisible",
     "vehicleParseError": "Véhicules : {details}",
     "fileWriteError": "{file} : {details}",

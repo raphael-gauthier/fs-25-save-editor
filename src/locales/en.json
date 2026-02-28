@@ -348,7 +348,17 @@
     "defaultPathPlaceholder": "Default path (auto-detection)",
     "browse": "Browse",
     "maxBackups": "Max backups",
-    "maxBackupsDesc": "Maximum number of backups to keep"
+    "maxBackupsDesc": "Maximum number of backups to keep",
+    "gamePath": "Game files",
+    "gamePathDesc": "Farming Simulator 25 installation path to display vehicle images",
+    "gamePathPlaceholder": "Path not configured",
+    "gamePathDialogTitle": "Select the FS25 installation folder",
+    "detect": "Detect",
+    "gamePathDetected": "Game path detected automatically",
+    "gamePathNotFound": "Could not detect the game path automatically",
+    "imageCache": "Image cache",
+    "clearCache": "Clear cache",
+    "cacheClearedMsg": "Cache cleared ({size})"
   },
   "field": {
     "title": "Fields",
@@ -531,6 +541,7 @@
     "xmlParseError": "XML error: {file} — {message}",
     "backupError": "Backup error: {message}",
     "savegameNotFound": "Savegame not found: {path}",
+    "imageError": "Image error: {message}",
     "fileUnreadable": "File {file} missing or unreadable",
     "vehicleParseError": "Vehicles: {details}",
     "fileWriteError": "{file}: {details}",

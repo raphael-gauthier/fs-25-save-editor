@@ -1,7 +1,10 @@
 <script setup lang="ts">
+import { ref, onMounted } from "vue";
 import { useI18n } from "vue-i18n";
 import { open } from "@tauri-apps/plugin-dialog";
+import { toast } from "vue-sonner";
 import { useSettingsStore } from "@/stores/settings";
+import { useVehicleImages } from "@/composables/useVehicleImages";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
@@ -14,10 +17,51 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { FolderOpen } from "lucide-vue-next";
+import { FolderOpen, Search, Trash2 } from "lucide-vue-next";
 
 const { t } = useI18n();
 const settings = useSettingsStore();
+const { detectGamePath, clearDiskCache, getCacheSize } = useVehicleImages();
+
+const cacheSize = ref(0);
+
+onMounted(async () => {
+  cacheSize.value = await getCacheSize();
+});
+
+function formatBytes(bytes: number): string {
+  if (bytes === 0) return "0 B";
+  const units = ["B", "KB", "MB", "GB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(1024));
+  return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${units[i]}`;
+}
+
+async function browseGamePath() {
+  const selected = await open({
+    directory: true,
+    title: t("settings.gamePathDialogTitle"),
+  });
+  if (selected) {
+    await settings.setGamePath(selected);
+    cacheSize.value = await getCacheSize();
+  }
+}
+
+async function handleDetectGamePath() {
+  const detected = await detectGamePath();
+  if (detected) {
+    await settings.setGamePath(detected);
+    toast.success(t("settings.gamePathDetected"));
+  } else {
+    toast.error(t("settings.gamePathNotFound"));
+  }
+}
+
+async function handleClearCache() {
+  const freed = await clearDiskCache();
+  cacheSize.value = 0;
+  toast.success(t("settings.cacheClearedMsg", { size: formatBytes(freed) }));
+}
 
 async function browsePath() {
   const selected = await open({
@@ -145,6 +189,39 @@ function handleMaxBackupsInput(event: Event) {
             max="100"
             step="1"
           />
+        </CardContent>
+      </Card>
+
+      <!-- Game Path -->
+      <Card>
+        <CardHeader>
+          <CardTitle class="text-base">{{ t("settings.gamePath") }}</CardTitle>
+          <CardDescription>{{ t("settings.gamePathDesc") }}</CardDescription>
+        </CardHeader>
+        <CardContent class="space-y-4">
+          <div class="flex items-center gap-2">
+            <Input
+              :model-value="settings.gamePath ?? ''"
+              :placeholder="t('settings.gamePathPlaceholder')"
+              readonly
+              class="flex-1"
+            />
+            <Button variant="outline" size="sm" @click="browseGamePath">
+              <FolderOpen class="size-4" />
+              {{ t("settings.browse") }}
+            </Button>
+            <Button variant="outline" size="sm" @click="handleDetectGamePath">
+              <Search class="size-4" />
+              {{ t("settings.detect") }}
+            </Button>
+          </div>
+          <div v-if="settings.gamePath" class="flex items-center justify-between text-sm text-muted-foreground">
+            <span>{{ t("settings.imageCache") }}: {{ formatBytes(cacheSize) }}</span>
+            <Button variant="ghost" size="sm" @click="handleClearCache">
+              <Trash2 class="size-4" />
+              {{ t("settings.clearCache") }}
+            </Button>
+          </div>
         </CardContent>
       </Card>
     </div>
