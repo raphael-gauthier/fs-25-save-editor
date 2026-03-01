@@ -91,7 +91,7 @@ async function handleSave() {
 
   const changes = collectAllChanges();
 
-  if (!changes.finance && !changes.vehicles && !changes.sales && !changes.fields && !changes.farmlands && !changes.placeables && !changes.missions && !changes.collectibles && !changes.contractSettings && !changes.environment) {
+  if (!Object.values(changes).some(Boolean)) {
     toast.info(t("savegame.noChanges"));
     return;
   }
