@@ -50,7 +50,14 @@
     "saveSuccess": "Sauvegarde réussie",
     "saveSuccessDesc": "{count} fichier(s) modifié(s)",
     "saveError": "Erreur lors de la sauvegarde",
-    "unexpectedError": "Une erreur inattendue est survenue"
+    "unexpectedError": "Une erreur inattendue est survenue",
+    "searchPlaceholder": "Rechercher une sauvegarde...",
+    "sortBy": "Trier par",
+    "sortDate": "Date",
+    "sortName": "Nom",
+    "sortMoney": "Argent",
+    "sortPlayTime": "Temps de jeu",
+    "savegameCount": "{count} sauvegarde(s)"
   },
   "finance": {
     "title": "Finances",

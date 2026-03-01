@@ -50,7 +50,14 @@
     "saveSuccess": "Save successful",
     "saveSuccessDesc": "{count} file(s) modified",
     "saveError": "Error while saving",
-    "unexpectedError": "An unexpected error occurred"
+    "unexpectedError": "An unexpected error occurred",
+    "searchPlaceholder": "Search savegames...",
+    "sortBy": "Sort by",
+    "sortDate": "Date",
+    "sortName": "Name",
+    "sortMoney": "Money",
+    "sortPlayTime": "Play time",
+    "savegameCount": "{count} savegame(s)"
   },
   "finance": {
     "title": "Finances",
