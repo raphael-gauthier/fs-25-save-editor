@@ -68,7 +68,7 @@ pub fn parse_vehicles(path: &Path) -> Result<Vec<Vehicle>, AppError> {
                             property_state: PropertyState::from_str(
                                 &attr_str(e, "propertyState"),
                             ),
-                            operating_time: attr_f64(e, "operatingTime") / 60.0,
+                            operating_time: attr_f64(e, "operatingTime") / 3600.0,
                             damage: 0.0,
                             wear: 0.0,
                             position: None,

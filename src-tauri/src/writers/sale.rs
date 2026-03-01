@@ -118,7 +118,7 @@ fn patch_item_start(e: &BytesStart, change: &SaleChange) -> BytesStart<'static> 
             "operatingTime" if change.operating_time.is_some() => {
                 elem.push_attribute((
                     "operatingTime",
-                    format!("{:.6}", change.operating_time.unwrap() * 60.0).as_str(),
+                    format!("{:.6}", change.operating_time.unwrap() * 3600.0).as_str(),
                 ));
             }
             "timeLeft" if change.time_left.is_some() => {
@@ -202,7 +202,7 @@ fn format_sale_item(addition: &SaleAddition) -> String {
         addition.price,
         addition.damage,
         addition.wear,
-        addition.operating_time * 60.0, // minutes → seconds
+        addition.operating_time * 3600.0, // hours → seconds
         addition.time_left,
     )
 }

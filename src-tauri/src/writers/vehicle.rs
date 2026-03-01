@@ -225,7 +225,7 @@ fn patch_vehicle_start(e: &BytesStart, change: &VehicleChange) -> BytesStart<'st
             "operatingTime" if change.operating_time.is_some() => {
                 elem.push_attribute((
                     "operatingTime",
-                    format!("{:.6}", change.operating_time.unwrap() * 60.0).as_str(),
+                    format!("{:.6}", change.operating_time.unwrap() * 3600.0).as_str(),
                 ));
             }
             _ => {
