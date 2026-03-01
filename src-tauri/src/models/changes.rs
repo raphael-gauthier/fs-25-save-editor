@@ -16,6 +16,7 @@ pub struct SavegameChanges {
     pub collectibles: Option<Vec<CollectibleChange>>,
     pub contract_settings: Option<ContractSettingsChange>,
     pub environment: Option<EnvironmentChanges>,
+    pub economy: Option<EconomyChanges>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -149,6 +150,38 @@ pub struct ContractSettingsChange {
     pub lease_vehicle: Option<f64>,
     pub mission_per_farm: Option<f64>,
     pub allow_clear_add: Option<f64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GreatDemandChange {
+    pub index: usize,
+    pub fill_type_name: Option<String>,
+    pub demand_multiplier: Option<f64>,
+    pub demand_start_day: Option<u32>,
+    pub demand_start_hour: Option<u32>,
+    pub demand_duration: Option<u32>,
+    pub is_running: Option<bool>,
+    pub is_valid: Option<bool>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GreatDemandAddition {
+    pub unique_id: String,
+    pub fill_type_name: String,
+    pub demand_multiplier: f64,
+    pub demand_start_day: u32,
+    pub demand_start_hour: u32,
+    pub demand_duration: u32,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct EconomyChanges {
+    pub great_demand_changes: Option<Vec<GreatDemandChange>>,
+    pub great_demand_additions: Option<Vec<GreatDemandAddition>>,
+    pub great_demand_deletions: Option<Vec<usize>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

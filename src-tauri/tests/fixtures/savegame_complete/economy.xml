@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<economy>
+    <greatDemands>
+        <greatDemand uniqueId="sellingStationTrain01" fillTypeName="SEEDS" demandMultiplier="1.100000" demandStartDay="55" demandStartHour="12" demandDuration="18" isRunning="false" isValid="true"/>
+        <greatDemand/>
+        <greatDemand uniqueId="sellingStationGrain02" fillTypeName="FLOUR" demandMultiplier="1.500000" demandStartDay="30" demandStartHour="8" demandDuration="24" isRunning="true" isValid="true"/>
+        <greatDemand/>
+    </greatDemands>
+    <fillTypes>
+        <fillType fillType="WHEAT" totalAmount="44762">
+            <history>
+                <period period="EARLY_SPRING">349</period>
+                <period period="MID_SPRING">351</period>
+                <period period="LATE_SPRING">355</period>
+                <period period="EARLY_SUMMER">360</period>
+                <period period="MID_SUMMER">365</period>
+                <period period="LATE_SUMMER">370</period>
+                <period period="EARLY_AUTUMN">368</period>
+                <period period="MID_AUTUMN">362</period>
+                <period period="LATE_AUTUMN">358</period>
+                <period period="EARLY_WINTER">354</period>
+                <period period="MID_WINTER">351</period>
+                <period period="LATE_WINTER">349</period>
+            </history>
+        </fillType>
+        <fillType fillType="BARLEY" totalAmount="12500">
+            <history>
+                <period period="EARLY_SPRING">300</period>
+                <period period="MID_SPRING">305</period>
+                <period period="LATE_SPRING">310</period>
+                <period period="EARLY_SUMMER">315</period>
+                <period period="MID_SUMMER">320</period>
+                <period period="LATE_SUMMER">325</period>
+                <period period="EARLY_AUTUMN">322</period>
+                <period period="MID_AUTUMN">318</period>
+                <period period="LATE_AUTUMN">312</period>
+                <period period="EARLY_WINTER">308</period>
+                <period period="MID_WINTER">304</period>
+                <period period="LATE_WINTER">300</period>
+            </history>
+        </fillType>
+        <fillType fillType="UNKNOWN"/>
+    </fillTypes>
+</economy>

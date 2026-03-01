@@ -1,6 +1,7 @@
 pub mod career;
 pub mod collectible;
 pub mod contract;
+pub mod economy;
 pub mod environment;
 pub mod farm;
 pub mod field;

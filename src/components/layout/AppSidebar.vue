@@ -25,6 +25,7 @@ import {
   Building2,
   ClipboardList,
   Trophy,
+  TrendingUp,
   Archive,
   Settings,
   type LucideIcon,
@@ -52,6 +53,7 @@ const phase2Nav: NavItem[] = [
   { labelKey: "sidebar.buildings", icon: Building2, route: "/editor/buildings" },
   { labelKey: "sidebar.missions", icon: ClipboardList, route: "/editor/missions" },
   { labelKey: "sidebar.collectibles", icon: Trophy, route: "/editor/collectibles" },
+  { labelKey: "sidebar.economy", icon: TrendingUp, route: "/editor/economy" },
 ];
 
 const utilNav: NavItem[] = [

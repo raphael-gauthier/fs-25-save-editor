@@ -25,6 +25,7 @@ import { useFieldStore } from "@/stores/field";
 import { useBuildingStore } from "@/stores/building";
 import { useMissionStore } from "@/stores/mission";
 import { useWorldStore } from "@/stores/world";
+import { useEconomyStore } from "@/stores/economy";
 import { useTauri, translateError } from "@/composables/useTauri";
 import { useUnsavedChanges } from "@/composables/useUnsavedChanges";
 import type { SaveResult } from "@/lib/types";
@@ -39,6 +40,7 @@ const fieldStore = useFieldStore();
 const buildingStore = useBuildingStore();
 const missionStore = useMissionStore();
 const worldStore = useWorldStore();
+const economyStore = useEconomyStore();
 const { invokeCommand } = useTauri();
 const { isDirty, changeCount, collectAllChanges, confirmDiscardIfDirty } =
   useUnsavedChanges();
@@ -70,6 +72,7 @@ const breadcrumbKeyMap: Record<string, string> = {
   buildings: "sidebar.buildings",
   missions: "sidebar.missions",
   collectibles: "sidebar.collectibles",
+  economy: "sidebar.economy",
   settings: "sidebar.settings",
   backups: "sidebar.backups",
 };
@@ -111,6 +114,7 @@ async function handleSave() {
       buildingStore.commitChanges();
       missionStore.commitChanges();
       worldStore.commitChanges();
+      economyStore.commitChanges();
       toast.success(t("savegame.saveSuccess"), {
         description: t("savegame.saveSuccessDesc", {
           count: result.filesModified.length,
@@ -138,6 +142,7 @@ async function handleDiscard() {
     saleStore.resetChanges();
     fieldStore.resetChanges();
     worldStore.resetChanges();
+    economyStore.resetChanges();
   }
 }
 
@@ -157,6 +162,7 @@ async function handleReload() {
       if (savegameStore.currentSavegame.environment) {
         worldStore.hydrate(savegameStore.currentSavegame.environment);
       }
+      economyStore.hydrate(savegameStore.currentSavegame.economy);
     }
   } finally {
     isReloading.value = false;

@@ -15,6 +15,7 @@ import { useFieldStore } from "@/stores/field";
 import { useBuildingStore } from "@/stores/building";
 import { useMissionStore } from "@/stores/mission";
 import { useWorldStore } from "@/stores/world";
+import { useEconomyStore } from "@/stores/economy";
 import AppSidebar from "./AppSidebar.vue";
 import AppHeader from "./AppHeader.vue";
 
@@ -27,6 +28,7 @@ const fieldStore = useFieldStore();
 const buildingStore = useBuildingStore();
 const missionStore = useMissionStore();
 const worldStore = useWorldStore();
+const economyStore = useEconomyStore();
 const router = useRouter();
 
 onMounted(async () => {
@@ -51,6 +53,7 @@ onMounted(async () => {
     if (store.currentSavegame.environment) {
       worldStore.hydrate(store.currentSavegame.environment);
     }
+    economyStore.hydrate(store.currentSavegame.economy);
   }
 });
 </script>

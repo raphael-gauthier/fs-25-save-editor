@@ -64,6 +64,11 @@ const router = createRouter({
           component: () => import("@/views/CollectibleView.vue"),
         },
         {
+          path: "economy",
+          name: "economy",
+          component: () => import("@/views/EconomyView.vue"),
+        },
+        {
           path: "settings",
           name: "settings",
           component: () => import("@/views/SettingsView.vue"),

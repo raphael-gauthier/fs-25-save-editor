@@ -6,6 +6,7 @@ import { useFieldStore } from "@/stores/field";
 import { useBuildingStore } from "@/stores/building";
 import { useMissionStore } from "@/stores/mission";
 import { useWorldStore } from "@/stores/world";
+import { useEconomyStore } from "@/stores/economy";
 import type { SavegameChanges } from "@/lib/types";
 
 const showDiscardDialog = ref(false);
@@ -19,6 +20,7 @@ export function useUnsavedChanges() {
   const buildingStore = useBuildingStore();
   const missionStore = useMissionStore();
   const worldStore = useWorldStore();
+  const economyStore = useEconomyStore();
 
   const isDirty = computed(
     () =>
@@ -28,7 +30,8 @@ export function useUnsavedChanges() {
       fieldStore.isDirty ||
       buildingStore.isDirty ||
       missionStore.isDirty ||
-      worldStore.isDirty,
+      worldStore.isDirty ||
+      economyStore.isDirty,
   );
 
   const changeCount = computed(
@@ -39,7 +42,8 @@ export function useUnsavedChanges() {
       fieldStore.changeCount +
       buildingStore.changeCount +
       missionStore.changeCount +
-      worldStore.changeCount,
+      worldStore.changeCount +
+      economyStore.changeCount,
   );
 
   function collectAllChanges(): SavegameChanges {
@@ -66,6 +70,8 @@ export function useUnsavedChanges() {
     }
     const envChanges = worldStore.getChanges();
     if (envChanges) changes.environment = envChanges;
+    const economyChanges = economyStore.getChanges();
+    if (economyChanges) changes.economy = economyChanges;
     return changes;
   }
 
@@ -77,6 +83,7 @@ export function useUnsavedChanges() {
     buildingStore.resetChanges();
     missionStore.resetChanges();
     worldStore.resetChanges();
+    economyStore.resetChanges();
   }
 
   function confirmDiscardIfDirty(): Promise<boolean> {

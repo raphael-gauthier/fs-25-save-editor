@@ -374,6 +374,60 @@ export interface ContractSettingsChangePayload {
   allowClearAdd?: number;
 }
 
+export interface Economy {
+  greatDemands: GreatDemand[];
+  fillTypes: FillTypePrice[];
+}
+
+export interface GreatDemand {
+  index: number;
+  uniqueId: string;
+  fillTypeName: string;
+  demandMultiplier: number;
+  demandStartDay: number;
+  demandStartHour: number;
+  demandDuration: number;
+  isRunning: boolean;
+  isValid: boolean;
+}
+
+export interface FillTypePrice {
+  fillType: string;
+  totalAmount: number | null;
+  priceHistory: PeriodPrice[];
+}
+
+export interface PeriodPrice {
+  period: string;
+  price: number;
+}
+
+export interface GreatDemandChangePayload {
+  index: number;
+  fillTypeName?: string;
+  demandMultiplier?: number;
+  demandStartDay?: number;
+  demandStartHour?: number;
+  demandDuration?: number;
+  isRunning?: boolean;
+  isValid?: boolean;
+}
+
+export interface GreatDemandAdditionPayload {
+  uniqueId: string;
+  fillTypeName: string;
+  demandMultiplier: number;
+  demandStartDay: number;
+  demandStartHour: number;
+  demandDuration: number;
+}
+
+export interface EconomyChanges {
+  greatDemandChanges?: GreatDemandChangePayload[];
+  greatDemandAdditions?: GreatDemandAdditionPayload[];
+  greatDemandDeletions?: number[];
+}
+
 export interface SavegameData {
   path: string;
   career: CareerSavegame;
@@ -387,6 +441,7 @@ export interface SavegameData {
   collectibles: Collectible[];
   contractSettings: ContractSettings | null;
   environment: Environment | null;
+  economy: Economy | null;
   warnings: LocalizedMessage[];
 }
 
@@ -471,6 +526,7 @@ export interface SavegameChanges {
   collectibles?: CollectibleChangePayload[];
   contractSettings?: ContractSettingsChangePayload;
   environment?: EnvironmentChanges;
+  economy?: EconomyChanges;
 }
 
 export interface SaveResult {

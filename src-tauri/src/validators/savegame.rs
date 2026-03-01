@@ -176,6 +176,7 @@ mod tests {
             collectibles: vec![],
             contract_settings: None,
             environment: None,
+            economy: None,
             warnings: vec![],
         }
     }

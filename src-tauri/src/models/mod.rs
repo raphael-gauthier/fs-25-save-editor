@@ -5,6 +5,7 @@ pub mod changes;
 pub mod collectible;
 pub mod common;
 pub mod contract;
+pub mod economy;
 pub mod environment;
 pub mod farm;
 pub mod field;
@@ -20,6 +21,7 @@ use career::CareerSavegame;
 use collectible::Collectible;
 use common::LocalizedMessage;
 use contract::ContractSettings;
+use economy::Economy;
 use environment::Environment;
 use farm::Farm;
 use field::{Farmland, Field};
@@ -43,5 +45,6 @@ pub struct SavegameData {
     pub collectibles: Vec<Collectible>,
     pub contract_settings: Option<ContractSettings>,
     pub environment: Option<Environment>,
+    pub economy: Option<Economy>,
     pub warnings: Vec<LocalizedMessage>,
 }

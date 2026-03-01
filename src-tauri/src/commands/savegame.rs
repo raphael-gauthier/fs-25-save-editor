@@ -8,6 +8,7 @@ use crate::models::common::LocalizedMessage;
 use crate::models::SavegameData;
 use crate::parsers::career::{parse_career, parse_career_summary};
 use crate::parsers::farm::parse_farms;
+use crate::parsers::economy::parse_economy;
 use crate::parsers::environment::parse_environment;
 use crate::parsers::field::{parse_farmlands, parse_fields};
 use crate::parsers::sale::parse_sales;
@@ -228,6 +229,18 @@ pub fn load_savegame(path: String) -> Result<SavegameData, AppError> {
         }
     };
 
+    // Parse economy (optional)
+    let economy = match parse_economy(&save_path) {
+        Ok(eco) => Some(eco),
+        Err(_) => {
+            warnings.push(
+                LocalizedMessage::new("errors.fileUnreadable")
+                    .with_param("file", "economy.xml"),
+            );
+            None
+        }
+    };
+
     let mut data = SavegameData {
         path,
         career,
@@ -241,6 +254,7 @@ pub fn load_savegame(path: String) -> Result<SavegameData, AppError> {
         collectibles,
         contract_settings,
         environment,
+        economy,
         warnings,
     };
 
@@ -275,7 +289,8 @@ pub fn save_changes(path: String, changes: SavegameChanges) -> Result<SaveResult
         || changes.missions.is_some()
         || changes.collectibles.is_some()
         || changes.contract_settings.is_some()
-        || changes.environment.is_some();
+        || changes.environment.is_some()
+        || changes.economy.is_some();
 
     if !has_changes {
         return Ok(SaveResult {
@@ -491,6 +506,22 @@ pub fn save_changes(path: String, changes: SavegameChanges) -> Result<SaveResult
         }
     }
 
+    // Apply economy changes
+    if let Some(ref economy_changes) = changes.economy {
+        match writers::economy::write_economy_changes(&save_path, economy_changes) {
+            Ok(()) => {
+                if !files_modified.contains(&"economy.xml".to_string()) {
+                    files_modified.push("economy.xml".to_string());
+                }
+            }
+            Err(e) => errors.push(
+                LocalizedMessage::new("errors.fileWriteError")
+                    .with_param("file", "economy.xml")
+                    .with_param("details", e),
+            ),
+        }
+    }
+
     Ok(SaveResult {
         success: errors.is_empty(),
         backup_path: Some(backup_info.path),
@@ -572,6 +603,10 @@ mod tests {
         let env = data.environment.unwrap();
         assert_eq!(env.current_day, 54);
         assert_eq!(env.weather_forecast.len(), 4);
+        assert!(data.economy.is_some());
+        let eco = data.economy.unwrap();
+        assert_eq!(eco.great_demands.len(), 2);
+        assert_eq!(eco.fill_types.len(), 2);
         assert!(data.warnings.is_empty());
     }
 
@@ -655,6 +690,7 @@ mod tests {
             collectibles: None,
             contract_settings: None,
             environment: None,
+            economy: None,
         };
         let result = save_changes(path.clone(), changes).unwrap();
         assert!(result.success);
@@ -681,6 +717,7 @@ mod tests {
             collectibles: None,
             contract_settings: None,
             environment: None,
+            economy: None,
         };
         save_changes(path.clone(), changes).unwrap();
 
@@ -706,6 +743,7 @@ mod tests {
             collectibles: None,
             contract_settings: None,
             environment: None,
+            economy: None,
         };
         let result = save_changes(path.clone(), changes).unwrap();
         assert!(result.success);
@@ -739,6 +777,7 @@ mod tests {
             collectibles: None,
             contract_settings: None,
             environment: None,
+            economy: None,
         };
         let result = save_changes(path.clone(), changes).unwrap();
         assert!(result.success);
@@ -775,6 +814,7 @@ mod tests {
             collectibles: None,
             contract_settings: None,
             environment: None,
+            economy: None,
         };
         save_changes(path.clone(), changes).unwrap();
 
@@ -817,6 +857,7 @@ mod tests {
             collectibles: None,
             contract_settings: None,
             environment: None,
+            economy: None,
         };
         save_changes(path.clone(), changes).unwrap();
 
@@ -901,6 +942,7 @@ mod tests {
             collectibles: None,
             contract_settings: None,
             environment: None,
+            economy: None,
         };
         save_changes(path.clone(), changes).unwrap();
 
