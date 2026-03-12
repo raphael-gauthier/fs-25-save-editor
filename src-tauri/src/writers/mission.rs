@@ -51,6 +51,10 @@ pub fn write_mission_changes(
                     let change = active_change.unwrap();
                     let elem = patch_info(e, change);
                     write_event(&mut writer, &xml_path, Event::Start(elem))?;
+                } else if active_change.is_some() && tag == "harvest" {
+                    let change = active_change.unwrap();
+                    let elem = patch_harvest(e, change);
+                    write_event(&mut writer, &xml_path, Event::Start(elem))?;
                 } else {
                     write_event(&mut writer, &xml_path, Event::Start(e.clone().into_owned()))?;
                 }
@@ -60,6 +64,10 @@ pub fn write_mission_changes(
                 if active_change.is_some() && tag == "info" {
                     let change = active_change.unwrap();
                     let elem = patch_info(e, change);
+                    write_event(&mut writer, &xml_path, Event::Empty(elem))?;
+                } else if active_change.is_some() && tag == "harvest" {
+                    let change = active_change.unwrap();
+                    let elem = patch_harvest(e, change);
                     write_event(&mut writer, &xml_path, Event::Empty(elem))?;
                 } else {
                     write_event(&mut writer, &xml_path, Event::Empty(e.clone().into_owned()))?;
@@ -110,6 +118,25 @@ fn patch_mission_tag(e: &BytesStart, tag_name: &str, change: &MissionChange) -> 
             "status" if change.status.is_some() => {
                 let status = MissionStatus::from_str(change.status.as_ref().unwrap());
                 elem.push_attribute(("status", status.to_xml_str()));
+            }
+            _ => {
+                elem.push_attribute((
+                    key.as_str(),
+                    String::from_utf8_lossy(&attr.value).as_ref(),
+                ));
+            }
+        }
+    }
+    elem
+}
+
+fn patch_harvest(e: &BytesStart, change: &MissionChange) -> BytesStart<'static> {
+    let mut elem = BytesStart::new("harvest");
+    for attr in e.attributes().flatten() {
+        let key = String::from_utf8_lossy(attr.key.as_ref()).to_string();
+        match key.as_str() {
+            "depositedLiters" if change.deposited_liters.is_some() => {
+                elem.push_attribute(("depositedLiters", format!("{:.6}", change.deposited_liters.unwrap()).as_str()));
             }
             _ => {
                 elem.push_attribute((
@@ -193,6 +220,7 @@ mod tests {
             completion: None,
             status: None,
             reimbursement: None,
+            deposited_liters: None,
         }];
         write_mission_changes(&save, &changes).unwrap();
         let missions = parse_missions(&save).unwrap();
@@ -214,6 +242,7 @@ mod tests {
             completion: Some(1.0),
             status: Some("COMPLETED".to_string()),
             reimbursement: None,
+            deposited_liters: None,
         }];
         write_mission_changes(&save, &changes).unwrap();
         let missions = parse_missions(&save).unwrap();
@@ -238,6 +267,7 @@ mod tests {
             completion: Some(0.75),
             status: None,
             reimbursement: Some(5000.0),
+            deposited_liters: None,
         }];
         write_mission_changes(&save, &changes).unwrap();
         let after = parse_missions(&save).unwrap();

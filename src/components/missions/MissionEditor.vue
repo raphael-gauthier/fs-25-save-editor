@@ -11,7 +11,6 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
@@ -24,18 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import { ClipboardList, CheckCircle } from "lucide-vue-next";
+import { ClipboardList, TriangleAlert } from "lucide-vue-next";
 
 interface Props {
   mission: Mission | null;
@@ -67,12 +55,6 @@ function handleRewardChange(event: Event) {
 function handleCompletionChange(value: number[] | undefined) {
   if (value && props.mission) {
     store.updateMission(props.mission.uniqueId, { completion: value[0] / 100 });
-  }
-}
-
-function handleCompleteMission() {
-  if (props.mission) {
-    store.completeMission(props.mission.uniqueId);
   }
 }
 
@@ -161,29 +143,13 @@ function statusLabel(status: Mission["status"]): string {
             />
           </div>
 
-          <!-- Complete mission button -->
-          <AlertDialog v-if="original.status !== 'Completed'">
-            <AlertDialogTrigger as-child>
-              <Button variant="default" class="w-full">
-                <CheckCircle class="size-4" />
-                {{ t("mission.completeMission") }}
-              </Button>
-            </AlertDialogTrigger>
-            <AlertDialogContent>
-              <AlertDialogHeader>
-                <AlertDialogTitle>{{ t("mission.completeMission") }}</AlertDialogTitle>
-                <AlertDialogDescription>
-                  {{ t("mission.completeMissionDesc") }}
-                </AlertDialogDescription>
-              </AlertDialogHeader>
-              <AlertDialogFooter>
-                <AlertDialogCancel>{{ t("common.cancel") }}</AlertDialogCancel>
-                <AlertDialogAction @click="handleCompleteMission">
-                  {{ t("common.confirm") }}
-                </AlertDialogAction>
-              </AlertDialogFooter>
-            </AlertDialogContent>
-          </AlertDialog>
+          <!-- Warning: missions cannot be completed from the editor -->
+          <div
+            class="flex items-start gap-2 rounded-md border border-yellow-500/30 bg-yellow-500/10 p-3 text-sm text-yellow-700 dark:text-yellow-400"
+          >
+            <TriangleAlert class="mt-0.5 size-4 shrink-0" />
+            <span>{{ t("mission.cannotComplete") }}</span>
+          </div>
 
           <!-- Advanced mode -->
           <template v-if="settings.advancedMode">
@@ -215,16 +181,16 @@ function statusLabel(status: Mission["status"]): string {
             </div>
 
             <!-- Mission-specific info (read-only) -->
-            <template v-if="mission.expectedLiters || mission.depositedLiters">
+            <template v-if="original.expectedLiters != null || original.depositedLiters != null">
               <Separator />
               <div class="space-y-2">
-                <div v-if="mission.expectedLiters" class="flex justify-between text-sm">
+                <div v-if="original.expectedLiters != null" class="flex justify-between text-sm">
                   <span class="text-muted-foreground">{{ t("mission.expectedLiters") }}</span>
-                  <span class="font-mono">{{ Math.round(mission.expectedLiters).toLocaleString() }} L</span>
+                  <span class="font-mono">{{ Math.round(original.expectedLiters).toLocaleString() }} L</span>
                 </div>
-                <div v-if="mission.depositedLiters" class="flex justify-between text-sm">
+                <div v-if="original.depositedLiters != null" class="flex justify-between text-sm">
                   <span class="text-muted-foreground">{{ t("mission.depositedLiters") }}</span>
-                  <span class="font-mono">{{ Math.round(mission.depositedLiters).toLocaleString() }} L</span>
+                  <span class="font-mono">{{ Math.round(original.depositedLiters).toLocaleString() }} L</span>
                 </div>
               </div>
             </template>

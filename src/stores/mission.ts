@@ -68,6 +68,7 @@ export const useMissionStore = defineStore("mission", () => {
       if (m.completion !== orig.completion) count++;
       if (m.status !== orig.status) count++;
       if (m.reimbursement !== orig.reimbursement) count++;
+      if (m.depositedLiters !== orig.depositedLiters) count++;
     }
     for (let i = 0; i < collectibles.value.length; i++) {
       if (collectibles.value[i].collected !== originalCollectibles.value[i]?.collected) {
@@ -87,7 +88,8 @@ export const useMissionStore = defineStore("mission", () => {
         m.reward !== orig.reward ||
         m.completion !== orig.completion ||
         m.status !== orig.status ||
-        m.reimbursement !== orig.reimbursement
+        m.reimbursement !== orig.reimbursement ||
+        m.depositedLiters !== orig.depositedLiters
       );
     });
   }
@@ -129,14 +131,6 @@ export const useMissionStore = defineStore("mission", () => {
     const m = missions.value.find((mi) => mi.uniqueId === id);
     if (m) {
       Object.assign(m, changes);
-    }
-  }
-
-  function completeMission(id: string) {
-    const m = missions.value.find((mi) => mi.uniqueId === id);
-    if (m) {
-      m.completion = 1.0;
-      m.status = "Completed";
     }
   }
 
@@ -195,7 +189,8 @@ export const useMissionStore = defineStore("mission", () => {
         m.reward !== orig.reward ||
         m.completion !== orig.completion ||
         m.status !== orig.status ||
-        m.reimbursement !== orig.reimbursement;
+        m.reimbursement !== orig.reimbursement ||
+        m.depositedLiters !== orig.depositedLiters;
       if (!changed) continue;
 
       const change: MissionChangePayload = { uniqueId: m.uniqueId };
@@ -203,6 +198,7 @@ export const useMissionStore = defineStore("mission", () => {
       if (m.completion !== orig.completion) change.completion = m.completion;
       if (m.status !== orig.status) change.status = missionStatusToString(m.status);
       if (m.reimbursement !== orig.reimbursement) change.reimbursement = m.reimbursement;
+      if (m.depositedLiters !== orig.depositedLiters) change.depositedLiters = m.depositedLiters ?? undefined;
       missionChanges.push(change);
     }
     if (missionChanges.length > 0) {
@@ -261,7 +257,6 @@ export const useMissionStore = defineStore("mission", () => {
     changeCount,
     hydrate,
     updateMission,
-    completeMission,
     toggleCollectible,
     collectAll,
     resetAllCollectibles,
