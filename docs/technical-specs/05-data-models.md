@@ -324,6 +324,90 @@ pub struct Farmland {
 }
 ```
 
+## Field Density Data (binary density maps)
+
+```rust
+pub struct FieldDensityData {
+    pub farmland_id: u32,
+    pub pixel_count: u32,
+    pub dominant_fruit: Option<String>,
+    pub fruit_coverage: f32,
+    pub fruit_distribution: Vec<FruitCoverage>,
+    pub avg_growth_state: f32,
+    pub max_growth_state: u8,
+    pub lime_status: LevelDistribution,
+    pub plow_status: LevelDistribution,
+    pub spray_status: LevelDistribution,
+    pub roller_status: LevelDistribution,
+    pub stubble_shred_status: LevelDistribution,
+    pub weed_coverage: f32,
+    pub avg_weed_level: f32,
+    pub stone_coverage: f32,
+    pub ground_type_distribution: Vec<GroundCoverage>,
+}
+
+pub struct FruitCoverage {
+    pub fruit_type: String,
+    pub percentage: f32,
+}
+
+pub struct GroundCoverage {
+    pub ground_type: String,
+    pub percentage: f32,
+}
+
+pub struct LevelDistribution {
+    pub pct_at_zero: f32,
+}
+
+pub struct DensityEditPayload {
+    pub farmland_id: u32,
+    pub set_fruit_name: Option<String>,
+    pub set_growth_state: Option<u8>,
+    pub set_lime_level: Option<u8>,
+    pub set_spray_level: Option<u8>,
+    pub set_plow_level: Option<u8>,
+    pub set_roller_level: Option<u8>,
+    pub set_stubble_shred_level: Option<u8>,
+    pub clear_weeds: bool,
+    pub clear_stones: bool,
+}
+```
+
+```typescript
+interface FieldDensityData {
+  farmlandId: number
+  pixelCount: number
+  dominantFruit: string | null
+  fruitCoverage: number
+  fruitDistribution: FruitCoverage[]
+  avgGrowthState: number
+  maxGrowthState: number
+  limeStatus: LevelDistribution
+  plowStatus: LevelDistribution
+  sprayStatus: LevelDistribution
+  rollerStatus: LevelDistribution
+  stubbleShredStatus: LevelDistribution
+  weedCoverage: number
+  avgWeedLevel: number
+  stoneCoverage: number
+  groundTypeDistribution: GroundCoverage[]
+}
+
+interface DensityEditPayload {
+  farmlandId: number
+  setFruitName?: string
+  setGrowthState?: number
+  setLimeLevel?: number
+  setSprayLevel?: number
+  setPlowLevel?: number
+  setRollerLevel?: number
+  setStubbleShredLevel?: number
+  clearWeeds?: boolean
+  clearStones?: boolean
+}
+```
+
 ## Environment (`environment.xml`) — Phase 2
 
 ```rust

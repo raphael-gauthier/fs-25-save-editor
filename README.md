@@ -25,7 +25,14 @@ A desktop application for editing Farming Simulator 25 savegames. Modify finance
 - Quick actions: reset to new, bargain price, extend sale
 
 ### Fields & Crops
-- View and edit field ownership, crop types, and growth states
+- **Accurate field data** from binary density maps (GDM/GRLE), not just AI summaries from fields.xml
+- View real crop distribution, growth state, and treatment levels per field
+- Edit density maps directly: set crop type + growth, max lime/spray/plow, clear weeds/stones
+- Batch actions on multiple fields (max growth, remove weeds, max lime, etc.)
+- Density data cached locally for instant display on subsequent loads
+- Field ownership editing (transfer land between farms)
+- Supports built-in maps (MapUS, MapEU, MapAS) and modded maps (from zip archives)
+- Fruit type resolution from 4 sources: base XML, map XML, game log, and known fallback list
 
 ### World & Environment
 - Modify weather settings, current season, and time of day
@@ -167,7 +174,7 @@ fs-25-save-editor/
 │       ├── models/               # Data structures
 │       ├── parsers/              # XML → struct parsing
 │       ├── writers/              # struct → XML writing
-│       ├── services/             # Business logic (catalog scanner)
+│       ├── services/             # Business logic (catalog scanner, density map aggregation)
 │       ├── validators/           # Data validation
 │       ├── backup/               # Backup manager
 │       └── error.rs              # Error types
@@ -184,6 +191,24 @@ fs-25-save-editor/
 4. On save, only modified data is sent back to Rust, which writes the changes to the XML files
 5. Backups are managed entirely by the Rust backend (copy/restore/delete)
 
+### Density Maps (Fields)
+
+Field data in FS25 is stored in two layers:
+- **XML files** (`fields.xml`) — AI/mission system summaries (often inaccurate)
+- **Binary density maps** (`.gdm`, `.grle`) — actual in-game pixel-level field state
+
+The editor reads binary density maps for accurate field display and writes modifications back to them. Density data is cached locally via `@tauri-apps/plugin-store` for instant display on subsequent loads, with background refresh.
+
+**Supported binary formats:**
+- **GRLE** (RLE-compressed): info layers (lime, plow, spray, roller, stubble shred, farmlands)
+- **GDM** (chunk-based palette compression): density maps (fruits, ground, weeds, stones)
+
+**Fruit type resolution** uses 4 sources in order:
+1. `maps_fruitTypes.xml` — 25 base types (indices 1-25)
+2. Map's own XML (e.g., `mapUS.xml`) — map-specific types like MEADOW
+3. Game log (`log.txt`) — DLC types like ONION
+4. Known fallback list — base game crops that may not appear in the log (GREENBEAN, PEA, SPINACH)
+
 ### Tauri Commands
 
 | Command | Description |
@@ -196,6 +221,8 @@ fs-25-save-editor/
 | `create_backup` | Create a backup of the current savegame |
 | `restore_backup` | Restore a savegame from a backup |
 | `delete_backup` | Delete an existing backup |
+| `load_field_density_data` | Load accurate field data from binary density maps (GDM/GRLE) |
+| `save_density_edits` | Write density map modifications back to binary files |
 | `check_for_updates` | Check GitHub Releases for a newer version |
 
 ## Development

@@ -81,6 +81,28 @@ The Rust backend is responsible for:
   - Results are cached per `game_path` to avoid repeated filesystem scans
   - Returns sorted by brand then name
 
+### Density Maps (Fields)
+
+#### `load_field_density_data`
+- **Parameters:** `savegame_path: String`, `game_path: String`, `map_id: String`
+- **Returns:** `Vec<FieldDensityData>`
+- **Behavior:**
+  - Resolves map data path from `map_id` (built-in: `{gamePath}/data/maps/{mapDir}/`, modded: from zip archive)
+  - Reads `infoLayer_farmlands.grle` to build farmland pixel map
+  - Resolves fruit type indices from 4 sources: `maps_fruitTypes.xml`, map XML, game log, known fallback
+  - Reads all density maps from savegame dir (GDM fruits/ground/weeds/stones + GRLE info layers)
+  - Aggregates per-farmland statistics: fruit distribution, growth, treatments, coverage %
+  - Returns sorted by farmland ID
+
+#### `save_density_edits`
+- **Parameters:** `savegame_path: String`, `game_path: String`, `map_id: String`, `edits: Vec<DensityEditPayload>`
+- **Returns:** `Vec<String>` (list of modified files)
+- **Behavior:**
+  - Reads existing density map files (GDM and GRLE)
+  - For each edit: modifies pixels belonging to the specified farmland ID
+  - Writes modified files back using the original file's header and compression config
+  - Supports: set fruit+growth, set lime/spray/plow/roller/stubble levels, clear weeds/stones
+
 ### Settings
 
 #### `get_settings`
@@ -143,6 +165,51 @@ backup/
 - The copy is recursive and includes **all** files (XML + binaries) to ensure a complete restoration
 - `cleanup_old_backups` flags backups beyond the limit but does not delete them automatically
 
+### `parsers/grle.rs` — GRLE Binary Format Parser + Writer
+
+Parses and writes GRLE (Giants RLE) files used for info layers:
+
+```
+pub fn parse_grle(data: &[u8]) -> Result<GrleImage, AppError>
+pub fn parse_grle_with_header(data: &[u8]) -> Result<(GrleImage, [u8; 20]), AppError>
+pub fn write_grle(image: &GrleImage, original_header: &[u8; 20]) -> Vec<u8>
+```
+
+Format: 20-byte header (magic + version + dimensions + bpp + compressed size) + RLE-compressed pixel data.
+
+### `parsers/gdm.rs` — GDM Binary Format Parser + Writer
+
+Parses and writes GDM (Giants Density Map) chunk-based files:
+
+```
+pub fn parse_gdm(data: &[u8]) -> Result<GdmImage, AppError>
+pub fn write_gdm(image: &GdmImage, original_data: &[u8]) -> Result<Vec<u8>, AppError>
+```
+
+Format: Header (`"MDF` or `!MDF` magic) + compression range config + chunk-based palette-compressed pixel data. Multiple compression ranges are combined by bit-shifting.
+
+### `parsers/density_map_config.rs` — Fruit Type Mapping
+
+Resolves fruit type indices to names from multiple sources:
+
+```
+pub fn parse_fruit_types_xml(data: &[u8]) -> Result<Vec<String>, AppError>
+pub fn parse_map_xml_fruit_types(data: &[u8]) -> Result<Vec<String>, AppError>
+pub fn parse_game_log_fruit_types(log_path: &Path) -> Result<Vec<String>, AppError>
+pub const KNOWN_EXTRA_FRUIT_TYPES: &[&str]  // Fallback: GREENBEAN, PEA, SPINACH
+```
+
+### `services/density_map.rs` — Field Data Aggregation + Editing
+
+Orchestrates density map reading, per-farmland aggregation, and editing:
+
+```
+pub fn aggregate_field_data(savegame_path, game_path, map_id) -> Result<Vec<FieldDensityData>>
+pub fn save_density_edits(savegame_path, game_path, map_id, edits) -> Result<Vec<String>>
+```
+
+Handles map data resolution (built-in vs modded), scale factor computation between farmlands GRLE and info layers, and pixel-level modification of density maps.
+
 ### `services/catalog.rs` — Vehicle Catalog Scanner
 
 Scans the game installation directory and mod archives to build a vehicle catalog:
@@ -176,6 +243,9 @@ pub enum AppError {
 
     #[error("Savegame not found: {path}")]
     SavegameNotFound { path: String },
+
+    #[error("Density map error: {message}")]
+    DensityMapError { message: String },
 }
 ```
 

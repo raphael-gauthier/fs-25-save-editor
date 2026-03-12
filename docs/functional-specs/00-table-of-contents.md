@@ -36,8 +36,13 @@ The editor works with the following XML files:
 | `farms.xml` | Farms, finances, statistics, permissions | 1 |
 | `vehicles.xml` | Owned vehicles and their full state | 1 |
 | `sales.xml` | Used vehicle market | 1 |
-| `fields.xml` | Field and crop status | 2 |
+| `fields.xml` | Field and crop status (AI/mission summaries) | 2 |
 | `farmland.xml` | Land ownership | 2 |
+| `densityMap_fruits.gdm` | Actual crop types and growth states (binary) | 2 |
+| `densityMap_ground.gdm` | Ground types (binary) | 2 |
+| `densityMap_weed.gdm` | Weed states (binary) | 2 |
+| `densityMap_stones.gdm` | Stone levels (binary) | 2 |
+| `infoLayer_*.grle` | Treatment levels: lime, spray, plow, roller, stubble (binary) | 2 |
 | `environment.xml` | Time, weather, seasons | 2 |
 | `placeables.xml` | Buildings and structures | 2 |
 | `missions.xml` | Missions and contracts | 2 |

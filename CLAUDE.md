@@ -107,10 +107,11 @@ pnpm test:rust        # Rust tests (cargo test in src-tauri)
 
 ### Backend Structure (src-tauri/src/)
 
-- `commands/` — Tauri command handlers (savegame.rs, backup.rs, update.rs)
-- `models/` — Data structures (career, farm, vehicle, sale, field, environment, placeable, mission, collectible, update)
-- `parsers/` — XML → struct parsing
+- `commands/` — Tauri command handlers (savegame.rs, backup.rs, update.rs, density.rs)
+- `models/` — Data structures (career, farm, vehicle, sale, field, environment, placeable, mission, collectible, update, density)
+- `parsers/` — XML → struct parsing + binary format parsers (grle.rs, gdm.rs, density_map_config.rs)
 - `writers/` — struct → XML writing
+- `services/` — Business logic (catalog.rs for vehicle scanning, density_map.rs for field data aggregation + editing)
 - `validators/` — Data validation
 - `backup/` — Backup manager
 - `error.rs` — Error types (thiserror)
@@ -121,7 +122,7 @@ pnpm test:rust        # Rust tests (cargo test in src-tauri)
 
 ### Tauri Commands
 
-`list_savegames`, `load_savegame`, `save_changes`, `list_backups`, `create_backup`, `restore_backup`, `delete_backup`, `check_for_updates` — invoked via `useTauri` composable wrapping `@tauri-apps/api`.
+`list_savegames`, `load_savegame`, `save_changes`, `list_backups`, `create_backup`, `restore_backup`, `delete_backup`, `check_for_updates`, `load_field_density_data`, `save_density_edits` — invoked via `useTauri` composable wrapping `@tauri-apps/api`.
 
 ## Key Conventions
 
@@ -141,6 +142,11 @@ Each domain store tracks dirty state: `isDirty`, `changeCount`, `getChanges()`, 
 
 ### Settings
 Settings store persists to `settings.json` via Tauri plugin-store. Loaded in `App.vue` onMounted before UI renders. Access advanced mode via `settings.advancedMode` (not a separate composable).
+
+### Density Maps (Fields)
+Field data comes from binary density maps (GDM/GRLE), not fields.xml. The `field.ts` store manages density data with a cache-first strategy: cached data from `density-cache.json` (plugin-store) displays instantly, then refreshes from the backend in the background. XML crop data is hidden behind advanced mode when density is available. Density edits are saved via a separate `save_density_edits` Tauri command alongside the XML `save_changes` command.
+
+Fruit type resolution uses 4 sources: `maps_fruitTypes.xml` (base 25), map XML (e.g., MEADOW), game log (DLC types), and a hardcoded `KNOWN_EXTRA_FRUIT_TYPES` fallback (GREENBEAN, PEA, SPINACH).
 
 ## Git & Versioning
 

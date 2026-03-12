@@ -163,6 +163,56 @@ interface SaleStore {
 }
 ```
 
+### `field.ts` — Fields & Density Maps
+
+```typescript
+interface FieldStore {
+  // State (XML data)
+  fields: Field[]
+  farmlands: Farmland[]
+  originalFields: Field[]
+  originalFarmlands: Farmland[]
+  selectedFieldIds: Set<number>
+
+  // Density map data (binary)
+  densityData: FieldDensityData[]
+  densityLoading: boolean
+  densityError: string | null
+  densityFromCache: boolean
+
+  // Density edit tracking
+  densityEdits: Map<number, DensityEditPayload>
+
+  // Filters
+  searchQuery: string
+  fruitFilter: string | null
+  ownerFilter: number | null
+
+  // Computed
+  filteredFields: Field[]           // Filtered + sorted; uses density fruit names for fruit filter
+  availableFruits: string[]         // From density data when available, XML otherwise
+  hasDensityData: boolean
+  isDirty: boolean                  // XML changes + density edits
+  changeCount: number
+
+  // Actions
+  hydrate(fields, farmlands): void
+  loadDensityData(savegamePath, gamePath, mapId): Promise<void>  // Cache-first + background refresh
+  clearDensityData(): void
+  addDensityEdit(farmlandId, edit): void
+  batchDensityEdit(farmlandIds, edit): void
+  saveDensityEdits(savegamePath, gamePath, mapId): Promise<string[]>
+  getFieldDensity(farmlandId): FieldDensityData | undefined
+  batchMaxGrowth(fieldIds): void
+  batchRemoveWeeds(fieldIds): void
+  batchRemoveStones(fieldIds): void
+  batchMaxLime(fieldIds): void
+  batchMaxFertilizer(fieldIds): void
+  resetChanges(): void
+  getChanges(): { fields?: FieldChange[], farmlands?: FarmlandChange[] } | null
+}
+```
+
 ### `settings.ts` — Preferences
 
 ```typescript
