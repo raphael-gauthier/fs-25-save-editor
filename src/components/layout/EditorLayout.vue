@@ -16,6 +16,7 @@ import { useBuildingStore } from "@/stores/building";
 import { useMissionStore } from "@/stores/mission";
 import { useWorldStore } from "@/stores/world";
 import { useEconomyStore } from "@/stores/economy";
+import { useSettingsStore } from "@/stores/settings";
 import AppSidebar from "./AppSidebar.vue";
 import AppHeader from "./AppHeader.vue";
 
@@ -29,6 +30,7 @@ const buildingStore = useBuildingStore();
 const missionStore = useMissionStore();
 const worldStore = useWorldStore();
 const economyStore = useEconomyStore();
+const settings = useSettingsStore();
 const router = useRouter();
 
 onMounted(async () => {
@@ -54,6 +56,15 @@ onMounted(async () => {
       worldStore.hydrate(store.currentSavegame.environment);
     }
     economyStore.hydrate(store.currentSavegame.economy);
+
+    // Load density map data for fields (async, non-blocking)
+    if (settings.gamePath && store.currentSavegame.career.mapId && store.currentPath) {
+      fieldStore.loadDensityData(
+        store.currentPath,
+        settings.gamePath,
+        store.currentSavegame.career.mapId,
+      );
+    }
   }
 });
 </script>

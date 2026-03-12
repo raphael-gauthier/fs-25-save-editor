@@ -1,6 +1,29 @@
 import { defineStore } from "pinia";
 import { computed, ref } from "vue";
-import type { Field, Farmland, FieldChangePayload, FarmlandChangePayload } from "@/lib/types";
+import { invoke } from "@tauri-apps/api/core";
+import { load } from "@tauri-apps/plugin-store";
+import type {
+  Field,
+  Farmland,
+  FieldChangePayload,
+  FarmlandChangePayload,
+  FieldDensityData,
+  DensityEditPayload,
+} from "@/lib/types";
+
+const DENSITY_CACHE_FILE = "density-cache.json";
+
+interface DensityCacheEntry {
+  data: FieldDensityData[];
+  timestamp: number;
+  mapId: string;
+}
+
+function cacheKey(savegamePath: string): string {
+  // Use the savegame folder name as key (e.g., "savegame1")
+  const parts = savegamePath.replace(/\\/g, "/").split("/");
+  return parts[parts.length - 1] || parts[parts.length - 2] || savegamePath;
+}
 
 export const useFieldStore = defineStore("field", () => {
   const fields = ref<Field[]>([]);
@@ -8,6 +31,15 @@ export const useFieldStore = defineStore("field", () => {
   const originalFields = ref<Field[]>([]);
   const originalFarmlands = ref<Farmland[]>([]);
   const selectedFieldIds = ref<Set<number>>(new Set());
+
+  // Density map data
+  const densityData = ref<FieldDensityData[]>([]);
+  const densityLoading = ref(false);
+  const densityError = ref<string | null>(null);
+  const densityFromCache = ref(false);
+
+  // Density edit tracking
+  const densityEdits = ref<Map<number, DensityEditPayload>>(new Map());
 
   // Filters
   const searchQuery = ref("");
@@ -29,9 +61,18 @@ export const useFieldStore = defineStore("field", () => {
     }
 
     if (fruitFilter.value) {
-      result = result.filter(
-        (f) => f.fruitType === fruitFilter.value || f.plannedFruit === fruitFilter.value,
-      );
+      if (hasDensityData.value) {
+        result = result.filter((f) => {
+          const d = densityMap.value.get(f.id);
+          if (!d) return false;
+          return d.dominantFruit === fruitFilter.value ||
+            d.fruitDistribution.some((fc) => fc.fruitType === fruitFilter.value);
+        });
+      } else {
+        result = result.filter(
+          (f) => f.fruitType === fruitFilter.value || f.plannedFruit === fruitFilter.value,
+        );
+      }
     }
 
     if (ownerFilter.value !== null) {
@@ -42,17 +83,58 @@ export const useFieldStore = defineStore("field", () => {
     return result.sort((a, b) => a.id - b.id);
   });
 
+  const hasDensityData = computed(() => densityData.value.length > 0);
+
+  const densityMap = computed(() => {
+    const map = new Map<number, FieldDensityData>();
+    for (const d of densityData.value) {
+      map.set(d.farmlandId, d);
+    }
+    return map;
+  });
+
+  function getFieldDensity(farmlandId: number): FieldDensityData | undefined {
+    return densityMap.value.get(farmlandId);
+  }
+
   const availableFruits = computed(() => {
     const fruits = new Set<string>();
-    for (const f of fields.value) {
-      if (f.fruitType && f.fruitType !== "UNKNOWN") fruits.add(f.fruitType);
+    if (hasDensityData.value) {
+      for (const d of densityData.value) {
+        if (d.dominantFruit) fruits.add(d.dominantFruit);
+        for (const fc of d.fruitDistribution) {
+          fruits.add(fc.fruitType);
+        }
+      }
+    } else {
+      for (const f of fields.value) {
+        if (f.fruitType && f.fruitType !== "UNKNOWN") fruits.add(f.fruitType);
+      }
     }
     return Array.from(fruits).sort();
+  });
+
+  const hasDensityEdits = computed(() => densityEdits.value.size > 0);
+
+  const densityEditCount = computed(() => {
+    let count = 0;
+    for (const edit of densityEdits.value.values()) {
+      if (edit.setFruitName !== undefined) count++;
+      if (edit.setLimeLevel !== undefined) count++;
+      if (edit.setSprayLevel !== undefined) count++;
+      if (edit.setPlowLevel !== undefined) count++;
+      if (edit.setRollerLevel !== undefined) count++;
+      if (edit.setStubbleShredLevel !== undefined) count++;
+      if (edit.clearWeeds) count++;
+      if (edit.clearStones) count++;
+    }
+    return count;
   });
 
   const isDirty = computed(() => {
     if (isFieldsDirty()) return true;
     if (isFarmlandsDirty()) return true;
+    if (hasDensityEdits.value) return true;
     return false;
   });
 
@@ -82,6 +164,8 @@ export const useFieldStore = defineStore("field", () => {
       const orig = origFarmlandMap.get(fl.id);
       if (orig && fl.farmId !== orig.farmId) count++;
     }
+
+    count += densityEditCount.value;
 
     return count;
   });
@@ -206,9 +290,40 @@ export const useFieldStore = defineStore("field", () => {
     selectedFieldIds.value = new Set();
   }
 
+  function addDensityEdit(farmlandId: number, edit: Partial<DensityEditPayload>) {
+    const existing = densityEdits.value.get(farmlandId) ?? { farmlandId };
+    const merged = { ...existing, ...edit };
+    densityEdits.value.set(farmlandId, merged);
+    densityEdits.value = new Map(densityEdits.value);
+  }
+
+  function batchDensityEdit(farmlandIds: number[], edit: Partial<DensityEditPayload>) {
+    for (const id of farmlandIds) {
+      addDensityEdit(id, edit);
+    }
+  }
+
+  function getDensityEdits(): DensityEditPayload[] {
+    return Array.from(densityEdits.value.values());
+  }
+
+  async function saveDensityEdits(savegamePath: string, gamePath: string, mapId: string): Promise<string[]> {
+    const edits = getDensityEdits();
+    if (edits.length === 0) return [];
+    const result = await invoke<string[]>("save_density_edits", {
+      savegamePath,
+      gamePath,
+      mapId,
+      edits,
+    });
+    densityEdits.value = new Map();
+    return result;
+  }
+
   function resetChanges() {
     fields.value = JSON.parse(JSON.stringify(originalFields.value));
     farmlands.value = JSON.parse(JSON.stringify(originalFarmlands.value));
+    densityEdits.value = new Map();
   }
 
   function getChanges(): { fields?: FieldChangePayload[]; farmlands?: FarmlandChangePayload[] } | null {
@@ -244,7 +359,8 @@ export const useFieldStore = defineStore("field", () => {
       }
     }
 
-    if (fieldChanges.length === 0 && farmlandChanges.length === 0) return null;
+    if (fieldChanges.length === 0 && farmlandChanges.length === 0 && !hasDensityEdits.value)
+      return null;
 
     const result: { fields?: FieldChangePayload[]; farmlands?: FarmlandChangePayload[] } = {};
     if (fieldChanges.length > 0) result.fields = fieldChanges;
@@ -255,6 +371,61 @@ export const useFieldStore = defineStore("field", () => {
   function commitChanges() {
     originalFields.value = JSON.parse(JSON.stringify(fields.value));
     originalFarmlands.value = JSON.parse(JSON.stringify(farmlands.value));
+  }
+
+  async function loadDensityData(savegamePath: string, gamePath: string, mapId: string) {
+    densityLoading.value = true;
+    densityError.value = null;
+    densityFromCache.value = false;
+
+    // Try loading from cache first
+    const key = cacheKey(savegamePath);
+    try {
+      const store = await load(DENSITY_CACHE_FILE);
+      const cached = await store.get<DensityCacheEntry>(key);
+      if (cached && cached.mapId === mapId && cached.data.length > 0) {
+        densityData.value = cached.data;
+        densityFromCache.value = true;
+      }
+    } catch {
+      // Cache miss — continue to load from backend
+    }
+
+    // Refresh from backend
+    try {
+      const data = await invoke<FieldDensityData[]>("load_field_density_data", {
+        savegamePath,
+        gamePath,
+        mapId,
+      });
+      densityData.value = data;
+      densityFromCache.value = false;
+
+      // Update cache
+      try {
+        const store = await load(DENSITY_CACHE_FILE);
+        await store.set(key, { data, timestamp: Date.now(), mapId } as DensityCacheEntry);
+        await store.save();
+      } catch {
+        // Cache write failure is non-critical
+      }
+    } catch (error: unknown) {
+      const err = error as { code?: string; params?: { message?: string } };
+      densityError.value = err?.params?.message || String(error);
+      // Keep cached data if available, otherwise clear
+      if (!densityFromCache.value) {
+        densityData.value = [];
+      }
+    } finally {
+      densityLoading.value = false;
+    }
+  }
+
+  function clearDensityData() {
+    densityData.value = [];
+    densityError.value = null;
+    densityLoading.value = false;
+    densityFromCache.value = false;
   }
 
   return {
@@ -268,6 +439,24 @@ export const useFieldStore = defineStore("field", () => {
     availableFruits,
     isDirty,
     changeCount,
+    // Density map data
+    densityData,
+    densityLoading,
+    densityError,
+    densityFromCache,
+    hasDensityData,
+    getFieldDensity,
+    loadDensityData,
+    clearDensityData,
+    // Density edits
+    densityEdits,
+    hasDensityEdits,
+    densityEditCount,
+    addDensityEdit,
+    batchDensityEdit,
+    getDensityEdits,
+    saveDensityEdits,
+    // Actions
     hydrate,
     updateField,
     updateFarmland,

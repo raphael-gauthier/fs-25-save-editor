@@ -26,6 +26,7 @@ import { useBuildingStore } from "@/stores/building";
 import { useMissionStore } from "@/stores/mission";
 import { useWorldStore } from "@/stores/world";
 import { useEconomyStore } from "@/stores/economy";
+import { useSettingsStore } from "@/stores/settings";
 import { useTauri, translateError } from "@/composables/useTauri";
 import { useUnsavedChanges } from "@/composables/useUnsavedChanges";
 import type { SaveResult } from "@/lib/types";
@@ -41,6 +42,7 @@ const buildingStore = useBuildingStore();
 const missionStore = useMissionStore();
 const worldStore = useWorldStore();
 const economyStore = useEconomyStore();
+const settings = useSettingsStore();
 const { invokeCommand } = useTauri();
 const { isDirty, changeCount, collectAllChanges, confirmDiscardIfDirty } =
   useUnsavedChanges();
@@ -93,38 +95,67 @@ async function handleSave() {
   if (!savegameStore.currentPath || isSaving.value) return;
 
   const changes = collectAllChanges();
+  const hasDensityEdits = fieldStore.hasDensityEdits;
 
-  if (!Object.values(changes).some(Boolean)) {
+  if (!Object.values(changes).some(Boolean) && !hasDensityEdits) {
     toast.info(t("savegame.noChanges"));
     return;
   }
 
   isSaving.value = true;
   try {
-    const result = await invokeCommand<SaveResult>("save_changes", {
-      path: savegameStore.currentPath,
-      changes,
-    });
+    let totalFilesModified = 0;
 
-    if (result.success) {
-      financeStore.commitChanges();
-      vehicleStore.commitChanges();
-      saleStore.commitChanges();
-      fieldStore.commitChanges();
-      buildingStore.commitChanges();
-      missionStore.commitChanges();
-      worldStore.commitChanges();
-      economyStore.commitChanges();
-      toast.success(t("savegame.saveSuccess"), {
-        description: t("savegame.saveSuccessDesc", {
-          count: result.filesModified.length,
-        }),
+    // Save XML changes
+    if (Object.values(changes).some(Boolean)) {
+      const result = await invokeCommand<SaveResult>("save_changes", {
+        path: savegameStore.currentPath,
+        changes,
       });
-    } else {
-      toast.error(t("savegame.saveError"), {
-        description: result.errors.map(e => t(e.code, e.params)).join(", "),
-      });
+
+      if (!result.success) {
+        toast.error(t("savegame.saveError"), {
+          description: result.errors.map(e => t(e.code, e.params)).join(", "),
+        });
+        return;
+      }
+      totalFilesModified += result.filesModified.length;
     }
+
+    // Save density map edits
+    if (hasDensityEdits && settings.gamePath && savegameStore.currentSavegame?.career.mapId) {
+      const densityFiles = await fieldStore.saveDensityEdits(
+        savegameStore.currentPath,
+        settings.gamePath,
+        savegameStore.currentSavegame.career.mapId,
+      );
+      totalFilesModified += densityFiles.length;
+    }
+
+    // Commit all store changes
+    financeStore.commitChanges();
+    vehicleStore.commitChanges();
+    saleStore.commitChanges();
+    fieldStore.commitChanges();
+    buildingStore.commitChanges();
+    missionStore.commitChanges();
+    worldStore.commitChanges();
+    economyStore.commitChanges();
+
+    // Reload density data to reflect edits
+    if (hasDensityEdits && settings.gamePath && savegameStore.currentSavegame?.career.mapId) {
+      fieldStore.loadDensityData(
+        savegameStore.currentPath,
+        settings.gamePath,
+        savegameStore.currentSavegame.career.mapId,
+      );
+    }
+
+    toast.success(t("savegame.saveSuccess"), {
+      description: t("savegame.saveSuccessDesc", {
+        count: totalFilesModified,
+      }),
+    });
   } catch (e: unknown) {
     toast.error(t("savegame.saveError"), {
       description: translateError(t, e),

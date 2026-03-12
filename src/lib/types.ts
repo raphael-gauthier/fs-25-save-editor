@@ -258,6 +258,58 @@ export interface FarmlandChangePayload {
   farmId: number;
 }
 
+// Density map data (from binary GDM/GRLE files)
+
+export interface FieldDensityData {
+  farmlandId: number;
+  pixelCount: number;
+  dominantFruit: string | null;
+  fruitCoverage: number;
+  fruitDistribution: FruitCoverage[];
+  avgGrowthState: number;
+  maxGrowthState: number;
+  limeStatus: LevelDistribution;
+  plowStatus: LevelDistribution;
+  sprayStatus: LevelDistribution;
+  rollerStatus: LevelDistribution;
+  stubbleShredStatus: LevelDistribution;
+  weedCoverage: number;
+  avgWeedLevel: number;
+  stoneCoverage: number;
+  groundTypeDistribution: GroundCoverage[];
+}
+
+export interface FruitCoverage {
+  fruitType: string;
+  percentage: number;
+  avgGrowth: number;
+}
+
+export interface GroundCoverage {
+  groundType: string;
+  percentage: number;
+}
+
+export interface LevelDistribution {
+  avgLevel: number;
+  maxLevel: number;
+  pctAtZero: number;
+  pctAtMax: number;
+}
+
+export interface DensityEditPayload {
+  farmlandId: number;
+  setFruitName?: string;
+  setGrowthState?: number;
+  setLimeLevel?: number;
+  setSprayLevel?: number;
+  setPlowLevel?: number;
+  setRollerLevel?: number;
+  setStubbleShredLevel?: number;
+  clearWeeds?: boolean;
+  clearStones?: boolean;
+}
+
 export interface Environment {
   dayTime: number;
   currentDay: number;
@@ -361,6 +413,7 @@ export interface MissionChangePayload {
   completion?: number;
   status?: string;
   reimbursement?: number;
+  depositedLiters?: number;
 }
 
 export interface CollectibleChangePayload {

@@ -23,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Sprout, Sparkles } from "lucide-vue-next";
+import { Sprout, Sparkles, Bug, Gem, Droplets, FlaskConical, Tractor } from "lucide-vue-next";
 
 interface Props {
   field: Field | null;
@@ -45,6 +45,10 @@ const original = computed(() =>
 
 const farmland = computed(() =>
   props.field ? store.getFarmlandByFieldId(props.field.id) : undefined,
+);
+
+const density = computed(() =>
+  props.field ? store.getFieldDensity(props.field.id) : undefined,
 );
 
 function fieldModifiedClass(key: keyof Field): string {
@@ -99,6 +103,59 @@ function handleOwnerChange(value: any) {
     store.updateFarmland(props.field.id, Number(value));
   }
 }
+
+// Density edit actions
+function handleDensityMaxGrowth() {
+  if (!props.field || !density.value?.dominantFruit) return;
+  store.addDensityEdit(props.field.id, {
+    setFruitName: density.value.dominantFruit,
+    setGrowthState: 10,
+  });
+  store.updateField(props.field.id, { growthState: MAX_GROWTH_STATE });
+}
+
+function handleDensityMaxLime() {
+  if (!props.field) return;
+  store.addDensityEdit(props.field.id, { setLimeLevel: 3 });
+  store.updateField(props.field.id, { limeLevel: 3 });
+}
+
+function handleDensityMaxSpray() {
+  if (!props.field) return;
+  store.addDensityEdit(props.field.id, { setSprayLevel: 2 });
+  store.updateField(props.field.id, { sprayLevel: 2 });
+}
+
+function handleDensityMaxPlow() {
+  if (!props.field) return;
+  store.addDensityEdit(props.field.id, { setPlowLevel: 1 });
+  store.updateField(props.field.id, { plowLevel: 1 });
+}
+
+function handleDensityClearWeeds() {
+  if (!props.field) return;
+  store.addDensityEdit(props.field.id, { clearWeeds: true });
+  store.updateField(props.field.id, { weedState: 0 });
+}
+
+function handleDensityClearStones() {
+  if (!props.field) return;
+  store.addDensityEdit(props.field.id, { clearStones: true });
+  store.updateField(props.field.id, { stoneLevel: 0 });
+}
+
+const hasPendingDensityEdit = computed(() => {
+  if (!props.field) return false;
+  return store.densityEdits.has(props.field.id);
+});
+
+function formatFruitName(name: string): string {
+  const unknownMatch = name.match(/^UNKNOWN_(\d+)$/);
+  if (unknownMatch) {
+    return t("field.unknownFruit", { index: unknownMatch[1] });
+  }
+  return t(`fillTypes.${name}`, name);
+}
 </script>
 
 <template>
@@ -111,11 +168,111 @@ function handleOwnerChange(value: any) {
             {{ t("field.title") }} #{{ field.id }}
           </SheetTitle>
           <SheetDescription>
-            {{ field.fruitType !== "UNKNOWN" ? t(`fillTypes.${field.fruitType}`, field.fruitType) : t("field.none") }}
+            <template v-if="density?.dominantFruit">{{ formatFruitName(density.dominantFruit) }}</template>
+            <template v-else>{{ field.fruitType !== "UNKNOWN" ? t(`fillTypes.${field.fruitType}`, field.fruitType) : t("field.none") }}</template>
           </SheetDescription>
         </SheetHeader>
 
         <div class="mt-6 space-y-6">
+          <!-- Density map data (actual field state with edit actions) -->
+          <template v-if="density">
+            <p class="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+              {{ t("field.densityTitle") }}
+            </p>
+
+            <!-- Pending edit indicator -->
+            <div v-if="hasPendingDensityEdit" class="rounded-md bg-amber-500/10 px-3 py-2 text-xs text-amber-600 dark:text-amber-400">
+              {{ t("field.densityEditPending") }}
+            </div>
+
+            <!-- Crop distribution -->
+            <div class="space-y-2">
+              <Label>{{ t("field.fruitDistribution") }}</Label>
+              <div v-if="density.fruitDistribution.length > 0" class="space-y-1.5">
+                <div
+                  v-for="fc in density.fruitDistribution"
+                  :key="fc.fruitType"
+                  class="flex items-center gap-2"
+                >
+                  <span class="w-24 truncate text-sm">{{ formatFruitName(fc.fruitType) }}</span>
+                  <div class="h-2 flex-1 rounded-full bg-muted">
+                    <div class="h-2 rounded-full bg-green-500" :style="{ width: fc.percentage + '%' }" />
+                  </div>
+                  <span class="w-12 text-right font-mono text-xs text-muted-foreground">{{ fc.percentage.toFixed(0) }}%</span>
+                </div>
+              </div>
+              <p v-else class="text-sm text-muted-foreground">{{ t("field.none") }}</p>
+            </div>
+
+            <!-- Treatment levels with edit buttons -->
+            <div class="grid grid-cols-2 gap-3 text-sm">
+              <div class="flex items-center justify-between rounded-md bg-muted/50 px-3 py-2">
+                <span>{{ t("field.limeLevel") }}</span>
+                <span :class="density.limeStatus.pctAtZero > 50 ? 'font-medium text-red-500' : 'text-green-600 dark:text-green-400'">
+                  {{ (100 - density.limeStatus.pctAtZero).toFixed(0) }}%
+                </span>
+              </div>
+              <div class="flex items-center justify-between rounded-md bg-muted/50 px-3 py-2">
+                <span>{{ t("field.sprayLevel") }}</span>
+                <span :class="density.sprayStatus.pctAtZero > 50 ? 'font-medium text-red-500' : 'text-green-600 dark:text-green-400'">
+                  {{ (100 - density.sprayStatus.pctAtZero).toFixed(0) }}%
+                </span>
+              </div>
+              <div class="flex items-center justify-between rounded-md bg-muted/50 px-3 py-2">
+                <span>{{ t("field.plowLevel") }}</span>
+                <span :class="density.plowStatus.pctAtZero > 50 ? 'font-medium text-red-500' : 'text-green-600 dark:text-green-400'">
+                  {{ (100 - density.plowStatus.pctAtZero).toFixed(0) }}%
+                </span>
+              </div>
+              <div class="flex items-center justify-between rounded-md bg-muted/50 px-3 py-2">
+                <span>{{ t("field.weedState") }}</span>
+                <span :class="density.weedCoverage > 30 ? 'font-medium text-red-500' : 'text-green-600 dark:text-green-400'">
+                  {{ density.weedCoverage.toFixed(0) }}%
+                </span>
+              </div>
+            </div>
+
+            <!-- Density edit quick actions -->
+            <div class="space-y-2">
+              <Label>{{ t("field.densityActions") }}</Label>
+              <div class="flex flex-wrap gap-2">
+                <Button v-if="density.dominantFruit" variant="outline" size="sm" @click="handleDensityMaxGrowth">
+                  <Sparkles class="size-4" />
+                  {{ t("field.maxGrowth") }}
+                </Button>
+                <Button v-if="density.limeStatus.pctAtZero > 0" variant="outline" size="sm" @click="handleDensityMaxLime">
+                  <Droplets class="size-4" />
+                  {{ t("field.maxLime") }}
+                </Button>
+                <Button v-if="density.sprayStatus.pctAtZero > 0" variant="outline" size="sm" @click="handleDensityMaxSpray">
+                  <FlaskConical class="size-4" />
+                  {{ t("field.maxFertilizer") }}
+                </Button>
+                <Button v-if="density.plowStatus.pctAtZero > 0" variant="outline" size="sm" @click="handleDensityMaxPlow">
+                  <Tractor class="size-4" />
+                  {{ t("field.maxPlow") }}
+                </Button>
+                <Button v-if="density.weedCoverage > 0" variant="outline" size="sm" @click="handleDensityClearWeeds">
+                  <Bug class="size-4" />
+                  {{ t("field.removeWeeds") }}
+                </Button>
+                <Button v-if="density.stoneCoverage > 0" variant="outline" size="sm" @click="handleDensityClearStones">
+                  <Gem class="size-4" />
+                  {{ t("field.removeStones") }}
+                </Button>
+              </div>
+            </div>
+
+            <template v-if="settings.advancedMode">
+              <Separator />
+              <p class="text-xs font-medium uppercase tracking-wide text-muted-foreground">
+                {{ t("field.xmlEditTitle") }}
+              </p>
+            </template>
+          </template>
+
+          <!-- XML fields: show always when no density, or behind advanced mode when density exists -->
+          <template v-if="!density || settings.advancedMode">
           <!-- Fruit type -->
           <div class="space-y-2" :class="fieldModifiedClass('fruitType')">
             <Label>{{ t("field.fruitType") }}</Label>
@@ -182,7 +339,9 @@ function handleOwnerChange(value: any) {
             </Select>
           </div>
 
-          <!-- Farmland owner -->
+          </template>
+
+          <!-- Farmland owner (always visible, not from density maps) -->
           <div v-if="farmland" class="space-y-2">
             <Label>{{ t("field.farmlandOwner") }}</Label>
             <Select :model-value="String(farmland.farmId)" @update:model-value="handleOwnerChange">
