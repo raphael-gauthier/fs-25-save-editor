@@ -135,6 +135,7 @@ pub struct MissionChange {
     pub completion: Option<f64>,
     pub status: Option<String>,
     pub reimbursement: Option<f64>,
+    pub deposited_liters: Option<f64>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

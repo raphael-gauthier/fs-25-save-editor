@@ -5,6 +5,7 @@ pub mod changes;
 pub mod collectible;
 pub mod common;
 pub mod contract;
+pub mod density;
 pub mod economy;
 pub mod environment;
 pub mod farm;

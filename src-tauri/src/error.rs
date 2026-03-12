@@ -18,6 +18,9 @@ pub enum AppError {
     #[error("Image processing error: {message}")]
     ImageError { message: String },
 
+    #[error("Density map error: {message}")]
+    DensityMapError { message: String },
+
     #[error("{0}")]
     Generic(String),
 }
@@ -62,6 +65,13 @@ impl Serialize for AppError {
             }
             AppError::ImageError { message } => {
                 state.serialize_field("code", "errors.imageError")?;
+                state.serialize_field(
+                    "params",
+                    &std::collections::HashMap::from([("message", message.as_str())]),
+                )?;
+            }
+            AppError::DensityMapError { message } => {
+                state.serialize_field("code", "errors.densityMapError")?;
                 state.serialize_field(
                     "params",
                     &std::collections::HashMap::from([("message", message.as_str())]),

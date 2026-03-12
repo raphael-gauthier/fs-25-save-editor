@@ -46,6 +46,8 @@ pub fn run() {
             commands::vehicle_image::clear_image_cache,
             commands::vehicle_image::get_image_cache_size,
             commands::catalog::get_vehicle_catalog,
+            commands::density::load_field_density_data,
+            commands::density::save_density_edits,
             commands::update::check_for_updates,
         ])
         .run(tauri::generate_context!())

@@ -1,10 +1,13 @@
 pub mod career;
 pub mod collectible;
 pub mod contract;
+pub mod density_map_config;
 pub mod economy;
 pub mod environment;
 pub mod farm;
 pub mod field;
+pub mod gdm;
+pub mod grle;
 pub mod mission;
 pub mod placeable;
 pub mod sale;
