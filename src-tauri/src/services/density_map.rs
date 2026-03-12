@@ -551,6 +551,7 @@ pub fn save_density_edits(
 
     // Determine which files need to be modified
     let needs_fruits = edits.iter().any(|e| e.set_fruit_name.is_some());
+    let needs_ground = edits.iter().any(|e| e.set_ground_type.is_some());
     let needs_lime = edits.iter().any(|e| e.set_lime_level.is_some());
     let needs_spray = edits.iter().any(|e| e.set_spray_level.is_some());
     let needs_plow = edits.iter().any(|e| e.set_plow_level.is_some());
@@ -558,16 +559,23 @@ pub fn save_density_edits(
     let needs_stubble = edits.iter().any(|e| e.set_stubble_shred_level.is_some());
     let needs_weeds = edits.iter().any(|e| e.clear_weeds);
     let needs_stones = edits.iter().any(|e| e.clear_stones);
+    let any_crop_area_only = edits.iter().any(|e| e.crop_area_only);
+    let any_field_area_only = edits.iter().any(|e| e.field_area_only);
 
-    let scale = if needs_fruits || needs_weeds || needs_stones {
+    // Load fruits GDM for scale and crop_area_only filtering
+    let fruits_gdm_for_filter = if needs_fruits || needs_ground || needs_weeds || needs_stones || any_crop_area_only {
         let fruits_path = savegame_path.join("densityMap_fruits.gdm");
         let fruits_data = std::fs::read(&fruits_path).map_err(|e| AppError::DensityMapError {
             message: format!("Failed to read fruits GDM: {}", e),
         })?;
-        let fruits_gdm = gdm::parse_gdm(&fruits_data)?;
-        fruits_gdm.width / farmlands_grle.width
+        Some(gdm::parse_gdm(&fruits_data)?)
+    } else {
+        None
+    };
+
+    let scale = if let Some(ref fg) = fruits_gdm_for_filter {
+        fg.width / farmlands_grle.width
     } else if needs_lime || needs_spray || needs_plow || needs_roller || needs_stubble {
-        // Use any available info layer to determine scale
         let lime_path = savegame_path.join("infoLayer_limeLevel.grle");
         let lime_data = std::fs::read(&lime_path).map_err(|e| AppError::DensityMapError {
             message: format!("Failed to read lime GRLE: {}", e),
@@ -578,7 +586,45 @@ pub fn save_density_edits(
         return Ok(Vec::new());
     };
 
+    // Load ground GDM for field_area_only filtering
+    let ground_gdm_for_filter = if any_field_area_only {
+        let ground_path = savegame_path.join("densityMap_ground.gdm");
+        std::fs::read(&ground_path).ok().and_then(|data| gdm::parse_gdm(&data).ok())
+    } else {
+        None
+    };
+
     let mut modified_files = Vec::new();
+
+    // Helper: check if a pixel should be modified based on filter mode.
+    // - crop_area_only: fruit_idx > 0 (for harvest/mow — only affect crop pixels)
+    // - field_area_only: ground_type 1-13 (for plow/cultivate — field ground, not grass/road)
+    // - neither: modify all pixels in the farmland boundary
+    let should_modify_pixel = |hx: u32, hy: u32, edit: &DensityEditPayload| -> bool {
+        if edit.crop_area_only {
+            if let Some(ref fg) = fruits_gdm_for_filter {
+                if hx < fg.width && hy < fg.height {
+                    let fruit_pixel = fg.get_pixel(hx, hy);
+                    let fruit_idx = GdmImage::extract_bits(fruit_pixel, 0, 5);
+                    return fruit_idx > 0;
+                }
+            }
+            return false;
+        }
+        if edit.field_area_only {
+            if let Some(ref gg) = ground_gdm_for_filter {
+                if hx < gg.width && hy < gg.height {
+                    let ground_pixel = gg.get_pixel(hx, hy);
+                    let ground_type = GdmImage::extract_bits(ground_pixel, 0, 4);
+                    // Field ground types: 1 (STUBBLE_TILLAGE) through 13 (HARVEST_READY_OTHER)
+                    // Excludes: 0 (NONE), 14 (GRASS), 15 (GRASS_CUT)
+                    return ground_type >= 1 && ground_type <= 13;
+                }
+            }
+            return false;
+        }
+        true
+    };
 
     // Build a fruit name → index map (1-based)
     let fruit_name_to_idx: HashMap<String, u8> = fruit_types
@@ -613,7 +659,9 @@ pub fn save_density_edits(
                         for dx in 0..scale {
                             let hx = (fx as u32) * scale + dx;
                             let hy = (fy as u32) * scale + dy;
-                            if hx < fruits_gdm.width && hy < fruits_gdm.height {
+                            if hx < fruits_gdm.width && hy < fruits_gdm.height
+                                && should_modify_pixel(hx, hy, edit)
+                            {
                                 fruits_gdm.set_pixel(hx, hy, combined);
                             }
                         }
@@ -625,6 +673,45 @@ pub fn save_density_edits(
         let encoded = gdm::write_gdm(&fruits_gdm, &original_data)?;
         std::fs::write(&fruits_path, &encoded)?;
         modified_files.push("densityMap_fruits.gdm".to_string());
+    }
+
+    // Modify ground GDM
+    if needs_ground {
+        let ground_path = savegame_path.join("densityMap_ground.gdm");
+        if let Ok(original_data) = std::fs::read(&ground_path) {
+            let mut ground_gdm = gdm::parse_gdm(&original_data)?;
+
+            for edit in edits {
+                let ground_type = match edit.set_ground_type {
+                    Some(gt) => gt.min(15),
+                    None => continue,
+                };
+                let pixels = match farmland_pixels.get(&(edit.farmland_id as u8)) {
+                    Some(p) => p,
+                    None => continue,
+                };
+                for &(fx, fy) in pixels {
+                    for dy in 0..scale {
+                        for dx in 0..scale {
+                            let hx = (fx as u32) * scale + dx;
+                            let hy = (fy as u32) * scale + dy;
+                            if hx < ground_gdm.width && hy < ground_gdm.height
+                                && should_modify_pixel(hx, hy, edit)
+                            {
+                                let current = ground_gdm.get_pixel(hx, hy);
+                                // Replace only bits 0-3 (ground type), preserve upper bits
+                                let new_val = (current & !0xF) | (ground_type as u16);
+                                ground_gdm.set_pixel(hx, hy, new_val);
+                            }
+                        }
+                    }
+                }
+            }
+
+            let encoded = gdm::write_gdm(&ground_gdm, &original_data)?;
+            std::fs::write(&ground_path, &encoded)?;
+            modified_files.push("densityMap_ground.gdm".to_string());
+        }
     }
 
     // Modify weed GDM
@@ -646,7 +733,9 @@ pub fn save_density_edits(
                         for dx in 0..scale {
                             let hx = (fx as u32) * scale + dx;
                             let hy = (fy as u32) * scale + dy;
-                            if hx < weed_gdm.width && hy < weed_gdm.height {
+                            if hx < weed_gdm.width && hy < weed_gdm.height
+                                && should_modify_pixel(hx, hy, edit)
+                            {
                                 weed_gdm.set_pixel(hx, hy, 0);
                             }
                         }
@@ -679,7 +768,9 @@ pub fn save_density_edits(
                         for dx in 0..scale {
                             let hx = (fx as u32) * scale + dx;
                             let hy = (fy as u32) * scale + dy;
-                            if hx < stones_gdm.width && hy < stones_gdm.height {
+                            if hx < stones_gdm.width && hy < stones_gdm.height
+                                && should_modify_pixel(hx, hy, edit)
+                            {
                                 stones_gdm.set_pixel(hx, hy, 0);
                             }
                         }
@@ -721,7 +812,9 @@ pub fn save_density_edits(
                     for dx in 0..scale {
                         let hx = (fx as u32) * scale + dx;
                         let hy = (fy as u32) * scale + dy;
-                        if hx < image.width && hy < image.height {
+                        if hx < image.width && hy < image.height
+                            && should_modify_pixel(hx, hy, edit)
+                        {
                             image.set_pixel(hx, hy, value);
                         }
                     }

@@ -26,12 +26,24 @@ pub struct DensityEditPayload {
     /// Set stubble shred level (0-1)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub set_stubble_shred_level: Option<u8>,
+    /// Set ground type (0-15, see GROUND_TYPES constant)
+    #[serde(skip_serializing_if = "Option::is_none")]
+    pub set_ground_type: Option<u8>,
     /// Clear all weeds (set to 0)
     #[serde(default)]
     pub clear_weeds: bool,
     /// Clear all stones (set to 0)
     #[serde(default)]
     pub clear_stones: bool,
+    /// Only modify pixels that have crops (fruit_idx > 0).
+    /// Use for harvest/mow where we only want to affect crop pixels.
+    #[serde(default)]
+    pub crop_area_only: bool,
+    /// Only modify pixels with field-like ground types (1-13).
+    /// Use for plow/cultivate/hoe where the field has no crops but has
+    /// field ground types. Excludes NONE(0), GRASS(14), GRASS_CUT(15).
+    #[serde(default)]
+    pub field_area_only: bool,
 }
 
 /// Per-field aggregated density map data

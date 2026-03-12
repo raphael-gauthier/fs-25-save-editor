@@ -56,6 +56,11 @@ fn decode_rle(data: &[u8], expected_size: usize) -> Vec<u8> {
         }
     }
 
+    // Handle trailing single byte that couldn't form a pair
+    if i < data.len() && output.len() < expected_size {
+        output.push(data[i]);
+    }
+
     output.resize(expected_size, 0);
     output
 }
@@ -147,11 +152,22 @@ fn encode_rle(pixels: &[u8]) -> Vec<u8> {
 }
 
 /// Encode a GrleImage back to the GRLE binary format.
-/// Uses the original file's header (first 20 bytes) and re-encodes the pixel data.
+/// Uses the original file's header and re-encodes the pixel data.
+/// Updates the compressed size field in the header (bytes 17-19 = (size-1) as u24 LE).
 pub fn write_grle(image: &GrleImage, original_header: &[u8; 20]) -> Vec<u8> {
     let compressed = encode_rle(&image.pixels);
+    let compressed_size_minus_1 = compressed.len().saturating_sub(1) as u32;
+
     let mut output = Vec::with_capacity(20 + compressed.len());
     output.extend_from_slice(original_header);
+
+    // Update compressed size field: bytes 16-19 = (compressed_size - 1) << 8 as u32 LE
+    // i.e., byte 16 = 0x00, bytes 17-19 = (compressed_size - 1) as u24 LE
+    output[16] = 0;
+    output[17] = (compressed_size_minus_1 & 0xFF) as u8;
+    output[18] = ((compressed_size_minus_1 >> 8) & 0xFF) as u8;
+    output[19] = ((compressed_size_minus_1 >> 16) & 0xFF) as u8;
+
     output.extend_from_slice(&compressed);
     output
 }
@@ -196,5 +212,30 @@ mod tests {
     fn test_parse_grle_too_small() {
         let data = vec![0x47, 0x52, 0x4C, 0x45]; // Just "GRLE"
         assert!(parse_grle(&data).is_err());
+    }
+
+    #[test]
+    fn test_encode_decode_rle_roundtrip() {
+        // Mixed data: runs + transitions + trailing single value
+        let pixels = vec![5, 5, 5, 3, 2, 1, 7, 7, 4];
+        let encoded = encode_rle(&pixels);
+        let decoded = decode_rle(&encoded, pixels.len());
+        assert_eq!(pixels, decoded);
+    }
+
+    #[test]
+    fn test_encode_decode_rle_all_different() {
+        let pixels = vec![1, 2, 3, 4, 5];
+        let encoded = encode_rle(&pixels);
+        let decoded = decode_rle(&encoded, pixels.len());
+        assert_eq!(pixels, decoded);
+    }
+
+    #[test]
+    fn test_encode_decode_rle_uniform() {
+        let pixels = vec![42u8; 1000];
+        let encoded = encode_rle(&pixels);
+        let decoded = decode_rle(&encoded, pixels.len());
+        assert_eq!(pixels, decoded);
     }
 }

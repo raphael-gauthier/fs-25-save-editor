@@ -83,12 +83,16 @@ fn decode_block(data: &[u8], pos: usize, chunk_size: usize) -> Result<(Vec<u16>,
             let byte_idx = bit_pos / 8;
             let bit_offset = bit_pos % 8;
 
-            let mut raw_value = bitmap[byte_idx] as u16;
+            // Read up to 3 bytes to support bit_depth > 8 (e.g. ground GDM with 11 channels)
+            let mut raw_value = bitmap[byte_idx] as u32;
             if byte_idx + 1 < bitmap.len() {
-                raw_value |= (bitmap[byte_idx + 1] as u16) << 8;
+                raw_value |= (bitmap[byte_idx + 1] as u32) << 8;
+            }
+            if byte_idx + 2 < bitmap.len() {
+                raw_value |= (bitmap[byte_idx + 2] as u32) << 16;
             }
 
-            let idx_or_value = ((raw_value >> bit_offset) & mask) as usize;
+            let idx_or_value = ((raw_value >> bit_offset) & (mask as u32)) as usize;
 
             let pixel_value = if bit_depth <= 2 && !palette.is_empty() {
                 *palette.get(idx_or_value).unwrap_or(&0)
@@ -239,32 +243,70 @@ impl GdmImage {
 }
 
 /// Encode a single GDM chunk.
-/// Uses a simple encoding strategy: uniform (bit_depth=0) when all pixels are identical,
-/// otherwise direct encoding with the minimum required bit depth.
-fn encode_block(pixels: &[u16], chunk_size: usize) -> Vec<u8> {
+/// Matches the game's encoding strategy:
+/// - 1 unique value: uniform (bit_depth=0, palette_count=1)
+/// - 2-4 unique values: palette encoding (bit_depth=1-2, palette lookup)
+/// - >4 unique values: direct encoding (bit_depth = range_bits, no palette)
+///
+/// `range_bits` is the number of channels in this compression range.
+/// The game always uses range_bits as bit_depth for direct encoding.
+fn encode_block(pixels: &[u16], chunk_size: usize, range_bits: usize) -> Vec<u8> {
     let total_pixels = chunk_size * chunk_size;
     assert!(pixels.len() == total_pixels);
 
-    // Check if all pixels are identical
-    let first = pixels[0];
-    if pixels.iter().all(|&p| p == first) {
-        // Uniform chunk: bit_depth=0, palette_count=1, palette=[first]
+    // Collect unique values (stop early if >4)
+    let mut unique: Vec<u16> = Vec::new();
+    for &p in pixels {
+        if !unique.contains(&p) {
+            unique.push(p);
+            if unique.len() > 4 {
+                break;
+            }
+        }
+    }
+
+    if unique.len() == 1 {
+        // Uniform chunk: bit_depth=0, palette_count=1, palette=[value]
         let mut out = Vec::with_capacity(4);
         out.push(0); // bit_depth
         out.push(1); // palette_count
-        out.extend_from_slice(&first.to_le_bytes());
+        out.extend_from_slice(&unique[0].to_le_bytes());
         return out;
     }
 
-    // Find max value to determine bit depth
-    let max_val = *pixels.iter().max().unwrap() as usize;
-    let bit_depth = if max_val == 0 {
-        1
-    } else {
-        (usize::BITS - max_val.leading_zeros()) as usize
-    };
+    if unique.len() <= 4 {
+        // Palette encoding: bit_depth=1 or 2, bitmap stores palette indices
+        // Do NOT sort — preserve insertion order to match game's encoder
+        let palette_count = unique.len();
+        let bit_depth = if palette_count <= 2 { 1 } else { 2 };
+        let bitmap_size = bit_depth * 128;
+        let mut bitmap = vec![0u8; bitmap_size];
 
-    // Direct encoding (no palette)
+        for (pixel_idx, &val) in pixels.iter().enumerate() {
+            let idx = unique.iter().position(|&v| v == val).unwrap() as u32;
+            let bit_pos = pixel_idx * bit_depth;
+            let byte_idx = bit_pos / 8;
+            let bit_offset = bit_pos % 8;
+
+            bitmap[byte_idx] |= (idx << bit_offset) as u8;
+            if byte_idx + 1 < bitmap.len() {
+                bitmap[byte_idx + 1] |= (idx >> (8 - bit_offset)) as u8;
+            }
+        }
+
+        let mut out = Vec::with_capacity(2 + palette_count * 2 + bitmap_size);
+        out.push(bit_depth as u8);
+        out.push(palette_count as u8);
+        for &val in &unique {
+            out.extend_from_slice(&val.to_le_bytes());
+        }
+        out.extend_from_slice(&bitmap);
+        return out;
+    }
+
+    // Direct encoding: use range_bits as bit_depth (matches game behavior)
+    let bit_depth = range_bits;
+
     let bitmap_size = bit_depth * 128; // bit_depth * total_pixels / 8 = bit_depth * 1024 / 8
     let mut bitmap = vec![0u8; bitmap_size];
 
@@ -290,14 +332,32 @@ fn encode_block(pixels: &[u16], chunk_size: usize) -> Vec<u8> {
     out
 }
 
+/// Calculate the byte size of a GDM block from its header
+fn block_byte_size(data: &[u8], pos: usize, chunk_size: usize) -> usize {
+    let bit_depth = data[pos] as usize;
+    let palette_count = data[pos + 1] as usize;
+    let total_pixels = chunk_size * chunk_size;
+    let palette_size = 2 * palette_count;
+    let bitmap_size = if bit_depth > 0 {
+        (bit_depth * total_pixels + 7) / 8
+    } else {
+        0
+    };
+    2 + palette_size + bitmap_size
+}
+
 /// Encode a GdmImage back to the GDM binary format.
-/// Uses the original file's header and compression configuration.
+/// Only re-encodes chunks where pixels actually changed; copies original bytes
+/// for unchanged chunks to avoid palette reordering artifacts.
 pub fn write_gdm(image: &GdmImage, original_data: &[u8]) -> Result<Vec<u8>, AppError> {
     if original_data.len() < 16 {
         return Err(AppError::DensityMapError {
             message: "Original GDM data too small for re-encoding".to_string(),
         });
     }
+
+    // Also decode the original to compare pixels
+    let original_image = parse_gdm(original_data)?;
 
     let magic = &original_data[0..4];
     let (dimension, num_channels, chunk_size, num_compression_ranges, header_size) =
@@ -350,6 +410,9 @@ pub fn write_gdm(image: &GdmImage, original_data: &[u8]) -> Result<Vec<u8>, AppE
     let mut output = Vec::with_capacity(original_data.len());
     output.extend_from_slice(&original_data[..data_start]);
 
+    // Track position in original data for copying unchanged blocks
+    let mut orig_pos = data_start;
+
     // Encode each chunk
     for chunk_idx in 0..total_chunks {
         let chunk_row = chunk_idx / chunks_per_dim;
@@ -357,24 +420,51 @@ pub fn write_gdm(image: &GdmImage, original_data: &[u8]) -> Result<Vec<u8>, AppE
         let base_y = chunk_row * chunk_size;
         let base_x = chunk_col * chunk_size;
 
-        // Extract chunk pixels and split by compression range
-        for (range_idx, &bits) in bits_per_range.iter().enumerate() {
-            let shift: usize = bits_per_range[..range_idx].iter().sum();
-            let mask = (1u16 << bits) - 1;
-
-            let mut chunk_pixels = Vec::with_capacity(chunk_size * chunk_size);
-            for py in 0..chunk_size {
-                for px in 0..chunk_size {
-                    let img_x = base_x + px;
-                    let img_y = base_y + py;
-                    let combined = image.pixels[img_y * dimension + img_x];
-                    let range_val = (combined >> shift) & mask;
-                    chunk_pixels.push(range_val);
+        // Check if ANY pixel in this chunk changed
+        let mut chunk_changed = false;
+        'outer: for py in 0..chunk_size {
+            for px in 0..chunk_size {
+                let img_x = base_x + px;
+                let img_y = base_y + py;
+                let idx = img_y * dimension + img_x;
+                if image.pixels[idx] != original_image.pixels[idx] {
+                    chunk_changed = true;
+                    break 'outer;
                 }
             }
+        }
 
-            let block = encode_block(&chunk_pixels, chunk_size);
-            output.extend_from_slice(&block);
+        if chunk_changed {
+            // Re-encode all ranges for this chunk
+            for (range_idx, &bits) in bits_per_range.iter().enumerate() {
+                let shift: usize = bits_per_range[..range_idx].iter().sum();
+                let mask = (1u16 << bits) - 1;
+
+                let mut chunk_pixels = Vec::with_capacity(chunk_size * chunk_size);
+                for py in 0..chunk_size {
+                    for px in 0..chunk_size {
+                        let img_x = base_x + px;
+                        let img_y = base_y + py;
+                        let combined = image.pixels[img_y * dimension + img_x];
+                        let range_val = (combined >> shift) & mask;
+                        chunk_pixels.push(range_val);
+                    }
+                }
+
+                // Skip past original block
+                let orig_block_size = block_byte_size(original_data, orig_pos, chunk_size);
+                orig_pos += orig_block_size;
+
+                let block = encode_block(&chunk_pixels, chunk_size, bits);
+                output.extend_from_slice(&block);
+            }
+        } else {
+            // Copy original bytes for all ranges in this chunk
+            for _ in 0..num_compression_ranges {
+                let orig_block_size = block_byte_size(original_data, orig_pos, chunk_size);
+                output.extend_from_slice(&original_data[orig_pos..orig_pos + orig_block_size]);
+                orig_pos += orig_block_size;
+            }
         }
     }
 
@@ -413,5 +503,105 @@ mod tests {
     fn test_parse_gdm_too_small() {
         let data = vec![0x22, 0x4D, 0x44, 0x46]; // Just magic
         assert!(parse_gdm(&data).is_err());
+    }
+
+    #[test]
+    fn test_encode_decode_block_roundtrip() {
+        // Test with bit_depth > 8 (simulates ground GDM with 11 channels)
+        let chunk_size = 32;
+        let total = chunk_size * chunk_size;
+        let mut pixels: Vec<u16> = Vec::with_capacity(total);
+        for i in 0..total {
+            // Values up to 2047 (11 bits) to simulate ground GDM
+            pixels.push((i % 2048) as u16);
+        }
+
+        let encoded = encode_block(&pixels, chunk_size, 11);
+        assert_eq!(encoded[0], 11); // bit_depth matches range_bits
+        let (decoded, _size) = decode_block(&encoded, 0, chunk_size).unwrap();
+        assert_eq!(pixels, decoded);
+    }
+
+    #[test]
+    fn test_encode_decode_block_uniform_roundtrip() {
+        let chunk_size = 32;
+        let pixels = vec![1234u16; chunk_size * chunk_size];
+        let encoded = encode_block(&pixels, chunk_size, 11);
+        let (decoded, _size) = decode_block(&encoded, 0, chunk_size).unwrap();
+        assert_eq!(pixels, decoded);
+    }
+
+    #[test]
+    fn test_encode_decode_block_palette_2_values() {
+        // Simulates ground GDM block with 2 ground types (e.g., 0 and 4)
+        let chunk_size = 32;
+        let total = chunk_size * chunk_size;
+        let mut pixels = vec![0u16; total];
+        for i in (0..total).step_by(2) {
+            pixels[i] = 4;
+        }
+
+        let encoded = encode_block(&pixels, chunk_size, 11);
+        // Should use palette encoding: bit_depth=1, palette_count=2
+        assert_eq!(encoded[0], 1); // bit_depth
+        assert_eq!(encoded[1], 2); // palette_count
+
+        let (decoded, _size) = decode_block(&encoded, 0, chunk_size).unwrap();
+        assert_eq!(pixels, decoded);
+    }
+
+    #[test]
+    fn test_encode_decode_block_palette_3_values() {
+        let chunk_size = 32;
+        let total = chunk_size * chunk_size;
+        let mut pixels = vec![0u16; total];
+        for i in (0..total).step_by(3) {
+            pixels[i] = 100;
+        }
+        for i in (1..total).step_by(3) {
+            pixels[i] = 500;
+        }
+
+        let encoded = encode_block(&pixels, chunk_size, 11);
+        assert_eq!(encoded[0], 2); // bit_depth
+        assert_eq!(encoded[1], 3); // palette_count
+
+        let (decoded, _size) = decode_block(&encoded, 0, chunk_size).unwrap();
+        assert_eq!(pixels, decoded);
+    }
+
+    #[test]
+    fn test_encode_decode_block_palette_4_values() {
+        let chunk_size = 32;
+        let total = chunk_size * chunk_size;
+        let mut pixels = vec![0u16; total];
+        for i in 0..total {
+            pixels[i] = [0, 4, 13, 2047][i % 4];
+        }
+
+        let encoded = encode_block(&pixels, chunk_size, 11);
+        assert_eq!(encoded[0], 2); // bit_depth
+        assert_eq!(encoded[1], 4); // palette_count
+
+        let (decoded, _size) = decode_block(&encoded, 0, chunk_size).unwrap();
+        assert_eq!(pixels, decoded);
+    }
+
+    #[test]
+    fn test_encode_decode_block_5_values_direct() {
+        // 5 unique values: direct encoding uses range_bits as bit_depth
+        let chunk_size = 32;
+        let total = chunk_size * chunk_size;
+        let mut pixels = vec![0u16; total];
+        for i in 0..total {
+            pixels[i] = [0, 1, 2, 3, 4][i % 5];
+        }
+
+        let encoded = encode_block(&pixels, chunk_size, 5);
+        assert_eq!(encoded[0], 5); // bit_depth = range_bits
+        assert_eq!(encoded[1], 0); // palette_count = 0
+
+        let (decoded, _size) = decode_block(&encoded, 0, chunk_size).unwrap();
+        assert_eq!(pixels, decoded);
     }
 }

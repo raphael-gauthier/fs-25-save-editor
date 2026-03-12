@@ -7,7 +7,9 @@ import type {
   MissionChangePayload,
   CollectibleChangePayload,
   ContractSettingsChangePayload,
+  DensityEditPayload,
 } from "@/lib/types";
+import { useFieldStore } from "@/stores/field";
 
 export const useMissionStore = defineStore("mission", () => {
   const missions = ref<Mission[]>([]);
@@ -134,6 +136,109 @@ export const useMissionStore = defineStore("mission", () => {
     }
   }
 
+  /**
+   * Mission types that can be completed via density map edits.
+   * Maps mission type → density edit generator.
+   */
+  function canCompleteMission(mission: Mission): boolean {
+    // Harvest missions cannot be completed via save editing — the game requires
+    // both terrain changes AND the grain delivery loop. Clearing terrain without
+    // actual delivery causes the game to remove the mission as invalid.
+    const completableTypes = [
+      "plow", "cultivate", "hoe", "mow", "herbicide", "stonePick",
+    ];
+    return mission.fieldId != null && completableTypes.includes(mission.missionType);
+  }
+
+  function completeMission(id: string) {
+    const m = missions.value.find((mi) => mi.uniqueId === id);
+    if (!m || m.fieldId == null) return;
+
+    const fieldStore = useFieldStore();
+    const fieldId = m.fieldId;
+
+    // Set mission XML state
+    if (m.status === "Created") {
+      m.status = "Running";
+    }
+
+    // Build density edits based on mission type
+    const densityEdit: Partial<DensityEditPayload> = {};
+
+    // Don't force completion=1.0 — the game recalculates from terrain/depositedLiters.
+    // Setting it externally can cause the game to auto-complete and remove the mission.
+
+    switch (m.missionType) {
+      // harvest: not completable via save editing (requires gameplay delivery loop)
+      case "plow":
+        densityEdit.setGroundType = 4; // PLOWED
+        densityEdit.setPlowLevel = 1;
+        break;
+      case "cultivate":
+        densityEdit.setGroundType = 2; // CULTIVATED
+        break;
+      case "hoe":
+        densityEdit.setGroundType = 2; // CULTIVATED
+        densityEdit.clearWeeds = true;
+        break;
+      case "mow":
+        densityEdit.setGroundType = 15; // GRASS_CUT
+        densityEdit.setFruitName = "NONE";
+        densityEdit.setGrowthState = 0;
+        break;
+      case "herbicide":
+        densityEdit.clearWeeds = true;
+        break;
+      case "stonePick":
+        densityEdit.clearStones = true;
+        break;
+    }
+
+    // Only apply density edits if there are actual terrain changes
+    const hasDensityChanges = Object.keys(densityEdit).length > 0;
+    if (hasDensityChanges) {
+      // cropAreaOnly (fruit_idx > 0): for harvest/mow where we clear crop pixels only.
+      // fieldAreaOnly (ground_type 1-13): for plow/cultivate/hoe where the field
+      // has no crops but has field-like ground types (excludes roads/grass).
+      if (m.missionType === "harvest" || m.missionType === "mow") {
+        densityEdit.cropAreaOnly = true;
+      } else {
+        densityEdit.fieldAreaOnly = true;
+      }
+      fieldStore.addDensityEdit(fieldId, densityEdit);
+    }
+
+    // Also update XML field state to keep UI consistent
+    const xmlUpdates: Record<string, unknown> = {};
+    switch (m.missionType) {
+      case "plow":
+        xmlUpdates.groundType = "PLOWED";
+        xmlUpdates.plowLevel = 1;
+        break;
+      case "cultivate":
+        xmlUpdates.groundType = "CULTIVATED";
+        break;
+      case "hoe":
+        xmlUpdates.groundType = "CULTIVATED";
+        xmlUpdates.weedState = 0;
+        break;
+      case "mow":
+        xmlUpdates.groundType = "GRASS_CUT";
+        xmlUpdates.fruitType = "UNKNOWN";
+        xmlUpdates.growthState = 0;
+        break;
+      case "herbicide":
+        xmlUpdates.weedState = 0;
+        break;
+      case "stonePick":
+        xmlUpdates.stoneLevel = 0;
+        break;
+    }
+    if (Object.keys(xmlUpdates).length > 0) {
+      fieldStore.updateField(fieldId, xmlUpdates);
+    }
+  }
+
   function toggleCollectible(index: number) {
     const c = collectibles.value.find((co) => co.index === index);
     if (c) {
@@ -257,6 +362,8 @@ export const useMissionStore = defineStore("mission", () => {
     changeCount,
     hydrate,
     updateMission,
+    canCompleteMission,
+    completeMission,
     toggleCollectible,
     collectAll,
     resetAllCollectibles,

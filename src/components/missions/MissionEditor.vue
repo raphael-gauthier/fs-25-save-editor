@@ -2,6 +2,7 @@
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { useMissionStore } from "@/stores/mission";
+import { useFieldStore } from "@/stores/field";
 import { useSettingsStore } from "@/stores/settings";
 import type { Mission } from "@/lib/types";
 import {
@@ -11,6 +12,7 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
@@ -23,7 +25,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ClipboardList, TriangleAlert } from "lucide-vue-next";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import { ClipboardList, CheckCircle, TriangleAlert } from "lucide-vue-next";
 
 interface Props {
   mission: Mission | null;
@@ -37,11 +50,17 @@ const emit = defineEmits<{
 
 const { t } = useI18n();
 const store = useMissionStore();
+const fieldStore = useFieldStore();
 const settings = useSettingsStore();
 
 const original = computed(() => {
   if (!props.mission) return undefined;
   return store.missions.find((m) => m.uniqueId === props.mission!.uniqueId);
+});
+
+const isCompletable = computed(() => {
+  if (!props.mission) return false;
+  return store.canCompleteMission(props.mission) && fieldStore.hasDensityData;
 });
 
 function handleRewardChange(event: Event) {
@@ -55,6 +74,12 @@ function handleRewardChange(event: Event) {
 function handleCompletionChange(value: number[] | undefined) {
   if (value && props.mission) {
     store.updateMission(props.mission.uniqueId, { completion: value[0] / 100 });
+  }
+}
+
+function handleCompleteMission() {
+  if (props.mission) {
+    store.completeMission(props.mission.uniqueId);
   }
 }
 
@@ -143,8 +168,33 @@ function statusLabel(status: Mission["status"]): string {
             />
           </div>
 
-          <!-- Warning: missions cannot be completed from the editor -->
+          <!-- Complete mission button -->
+          <AlertDialog v-if="isCompletable && original.completion < 1.0">
+            <AlertDialogTrigger as-child>
+              <Button variant="default" class="w-full">
+                <CheckCircle class="size-4" />
+                {{ t("mission.completeMission") }}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>{{ t("mission.completeMission") }}</AlertDialogTitle>
+                <AlertDialogDescription>
+                  {{ t("mission.completeMissionDesc") }}
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>{{ t("common.cancel") }}</AlertDialogCancel>
+                <AlertDialogAction @click="handleCompleteMission">
+                  {{ t("common.confirm") }}
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+
+          <!-- Warning for non-completable missions -->
           <div
+            v-else-if="!isCompletable"
             class="flex items-start gap-2 rounded-md border border-yellow-500/30 bg-yellow-500/10 p-3 text-sm text-yellow-700 dark:text-yellow-400"
           >
             <TriangleAlert class="mt-0.5 size-4 shrink-0" />

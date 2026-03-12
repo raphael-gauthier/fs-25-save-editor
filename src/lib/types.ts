@@ -306,8 +306,11 @@ export interface DensityEditPayload {
   setPlowLevel?: number;
   setRollerLevel?: number;
   setStubbleShredLevel?: number;
+  setGroundType?: number;
   clearWeeds?: boolean;
   clearStones?: boolean;
+  cropAreaOnly?: boolean;
+  fieldAreaOnly?: boolean;
 }
 
 export interface Environment {
