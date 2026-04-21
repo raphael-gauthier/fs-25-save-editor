@@ -173,19 +173,29 @@ pub fn write_sale_additions(
         message: format!("{}: {}", xml_path.display(), e),
     })?;
 
-    // Insert new items just before </sales>
-    let closing_tag = "</sales>";
-    let insert_pos = content.rfind(closing_tag).ok_or_else(|| AppError::XmlParseError {
-        file: xml_path.display().to_string(),
-        message: "Missing </sales> closing tag".to_string(),
-    })?;
-
     let mut result = String::with_capacity(content.len() + additions.len() * 200);
-    result.push_str(&content[..insert_pos]);
-    for addition in additions {
-        result.push_str(&format_sale_item(addition));
+
+    if let Some(insert_pos) = content.rfind("</sales>") {
+        result.push_str(&content[..insert_pos]);
+        for addition in additions {
+            result.push_str(&format_sale_item(addition));
+        }
+        result.push_str(&content[insert_pos..]);
+    } else if let Some(self_close_pos) = content.rfind("<sales/>") {
+        // Empty savegame: <sales/> self-closing → expand to <sales>...</sales>
+        result.push_str(&content[..self_close_pos]);
+        result.push_str("<sales>\n");
+        for addition in additions {
+            result.push_str(&format_sale_item(addition));
+        }
+        result.push_str("</sales>");
+        result.push_str(&content[self_close_pos + "<sales/>".len()..]);
+    } else {
+        return Err(AppError::XmlParseError {
+            file: xml_path.display().to_string(),
+            message: "Missing <sales> root element".to_string(),
+        });
     }
-    result.push_str(&content[insert_pos..]);
 
     let tmp_path = xml_path.with_extension("xml.tmp");
     std::fs::write(&tmp_path, &result)?;
@@ -437,6 +447,37 @@ mod tests {
         assert_eq!(sales.len(), 3); // 2 original + 1 added
         assert_eq!(sales[0].price, 1); // modified
         assert_eq!(sales[2].xml_filename, "data/vehicles/test/test.xml"); // added
+
+        let _ = std::fs::remove_dir_all(&save);
+    }
+
+    #[test]
+    fn test_write_sale_add_to_self_closing_sales() {
+        // Reproduces bug: savegame with no sales has <sales/> (self-closing),
+        // not <sales></sales>. Addition must still succeed.
+        let save = std::env::temp_dir().join("fs25_test_ws_sale_self_closing");
+        let _ = std::fs::remove_dir_all(&save);
+        std::fs::create_dir_all(&save).unwrap();
+        std::fs::write(
+            save.join("sales.xml"),
+            "<?xml version=\"1.0\" encoding=\"utf-8\" standalone=\"no\"?>\n<sales/>\n",
+        )
+        .unwrap();
+
+        let additions = vec![SaleAddition {
+            xml_filename: "data/vehicles/test/test.xml".to_string(),
+            price: 12345,
+            damage: 0.0,
+            wear: 0.0,
+            age: 0,
+            operating_time: 0.0,
+            time_left: 30,
+        }];
+        write_sale_additions(&save, &additions).unwrap();
+
+        let sales = parse_sales(&save).unwrap();
+        assert_eq!(sales.len(), 1);
+        assert_eq!(sales[0].price, 12345);
 
         let _ = std::fs::remove_dir_all(&save);
     }
