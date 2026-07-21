@@ -395,6 +395,64 @@ export interface ProductionStockChangePayload {
   amount: number;
 }
 
+export interface Husbandry {
+  placeableIndex: number;
+  displayName: string;
+  farmId: number;
+  /** How well the husbandry is producing. Read-only. */
+  productionFactor: number;
+  clusters: AnimalCluster[];
+  /** No capacity is recorded in the savegame. */
+  food: FillStock[];
+  water: FillStock[];
+  /** The only stock that carries a capacity. */
+  meadow: MeadowStock[];
+}
+
+export interface AnimalCluster {
+  index: number;
+  subType: string;
+  numAnimals: number;
+  /** Age in months. */
+  age: number;
+  health: number;
+  reproduction: number;
+}
+
+export interface FillStock {
+  fillType: string;
+  amount: number;
+}
+
+export interface MeadowStock {
+  fillType: string;
+  amount: number;
+  capacity: number;
+}
+
+export interface HusbandryChangePayload {
+  placeableIndex: number;
+  clusters?: AnimalClusterChangePayload[];
+  food?: FillStockChangePayload[];
+  water?: FillStockChangePayload[];
+  meadow?: FillStockChangePayload[];
+}
+
+/** Every field optional so untouched attributes are rewritten verbatim.
+ *  `subType` is absent by design: changing species is out of scope. */
+export interface AnimalClusterChangePayload {
+  index: number;
+  numAnimals?: number;
+  age?: number;
+  health?: number;
+  reproduction?: number;
+}
+
+export interface FillStockChangePayload {
+  fillType: string;
+  amount: number;
+}
+
 export interface Mission {
   uniqueId: string;
   missionType: string;
@@ -502,6 +560,7 @@ export interface SavegameData {
   fields: Field[];
   farmlands: Farmland[];
   placeables: Placeable[];
+  husbandries: Husbandry[];
   missions: Mission[];
   collectibles: Collectible[];
   contractSettings: ContractSettings | null;
@@ -587,6 +646,7 @@ export interface SavegameChanges {
   fields?: FieldChangePayload[];
   farmlands?: FarmlandChangePayload[];
   placeables?: PlaceableChangePayload[];
+  husbandries?: HusbandryChangePayload[];
   missions?: MissionChangePayload[];
   collectibles?: CollectibleChangePayload[];
   contractSettings?: ContractSettingsChangePayload;
