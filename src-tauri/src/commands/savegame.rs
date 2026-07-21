@@ -297,6 +297,7 @@ pub fn save_changes(path: String, changes: SavegameChanges) -> Result<SaveResult
         || changes.fields.is_some()
         || changes.farmlands.is_some()
         || changes.placeables.is_some()
+        || changes.husbandries.is_some()
         || changes.missions.is_some()
         || changes.collectibles.is_some()
         || changes.contract_settings.is_some()
@@ -1068,6 +1069,69 @@ mod tests {
         assert_eq!(
             barn_after.clusters[0].num_animals, 500,
             "husbandry num_animals edit was lost"
+        );
+
+        cleanup_writable_fixture(&path);
+    }
+
+    #[test]
+    fn test_save_changes_with_only_husbandry_edits_is_not_discarded() {
+        // has_changes OR-ed every SavegameChanges field except husbandries, so a save
+        // where husbandries is the ONLY populated field took the "nothing to do" early
+        // return: success: true, files_modified: [], no backup, and the animal edit
+        // never reached disk.
+        let path = setup_writable_fixture("husbandry_only");
+        let dst = PathBuf::from(&path);
+
+        let before = parse_husbandries(&dst).unwrap();
+        let barn = before
+            .iter()
+            .find(|h| h.display_name.contains("Chicken Barn Big"))
+            .unwrap();
+        let barn_placeable_index = barn.placeable_index;
+
+        let changes = SavegameChanges {
+            finance: None,
+            vehicles: None,
+            sales: None,
+            sale_additions: None,
+            fields: None,
+            farmlands: None,
+            placeables: None,
+            husbandries: Some(vec![crate::models::changes::HusbandryChange {
+                placeable_index: barn_placeable_index,
+                clusters: Some(vec![crate::models::changes::AnimalClusterChange {
+                    index: 0,
+                    num_animals: Some(500),
+                    age: None,
+                    health: None,
+                    reproduction: None,
+                }]),
+                food: None,
+                water: None,
+                meadow: None,
+            }]),
+            missions: None,
+            collectibles: None,
+            contract_settings: None,
+            environment: None,
+            economy: None,
+        };
+        let result = save_changes(path.clone(), changes).unwrap();
+        assert!(result.success, "save_changes failed: {:?}", result.errors);
+        assert!(
+            result.files_modified.contains(&"placeables.xml".to_string()),
+            "husbandry-only save reported no files modified — the edit was discarded"
+        );
+
+        let after = parse_husbandries(&dst).unwrap();
+        let barn_after = after
+            .iter()
+            .find(|h| h.display_name.contains("Chicken Barn Big"))
+            .unwrap();
+        assert_eq!(
+            barn_after.clusters[0].num_animals, 500,
+            "husbandry-only edit never reached disk"
         );
 
         cleanup_writable_fixture(&path);
