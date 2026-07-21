@@ -386,10 +386,10 @@ mod tests {
     #[test]
     fn test_write_placeable_leaves_silo_storage_untouched() {
         let save = setup_fixture("silo_untouched");
-        // The silo at index 0 has <silo><storage><node fillType="WHEAT">, which shares the
-        // node shape used by production points. Editing a production point must not touch it.
-        let before = std::fs::read_to_string(save.join("placeables.xml")).unwrap();
-        assert!(before.contains("fillType=\"SUNFLOWER\" fillLevel=\"4855.552734\""));
+        // Fixture precondition (not a result to verify): the silo at index 0 has
+        // <silo><storage><node fillType="WHEAT"/><node fillType="SUNFLOWER"/></storage></silo>,
+        // which shares the <node> shape used by production points. Editing a production
+        // point must not touch it. The SUNFLOWER node is checked after the write below.
 
         let changes = vec![PlaceableChange {
             index: 3,
@@ -411,9 +411,43 @@ mod tests {
             .find(|s| s.fill_type == "WHEAT")
             .unwrap();
         assert!((stock.amount - 42.0).abs() < 0.01);
-        // ...while the silo's own WHEAT node kept its original level.
+        // ...while the silo's own nodes kept their original levels.
         let raw = std::fs::read_to_string(save.join("placeables.xml")).unwrap();
         assert!(raw.contains("fillType=\"WHEAT\" fillLevel=\"20657.392578\""));
+        assert!(raw.contains("fillType=\"SUNFLOWER\" fillLevel=\"4855.552734\""));
+        let _ = std::fs::remove_dir_all(&save);
+    }
+
+    #[test]
+    fn test_write_placeable_production_storage_change_does_not_patch_non_production_node() {
+        // Exercises the `in_production_storage` gate directly. Index 0 is the silo:
+        // its <node> elements sit under <silo><storage>, never inside a
+        // <productionPoint>. A production_storage change aimed at the SILO'S OWN
+        // index sees `current_change = Some(..)` while walking those nodes, so
+        // whether they get patched depends entirely on the `if in_production_storage`
+        // guard on the "node" arm — not on index scoping. (A change aimed at the
+        // production point's own index, as in the test above, would never reach the
+        // silo regardless of the guard, because `current_change` stays None while
+        // walking the silo's subtree — that would be a toothless test.)
+        let save = setup_fixture("silo_gate");
+
+        let changes = vec![PlaceableChange {
+            index: 0,
+            farm_id: None,
+            price: None,
+            complete_construction: false,
+            production_storage: Some(vec![ProductionStockChange {
+                fill_type: "WHEAT".to_string(),
+                amount: 42.0,
+            }]),
+        }];
+        write_placeable_changes(&save, &changes).unwrap();
+
+        let raw = std::fs::read_to_string(save.join("placeables.xml")).unwrap();
+        assert!(
+            raw.contains("fillType=\"WHEAT\" fillLevel=\"20657.392578\""),
+            "silo's WHEAT node was patched by a production_storage change not scoped to a productionPoint"
+        );
         let _ = std::fs::remove_dir_all(&save);
     }
 

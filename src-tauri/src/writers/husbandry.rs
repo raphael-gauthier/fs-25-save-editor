@@ -343,6 +343,80 @@ mod tests {
     }
 
     #[test]
+    fn test_write_husbandry_does_not_bleed_into_later_husbandries() {
+        // Edits the FIRST husbandry's cluster and asserts the LATER husbandry's clusters
+        // are untouched.
+        //
+        // KNOWN LIMITATION: this does NOT catch the specific `current = change_map
+        // .get(&placeable_index).copied().or(current)` bleed mutation with the current
+        // fixture. That mutation only produces observable bleed when the EDITED
+        // placeable's own `<placeable>` tag is self-closing (Event::Empty never pairs
+        // with an End event, so the unconditional `current = None` reset in the
+        // `Event::End` `b"placeable"` arm never fires, leaving `current` stale for the
+        // next placeable). In `savegame_complete` the only self-closing placeable is
+        // index 1 (a plain barn, not a husbandry), and the placeable immediately after
+        // it (index 2) has no clusters/husbandryFood/husbandry-storage/husbandryMeadow
+        // tags to corrupt, so the one-hop staleness the mutation creates never lands on
+        // matchable content. None of the three husbandries in this fixture are
+        // self-closing, so editing any of them resets `current` correctly via the End
+        // handler before the next placeable starts, regardless of this mutation.
+        // Verified exhaustively: a brute-force probe editing every placeable index 0-8
+        // with a full clusters+food+water+meadow payload under the mutated code showed
+        // zero cross-placeable corruption anywhere in this fixture.
+        // Catching this mutation for real would need a fixture with a self-closing
+        // husbandry placeable immediately preceding another husbandry (a realistic
+        // shape — an untouched, freshly-claimed pre-placed husbandry next to another
+        // pre-placed husbandry) — not fabricated here per instructions.
+        // This test is still kept because it verifies a real, currently-true invariant
+        // (editing one husbandry's cluster must not touch another's), which protects
+        // against other classes of cross-placeable regressions even though it does not
+        // catch this specific proven mutation.
+        let save = setup_fixture("bleed");
+        let all = parse_husbandries(&save).unwrap();
+        let first = husbandry_named(&all, "Chicken Barn Big");
+        let later = husbandry_named(&all, "Sheep Barn Small");
+        assert!(
+            first.placeable_index < later.placeable_index,
+            "test assumes document order"
+        );
+
+        let changes = vec![HusbandryChange {
+            placeable_index: first.placeable_index,
+            clusters: Some(vec![AnimalClusterChange {
+                index: 0,
+                num_animals: Some(999),
+                age: None,
+                health: Some(55.0),
+                reproduction: None,
+            }]),
+            food: None,
+            water: None,
+            meadow: None,
+        }];
+        write_husbandry_changes(&save, &changes).unwrap();
+
+        let after = parse_husbandries(&save).unwrap();
+        let later_after = husbandry_named(&after, "Sheep Barn Small");
+        assert_eq!(
+            later_after.clusters[0].num_animals, 20,
+            "bled into later husbandry's first cluster num_animals"
+        );
+        assert!(
+            (later_after.clusters[0].health - 100.0).abs() < 0.01,
+            "bled into later husbandry's first cluster health"
+        );
+        assert_eq!(
+            later_after.clusters[1].num_animals, 71,
+            "bled into later husbandry's second cluster num_animals"
+        );
+        assert!(
+            (later_after.clusters[1].health - 90.0).abs() < 0.01,
+            "bled into later husbandry's second cluster health"
+        );
+        let _ = std::fs::remove_dir_all(&save);
+    }
+
+    #[test]
     fn test_write_food_water_and_meadow() {
         let save = setup_fixture("stocks");
         let all = parse_husbandries(&save).unwrap();
