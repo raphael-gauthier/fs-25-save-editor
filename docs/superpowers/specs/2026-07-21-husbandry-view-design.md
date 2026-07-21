@@ -83,8 +83,15 @@ writers/husbandry.rs   patches by (placeable_index, cluster_index)
 **Why a separate chain.** If the buildings store and the animals store both emitted
 `PlaceableChange` values, `save_changes` would have to merge two change lists targeting the
 same placeable index before writing — a silent-corruption risk. Two sequential passes over
-`placeables.xml` (buildings first, then husbandries, each reading the file the previous pass
-wrote) keep the two features fully decoupled. The extra parse costs milliseconds.
+`placeables.xml` keep the two features fully decoupled. The extra parse costs milliseconds.
+
+**On pass ordering.** An earlier draft of this spec claimed the husbandry pass had to run
+after the placeable pass, or it would read a stale file and discard the building edits. That
+was verified during implementation and is **false**. Both writers are streaming copy-through
+writers: each patches only the attributes it owns and passes every other XML event through
+byte-for-byte, so whichever runs second faithfully preserves the first one's output. Order is
+a readability convention here, not a correctness constraint. It is recorded because the
+opposite belief would otherwise look like a rule worth defending.
 
 ### Model
 
@@ -220,6 +227,39 @@ Writer tests:
 Frontend: `pnpm lint` clean; `fr`/`en` locales complete, including species names
 (`CHICKEN` → "Poule", `GOAT` → "Chèvre", …) with a fallback to the raw code for unknown
 species so DLC and modded animals still display.
+
+## Known Limitation: stocks are keyed by fill type
+
+`FillStockChange` identifies a stock only by `fillType`, and the writer's lookup takes the
+first match. If a husbandry ever held two entries of the same fill type in one collection —
+two `WHEAT` nodes in `<husbandryFood>`, say — an edit to one would be applied to whichever
+appears first, and the frontend would collapse both into a single payload entry.
+
+No such savegame has been observed, and the constraint is inherited from the payload shape
+rather than introduced by the UI. Fixing it would mean adding a positional field to
+`FillStockChange` and teaching the writer to count entries within a collection, the same way
+it already counts clusters. Worth doing if a real save ever exhibits the shape.
+
+Clusters do not have this problem: they carry an explicit positional `index`.
+
+## Known Test Coverage Gap
+
+The husbandry parser gates water collection on being inside a `<husbandry>` element, because
+`<storage>`/`<node>` tag names are shared with silos and production points. With the shapes
+observed in a real save, that gate cannot be falsified by a test: a silo or production
+placeable never sets `is_husbandry`, so anything wrongly collected is discarded when
+`</placeable>` closes.
+
+The gate does protect a real scenario the fixture cannot express — a single placeable that
+is a husbandry *and* carries an unrelated `<storage>` elsewhere, such as a husbandry building
+still under construction with a `<constructible><storage/>` section. There, `is_husbandry` is
+already true, so the discard-on-close safety net does not fire and the gate is the only
+protection.
+
+No fixture covers that case, because no such placeable has been observed in a real savegame
+and this project has been bitten badly by invented fixture shapes. If one is ever captured,
+add it to `savegame_complete/placeables.xml` and assert the foreign storage does not appear
+in `water`.
 
 ## Known Limitation
 

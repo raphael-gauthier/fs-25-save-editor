@@ -866,6 +866,15 @@ Then replace the placeholder in the `SavegameData { … }` literal:
         husbandries,
 ```
 
+- [ ] **Step 3b: Remove the now-unnecessary dead_code allow**
+
+Task 4 added `#[allow(dead_code)]` to `parse_husbandries` in `src-tauri/src/parsers/husbandry.rs`
+purely because nothing called it yet. This task is what calls it, so delete that attribute —
+along with any item-level allows on the `attr_*` helpers in that file.
+
+Then run `cd src-tauri && cargo build` and confirm zero warnings. If a warning reappears, the
+wiring is not actually reaching the parser; fix the wiring rather than restoring the allow.
+
 - [ ] **Step 4: Run the tests**
 
 Run: `cd src-tauri && cargo test`
@@ -2417,6 +2426,111 @@ Run: `pnpm tauri:dev`
 ```bash
 git add src/components/layout/AppHeader.vue
 git commit -m "fix(editor): re-hydrate buildings, missions and animals on reload"
+```
+
+---
+
+## Task 17: Extract the duplicated attribute helpers
+
+Added during execution. The code quality review of Task 4 flagged that
+`attr_str` / `attr_f64` / `attr_u8` / `attr_u32` are now byte-identical in three parsers
+(`placeable.rs`, `vehicle.rs`, `husbandry.rs`). It was deferred out of Task 4 because it
+touches two files outside that task's blast radius; doing it as its own commit keeps both
+changes atomic.
+
+**Files:**
+- Create: `src-tauri/src/parsers/attrs.rs`
+- Modify: `src-tauri/src/parsers/mod.rs`
+- Modify: `src-tauri/src/parsers/placeable.rs`, `vehicle.rs`, `husbandry.rs`
+
+- [ ] **Step 1: Create the shared module**
+
+```rust
+//! Attribute readers shared by the savegame XML parsers.
+//!
+//! Every reader is total: a missing or unparseable attribute yields the type's
+//! zero value rather than an error, because savegame attributes are frequently
+//! optional and a missing one is not a parse failure.
+
+use quick_xml::events::BytesStart;
+
+pub fn attr_str(e: &BytesStart, key: &str) -> String {
+    e.attributes()
+        .flatten()
+        .find(|a| a.key.as_ref() == key.as_bytes())
+        .map(|a| String::from_utf8_lossy(&a.value).to_string())
+        .unwrap_or_default()
+}
+
+pub fn attr_f64(e: &BytesStart, key: &str) -> f64 {
+    attr_str(e, key).parse().unwrap_or(0.0)
+}
+
+pub fn attr_u8(e: &BytesStart, key: &str) -> u8 {
+    attr_str(e, key).parse().unwrap_or(0)
+}
+
+pub fn attr_u32(e: &BytesStart, key: &str) -> u32 {
+    attr_str(e, key).parse().unwrap_or(0)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    fn element() -> BytesStart<'static> {
+        let mut e = BytesStart::new("sample");
+        e.push_attribute(("name", "WHEAT"));
+        e.push_attribute(("amount", "12.5"));
+        e.push_attribute(("bad", "not-a-number"));
+        e
+    }
+
+    #[test]
+    fn test_attr_str_reads_and_defaults_to_empty() {
+        assert_eq!(attr_str(&element(), "name"), "WHEAT");
+        assert_eq!(attr_str(&element(), "missing"), "");
+    }
+
+    #[test]
+    fn test_numeric_readers_default_to_zero_on_missing_or_malformed() {
+        assert!((attr_f64(&element(), "amount") - 12.5).abs() < 0.001);
+        assert!((attr_f64(&element(), "missing") - 0.0).abs() < 0.001);
+        assert!((attr_f64(&element(), "bad") - 0.0).abs() < 0.001);
+        assert_eq!(attr_u32(&element(), "missing"), 0);
+        assert_eq!(attr_u8(&element(), "bad"), 0);
+    }
+}
+```
+
+- [ ] **Step 2: Run the new tests**
+
+Add `pub mod attrs;` to `src-tauri/src/parsers/mod.rs`.
+
+Run: `cd src-tauri && cargo test parsers::attrs`
+Expected: PASS — 2 tests.
+
+- [ ] **Step 3: Replace the three copies**
+
+In each of `placeable.rs`, `vehicle.rs` and `husbandry.rs`: delete the local `attr_*`
+definitions and add `use crate::parsers::attrs::{attr_f64, attr_str, attr_u8, attr_u32};`,
+importing only the readers that file actually uses (an unused import is a warning).
+
+Note `vehicle.rs` and `husbandry.rs` type their helpers against
+`quick_xml::events::BytesStart` via the fully qualified path; the shared module imports the
+type directly, which is equivalent.
+
+- [ ] **Step 4: Verify nothing changed behaviourally**
+
+Run: `cd src-tauri && cargo test`
+Expected: PASS — same count as before this task, zero warnings. Any test that changes result
+means the extraction was not behaviour-preserving; fix the extraction, not the test.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add src-tauri/src/parsers/
+git commit -m "refactor(parsers): extract shared XML attribute readers"
 ```
 
 ---
