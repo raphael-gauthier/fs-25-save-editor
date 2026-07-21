@@ -16,6 +16,14 @@ export default defineConfig(async () => ({
     },
   },
 
+  // The dependency scanner crawls **/*.html by default, which reaches into
+  // src-tauri/target/doc once `cargo doc` has run — tens of thousands of rustdoc
+  // pages, enough to exhaust file descriptors and fail the build with EMFILE.
+  // server.watch.ignored does not cover this; it only affects the dev watcher.
+  optimizeDeps: {
+    entries: ["index.html"],
+  },
+
   clearScreen: false,
   server: {
     port: 1420,

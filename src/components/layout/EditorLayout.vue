@@ -6,7 +6,7 @@ import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { AlertCircle, ArrowLeft } from "lucide-vue-next";
+import { AlertCircle, ArrowLeft } from "@lucide/vue";
 import { useSavegameStore } from "@/stores/savegame";
 import { useFinanceStore } from "@/stores/finance";
 import { useVehicleStore } from "@/stores/vehicle";

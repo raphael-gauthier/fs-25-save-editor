@@ -2,7 +2,7 @@
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { openUrl } from "@tauri-apps/plugin-opener";
-import { Download } from "lucide-vue-next";
+import { Download } from "@lucide/vue";
 import {
   Dialog,
   DialogContent,

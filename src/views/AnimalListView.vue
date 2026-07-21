@@ -3,7 +3,7 @@ import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { useAnimalStore } from "@/stores/animal";
 import HusbandryCard from "@/components/animals/HusbandryCard.vue";
-import { PiggyBank } from "lucide-vue-next";
+import { PiggyBank } from "@lucide/vue";
 
 const { t } = useI18n();
 const store = useAnimalStore();

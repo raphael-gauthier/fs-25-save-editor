@@ -44,7 +44,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { TrendingUp, Plus, Trash2 } from "lucide-vue-next";
+import { TrendingUp, Plus, Trash2 } from "@lucide/vue";
 
 const PERIODS = [
   "EARLY_SPRING",

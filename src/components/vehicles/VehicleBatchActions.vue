@@ -20,7 +20,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Droplets, RotateCcw, X, ChevronDown } from "lucide-vue-next";
+import { Droplets, RotateCcw, X, ChevronDown } from "@lucide/vue";
 
 const { t } = useI18n();
 const store = useVehicleStore();

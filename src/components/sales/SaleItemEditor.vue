@@ -28,7 +28,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { RotateCcw, Tag, CalendarPlus, Trash2 } from "lucide-vue-next";
+import { RotateCcw, Tag, CalendarPlus, Trash2 } from "@lucide/vue";
 
 interface Props {
   item: SaleItem | null;

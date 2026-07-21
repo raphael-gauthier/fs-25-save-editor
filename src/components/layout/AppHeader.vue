@@ -16,7 +16,7 @@ import {
 } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Save, Loader2, RotateCcw, Undo2 } from "lucide-vue-next";
+import { Save, Loader2, RotateCcw, Undo2 } from "@lucide/vue";
 import { useSavegameStore } from "@/stores/savegame";
 import { useFinanceStore } from "@/stores/finance";
 import { useVehicleStore } from "@/stores/vehicle";

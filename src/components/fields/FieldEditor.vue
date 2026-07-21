@@ -23,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Sprout, Sparkles, Bug, Gem, Droplets, FlaskConical, Tractor } from "lucide-vue-next";
+import { Sprout, Sparkles, Bug, Gem, Droplets, FlaskConical, Tractor } from "@lucide/vue";
 
 interface Props {
   field: Field | null;

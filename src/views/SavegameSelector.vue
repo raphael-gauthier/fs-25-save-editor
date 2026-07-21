@@ -35,7 +35,7 @@ import {
   Calendar,
   Search,
   ArrowUpDown,
-} from "lucide-vue-next";
+} from "@lucide/vue";
 
 const { t } = useI18n();
 const store = useSavegameStore();

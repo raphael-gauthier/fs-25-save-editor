@@ -23,7 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Search, Plus, Loader2, AlertTriangle } from "lucide-vue-next";
+import { ArrowLeft, Search, Plus, Loader2, AlertTriangle } from "@lucide/vue";
 
 const { t } = useI18n();
 const router = useRouter();

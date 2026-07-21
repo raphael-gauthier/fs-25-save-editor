@@ -34,7 +34,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Building2, Hammer } from "lucide-vue-next";
+import { Building2, Hammer } from "@lucide/vue";
 
 interface Props {
   placeable: Placeable | null;

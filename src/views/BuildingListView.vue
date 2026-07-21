@@ -21,7 +21,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Building2, Hammer } from "lucide-vue-next";
+import { Building2, Hammer } from "@lucide/vue";
 
 const { t } = useI18n();
 const store = useBuildingStore();

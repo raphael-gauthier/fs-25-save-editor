@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { useVehicleImages } from "@/composables/useVehicleImages";
-import { Truck, Loader2 } from "lucide-vue-next";
+import { Truck, Loader2 } from "@lucide/vue";
 
 const props = withDefaults(
   defineProps<{

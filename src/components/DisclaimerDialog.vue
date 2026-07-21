@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, computed } from "vue";
 import { useI18n } from "vue-i18n";
-import { TriangleAlert, Square, SquareCheck } from "lucide-vue-next";
+import { TriangleAlert, Square, SquareCheck } from "@lucide/vue";
 import {
   AlertDialog,
   AlertDialogContent,

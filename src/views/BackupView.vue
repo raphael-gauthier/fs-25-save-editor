@@ -29,7 +29,7 @@ import {
   Trash2,
   RotateCcw,
   Loader2,
-} from "lucide-vue-next";
+} from "@lucide/vue";
 
 const { t } = useI18n();
 const store = useBackupStore();

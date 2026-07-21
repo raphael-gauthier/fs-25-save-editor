@@ -35,7 +35,7 @@ import {
   FlaskConical,
   Loader2,
   Info,
-} from "lucide-vue-next";
+} from "@lucide/vue";
 
 const { t } = useI18n();
 const store = useFieldStore();
