@@ -116,8 +116,8 @@ pub struct PlaceableChange {
     pub farm_id: Option<u8>,
     pub price: Option<f64>,
     pub complete_construction: bool,
-    pub production_inputs: Option<Vec<ProductionStockChange>>,
-    pub production_outputs: Option<Vec<ProductionStockChange>>,
+    /// Production point stock levels to overwrite, matched by fill type.
+    pub production_storage: Option<Vec<ProductionStockChange>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

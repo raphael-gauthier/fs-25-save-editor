@@ -342,6 +342,7 @@ export interface EnvironmentChanges {
 
 export interface Placeable {
   index: number;
+  uniqueId: string;
   filename: string;
   displayName: string;
   farmId: number;
@@ -350,26 +351,35 @@ export interface Placeable {
   position: Position | null;
   isPrePlaced: boolean;
   isUnderConstruction: boolean;
-  constructionSteps: ConstructionStep[];
-  productionInputs: ProductionStock[];
-  productionOutputs: ProductionStock[];
+  /** Present only for `<constructible>` placeables; a finished one stays in state "OLD". */
+  construction: ConstructionState | null;
+  productions: ProductionLine[];
+  /**
+   * Flat stock list of a production point. The savegame stores neither the
+   * input/output role nor the capacity — both live in the game's placeable XML.
+   */
+  productionStorage: ProductionStock[];
 }
 
-export interface ConstructionStep {
-  stepIndex: number;
-  materials: ConstructionMaterial[];
+export interface ConstructionState {
+  stateName: string;
+  inputs: ConstructionMaterial[];
 }
 
 export interface ConstructionMaterial {
   fillType: string;
+  /** Amount still to be delivered. The total required is not stored in the savegame. */
   amountRemaining: number;
-  amountTotal: number;
+}
+
+export interface ProductionLine {
+  id: string;
+  isEnabled: boolean;
 }
 
 export interface ProductionStock {
   fillType: string;
   amount: number;
-  capacity: number;
 }
 
 export interface PlaceableChangePayload {
@@ -377,8 +387,7 @@ export interface PlaceableChangePayload {
   farmId?: number;
   price?: number;
   completeConstruction: boolean;
-  productionInputs?: ProductionStockChangePayload[];
-  productionOutputs?: ProductionStockChangePayload[];
+  productionStorage?: ProductionStockChangePayload[];
 }
 
 export interface ProductionStockChangePayload {

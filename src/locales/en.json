@@ -552,10 +552,12 @@
     "noMatch": "No building matches the filters.",
     "completeConstruction": "Complete construction",
     "completeConstructionDesc": "All remaining materials will be set to 0, instantly completing the construction.",
-    "constructionStep": "Step {index}",
-    "materialRemaining": "{remaining} / {total}",
-    "productionInputs": "Input stocks",
-    "productionOutputs": "Output stocks",
+    "constructionState": "State: {state}",
+    "materialRemaining": "{remaining} L remaining",
+    "productions": "Productions",
+    "productionEnabled": "Enabled",
+    "productionDisabled": "Disabled",
+    "productionStorage": "Stocks",
     "position": "Position"
   },
   "mission": {

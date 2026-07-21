@@ -595,7 +595,7 @@ mod tests {
         assert_eq!(data.sales.len(), 2);
         assert_eq!(data.fields.len(), 4);
         assert_eq!(data.farmlands.len(), 5);
-        assert_eq!(data.placeables.len(), 4);
+        assert_eq!(data.placeables.len(), 5);
         assert_eq!(data.missions.len(), 3);
         assert_eq!(data.collectibles.len(), 25);
         assert!(data.contract_settings.is_some());

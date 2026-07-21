@@ -29,10 +29,11 @@ pub fn write_placeable_changes(
     let mut placeable_index: usize = 0;
     let mut in_placeable = false;
     let mut current_change: Option<&PlaceableChange> = None;
-    let mut in_construction = false;
+    // `<storage>`/`<node>` are shared by silos, husbandries and production points,
+    // so stock patching is gated on being inside a `<productionPoint>`.
+    let mut in_constructible = false;
     let mut in_production_point = false;
-    let mut in_production_input = false;
-    let mut in_production_output = false;
+    let mut in_production_storage = false;
 
     loop {
         match reader.read_event() {
@@ -56,8 +57,8 @@ pub fn write_placeable_changes(
                             )?;
                         }
                     }
-                    "constructionPlaceable" if in_placeable => {
-                        in_construction = true;
+                    "constructible" if in_placeable => {
+                        in_constructible = true;
                         write_event(
                             &mut writer,
                             &xml_path,
@@ -72,16 +73,8 @@ pub fn write_placeable_changes(
                             Event::Start(e.clone().into_owned()),
                         )?;
                     }
-                    "input" if in_production_point => {
-                        in_production_input = true;
-                        write_event(
-                            &mut writer,
-                            &xml_path,
-                            Event::Start(e.clone().into_owned()),
-                        )?;
-                    }
-                    "output" if in_production_point => {
-                        in_production_output = true;
+                    "storage" if in_production_point => {
+                        in_production_storage = true;
                         write_event(
                             &mut writer,
                             &xml_path,
@@ -102,26 +95,18 @@ pub fn write_placeable_changes(
 
                 if let Some(change) = current_change {
                     match tag.as_str() {
-                        "material" if in_construction && change.complete_construction => {
-                            let elem = patch_material_complete(e);
+                        "input" if in_constructible && change.complete_construction => {
+                            let elem = patch_construction_input_complete(e);
                             write_event(&mut writer, &xml_path, Event::Empty(elem))?;
                             continue;
                         }
-                        "storage" if in_production_input => {
-                            if let Some(ref input_changes) = change.production_inputs {
+                        "node" if in_production_storage => {
+                            if let Some(ref stock_changes) = change.production_storage {
                                 let fill_type = attr_str(e, "fillType");
-                                if let Some(sc) = input_changes.iter().find(|s| s.fill_type == fill_type) {
-                                    let elem = patch_storage(e, sc);
-                                    write_event(&mut writer, &xml_path, Event::Empty(elem))?;
-                                    continue;
-                                }
-                            }
-                        }
-                        "storage" if in_production_output => {
-                            if let Some(ref output_changes) = change.production_outputs {
-                                let fill_type = attr_str(e, "fillType");
-                                if let Some(sc) = output_changes.iter().find(|s| s.fill_type == fill_type) {
-                                    let elem = patch_storage(e, sc);
+                                if let Some(sc) =
+                                    stock_changes.iter().find(|s| s.fill_type == fill_type)
+                                {
+                                    let elem = patch_storage_node(e, sc);
                                     write_event(&mut writer, &xml_path, Event::Empty(elem))?;
                                     continue;
                                 }
@@ -144,15 +129,16 @@ pub fn write_placeable_changes(
                     "placeable" if in_placeable => {
                         in_placeable = false;
                         current_change = None;
+                        in_constructible = false;
+                        in_production_point = false;
+                        in_production_storage = false;
                     }
-                    "constructionPlaceable" => in_construction = false,
+                    "constructible" => in_constructible = false,
                     "productionPoint" => {
                         in_production_point = false;
-                        in_production_input = false;
-                        in_production_output = false;
+                        in_production_storage = false;
                     }
-                    "input" if in_production_point => in_production_input = false,
-                    "output" if in_production_point => in_production_output = false,
+                    "storage" if in_production_point => in_production_storage = false,
                     _ => {}
                 }
 
@@ -219,13 +205,14 @@ fn patch_placeable_start(e: &BytesStart, change: &PlaceableChange) -> BytesStart
     elem
 }
 
-fn patch_material_complete(e: &BytesStart) -> BytesStart<'static> {
-    let mut elem = BytesStart::new("material");
+/// Marks a construction material as fully delivered by zeroing its outstanding amount.
+fn patch_construction_input_complete(e: &BytesStart) -> BytesStart<'static> {
+    let mut elem = BytesStart::new("input");
     for attr in e.attributes().flatten() {
         let key = String::from_utf8_lossy(attr.key.as_ref()).to_string();
         match key.as_str() {
-            "amountRemaining" => {
-                elem.push_attribute(("amountRemaining", "0"));
+            "remainingAmount" => {
+                elem.push_attribute(("remainingAmount", "0.000000"));
             }
             _ => {
                 elem.push_attribute((
@@ -238,8 +225,8 @@ fn patch_material_complete(e: &BytesStart) -> BytesStart<'static> {
     elem
 }
 
-fn patch_storage(e: &BytesStart, change: &ProductionStockChange) -> BytesStart<'static> {
-    let mut elem = BytesStart::new("storage");
+fn patch_storage_node(e: &BytesStart, change: &ProductionStockChange) -> BytesStart<'static> {
+    let mut elem = BytesStart::new("node");
     for attr in e.attributes().flatten() {
         let key = String::from_utf8_lossy(attr.key.as_ref()).to_string();
         match key.as_str() {
@@ -303,8 +290,7 @@ mod tests {
             farm_id: Some(2),
             price: None,
             complete_construction: false,
-            production_inputs: None,
-            production_outputs: None,
+            production_storage: None,
         }];
         write_placeable_changes(&save, &changes).unwrap();
         let placeables = parse_placeables(&save).unwrap();
@@ -325,18 +311,16 @@ mod tests {
             farm_id: None,
             price: None,
             complete_construction: true,
-            production_inputs: None,
-            production_outputs: None,
+            production_storage: None,
         }];
         write_placeable_changes(&save, &changes).unwrap();
         let after = parse_placeables(&save).unwrap();
         let p = &after[uc_index];
-        // After completing, all remaining should be 0
+        // Every <input remainingAmount> is zeroed, so nothing is left to deliver.
         assert!(!p.is_under_construction);
-        for step in &p.construction_steps {
-            for mat in &step.materials {
-                assert!(mat.amount_remaining <= 0.0);
-            }
+        let construction = p.construction.as_ref().unwrap();
+        for mat in &construction.inputs {
+            assert!(mat.amount_remaining <= 0.0);
         }
         let _ = std::fs::remove_dir_all(&save);
     }
@@ -347,31 +331,64 @@ mod tests {
         let before = parse_placeables(&save).unwrap();
         let prod = before
             .iter()
-            .find(|p| !p.production_inputs.is_empty())
+            .find(|p| !p.production_storage.is_empty())
             .unwrap();
         let prod_index = prod.index;
-        let fill_type = prod.production_inputs[0].fill_type.clone();
+        let fill_type = prod.production_storage[0].fill_type.clone();
 
         let changes = vec![PlaceableChange {
             index: prod_index,
             farm_id: None,
             price: None,
             complete_construction: false,
-            production_inputs: Some(vec![ProductionStockChange {
+            production_storage: Some(vec![ProductionStockChange {
                 fill_type: fill_type.clone(),
                 amount: 5000.0,
             }]),
-            production_outputs: None,
         }];
         write_placeable_changes(&save, &changes).unwrap();
         let after = parse_placeables(&save).unwrap();
         let p = &after[prod_index];
-        let input = p
-            .production_inputs
+        let stock = p
+            .production_storage
             .iter()
             .find(|s| s.fill_type == fill_type)
             .unwrap();
-        assert!((input.amount - 5000.0).abs() < 0.01);
+        assert!((stock.amount - 5000.0).abs() < 0.01);
+        let _ = std::fs::remove_dir_all(&save);
+    }
+
+    #[test]
+    fn test_write_placeable_leaves_silo_storage_untouched() {
+        let save = setup_fixture("silo_untouched");
+        // The silo at index 0 has <silo><storage><node fillType="WHEAT">, which shares the
+        // node shape used by production points. Editing a production point must not touch it.
+        let before = std::fs::read_to_string(save.join("placeables.xml")).unwrap();
+        assert!(before.contains("fillType=\"SUNFLOWER\" fillLevel=\"4855.552734\""));
+
+        let changes = vec![PlaceableChange {
+            index: 2,
+            farm_id: None,
+            price: None,
+            complete_construction: false,
+            production_storage: Some(vec![ProductionStockChange {
+                fill_type: "WHEAT".to_string(),
+                amount: 42.0,
+            }]),
+        }];
+        write_placeable_changes(&save, &changes).unwrap();
+
+        let after = parse_placeables(&save).unwrap();
+        // Production point updated...
+        let stock = after[2]
+            .production_storage
+            .iter()
+            .find(|s| s.fill_type == "WHEAT")
+            .unwrap();
+        assert!((stock.amount - 42.0).abs() < 0.01);
+        // ...while the silo's own WHEAT node kept its original level.
+        let raw = std::fs::read_to_string(save.join("placeables.xml")).unwrap();
+        assert!(raw.contains("fillType=\"WHEAT\" fillLevel=\"20657.392578\""));
         let _ = std::fs::remove_dir_all(&save);
     }
 
@@ -386,8 +403,7 @@ mod tests {
             farm_id: None,
             price: Some(999999.0),
             complete_construction: false,
-            production_inputs: None,
-            production_outputs: None,
+            production_storage: None,
         }];
         write_placeable_changes(&save, &changes).unwrap();
         let after = parse_placeables(&save).unwrap();

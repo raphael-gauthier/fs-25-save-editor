@@ -1,40 +1,40 @@
 <?xml version="1.0" encoding="utf-8" standalone="no"?>
 <placeables>
-  <placeable filename="data/placeables/silos/largeSilo/largeSilo.xml" farmId="1" price="85000.000000" age="10.000000">
-    <component index="1">
-      <sentTranslation x="200.5" y="0.0" z="-100.3" />
-    </component>
-  </placeable>
-  <placeable filename="data/placeables/barns/largeBarn/largeBarn.xml" farmId="1" price="120000.000000" age="2.000000">
-    <component index="1">
-      <sentTranslation x="210.0" y="0.0" z="-95.0" />
-    </component>
-    <constructionPlaceable>
-      <step index="0">
-        <material fillType="CONCRETE" amountRemaining="500.000000" amount="1000.000000" />
-        <material fillType="WOOD" amountRemaining="250.000000" amount="500.000000" />
-      </step>
-      <step index="1">
-        <material fillType="STEEL" amountRemaining="100.000000" amount="200.000000" />
-      </step>
-    </constructionPlaceable>
-  </placeable>
-  <placeable filename="data/placeables/production/flourMill/flourMill.xml" farmId="1" price="200000.000000" age="30.000000">
-    <component index="1">
-      <sentTranslation x="180.0" y="0.0" z="-110.0" />
-    </component>
-    <productionPoint>
-      <input>
-        <storage fillType="WHEAT" fillLevel="2500.000000" capacity="10000.000000" />
-      </input>
-      <output>
-        <storage fillType="FLOUR" fillLevel="1200.000000" capacity="5000.000000" />
-      </output>
-    </productionPoint>
-  </placeable>
-  <placeable filename="data/placeables/mapDE/waterTower/waterTower.xml" farmId="0" price="0.000000" age="0.000000">
-    <component index="1">
-      <sentTranslation x="50.0" y="0.0" z="-200.0" />
-    </component>
-  </placeable>
+    <placeable filename="data/placeables/silos/largeSilo/largeSilo.xml" uniqueId="placeable1a2b3c4d5e6f70819a2b3c4d5e6f7081" position="200.500 0.000 -100.300" rotation="0.00 90.00 0.00" age="10.000000" price="85000.000000" farmId="1">
+        <silo>
+            <storage index="1" farmId="1">
+                <node fillType="WHEAT" fillLevel="20657.392578"/>
+                <node fillType="SUNFLOWER" fillLevel="4855.552734"/>
+            </storage>
+        </silo>
+    </placeable>
+    <placeable filename="data/placeables/barns/largeBarn/largeBarn.xml" uniqueId="placeable2b3c4d5e6f70819a2b3c4d5e6f70819a" position="210.000 0.000 -95.000" rotation="0.00 0.00 0.00" age="2.000000" price="120000.000000" farmId="1">
+        <constructible>
+            <state name="SETUP">
+                <input fillType="WOODBEAM" remainingAmount="6000.000000"/>
+                <input fillType="PLANKS" remainingAmount="3000.000000"/>
+            </state>
+            <storage farmId="1"/>
+        </constructible>
+    </placeable>
+    <placeable filename="data/placeables/production/flourMill/flourMill.xml" uniqueId="placeable3c4d5e6f70819a2b3c4d5e6f70819a2b" position="180.000 0.000 -110.000" rotation="0.00 0.00 0.00" age="30.000000" price="200000.000000" farmId="1">
+        <productionPoint productionCostsToClaim="0.098241">
+            <production id="flour" isEnabled="true"/>
+            <production id="bread" isEnabled="false"/>
+            <storage farmId="1">
+                <node fillType="WHEAT" fillLevel="2500.000000"/>
+                <node fillType="FLOUR" fillLevel="1200.000000"/>
+            </storage>
+        </productionPoint>
+    </placeable>
+    <placeable isPreplaced="true" uniqueId="preplaced_waterTower_fd436b2e09815cd8b2ec7259ef239ca5" age="59.000000" price="0.000000" farmId="0">
+        <constructible>
+            <state name="OLD"/>
+            <storage farmId="0"/>
+        </constructible>
+    </placeable>
+    <placeable isPreplaced="true" uniqueId="preplaced_farmHouse05_306e852a51d90726d144af50a865cbf0" age="59.000000" price="235000.000000" farmId="1" boughtWithFarmlandOverwrite="true">
+        <farmhouse isFreeForAll="false"/>
+        <wardrobe isFreeForAll="false"/>
+    </placeable>
 </placeables>
