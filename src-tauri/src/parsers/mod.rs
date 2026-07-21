@@ -8,6 +8,7 @@ pub mod farm;
 pub mod field;
 pub mod gdm;
 pub mod grle;
+pub mod husbandry;
 pub mod mission;
 pub mod placeable;
 pub mod sale;
