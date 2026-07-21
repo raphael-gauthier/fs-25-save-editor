@@ -11,6 +11,7 @@ use crate::parsers::farm::parse_farms;
 use crate::parsers::economy::parse_economy;
 use crate::parsers::environment::parse_environment;
 use crate::parsers::field::{parse_farmlands, parse_fields};
+use crate::parsers::husbandry::parse_husbandries;
 use crate::parsers::sale::parse_sales;
 use crate::parsers::collectible::parse_collectibles;
 use crate::parsers::contract::parse_contract_settings;
@@ -181,6 +182,15 @@ pub fn load_savegame(path: String) -> Result<SavegameData, AppError> {
         }
     };
 
+    // Parse husbandries — a second pass over placeables.xml (optional)
+    let husbandries = match parse_husbandries(&save_path) {
+        Ok(h) => h,
+        Err(_) => {
+            // placeables.xml already produced a warning above if it is unreadable.
+            Vec::new()
+        }
+    };
+
     // Parse missions (optional)
     let missions = match parse_missions(&save_path) {
         Ok(m) => m,
@@ -250,7 +260,7 @@ pub fn load_savegame(path: String) -> Result<SavegameData, AppError> {
         fields,
         farmlands,
         placeables,
-        husbandries: Vec::new(),
+        husbandries,
         missions,
         collectibles,
         contract_settings,
@@ -597,6 +607,14 @@ mod tests {
         assert_eq!(data.fields.len(), 4);
         assert_eq!(data.farmlands.len(), 5);
         assert_eq!(data.placeables.len(), 8);
+        assert_eq!(data.husbandries.len(), 3);
+        let total_animals: u32 = data
+            .husbandries
+            .iter()
+            .flat_map(|h| &h.clusters)
+            .map(|c| c.num_animals)
+            .sum();
+        assert_eq!(total_animals, 451);
         assert_eq!(data.missions.len(), 3);
         assert_eq!(data.collectibles.len(), 25);
         assert!(data.contract_settings.is_some());

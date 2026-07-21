@@ -7,9 +7,6 @@ use crate::error::AppError;
 use crate::models::husbandry::{AnimalCluster, FillStock, Husbandry, MeadowStock};
 use crate::models::placeable::{display_name_from_unique_id, placeable_display_name};
 
-// Not yet wired into a command — these exist ahead of the feature that will call them.
-// Remove the allows once a Tauri command invokes `parse_husbandries`.
-#[allow(dead_code)]
 fn attr_str(e: &quick_xml::events::BytesStart, key: &str) -> String {
     e.attributes()
         .flatten()
@@ -18,17 +15,14 @@ fn attr_str(e: &quick_xml::events::BytesStart, key: &str) -> String {
         .unwrap_or_default()
 }
 
-#[allow(dead_code)]
 fn attr_f64(e: &quick_xml::events::BytesStart, key: &str) -> f64 {
     attr_str(e, key).parse().unwrap_or(0.0)
 }
 
-#[allow(dead_code)]
 fn attr_u8(e: &quick_xml::events::BytesStart, key: &str) -> u8 {
     attr_str(e, key).parse().unwrap_or(0)
 }
 
-#[allow(dead_code)]
 fn attr_u32(e: &quick_xml::events::BytesStart, key: &str) -> u32 {
     attr_str(e, key).parse().unwrap_or(0)
 }
@@ -38,7 +32,6 @@ fn attr_u32(e: &quick_xml::events::BytesStart, key: &str) -> u32 {
 /// This is a second pass over the same file `parse_placeables` reads. Husbandries keep
 /// their own change payload so that editing animals can never collide with editing
 /// buildings, and `placeable_index` is what ties the two together.
-#[allow(dead_code)]
 pub fn parse_husbandries(path: &Path) -> Result<Vec<Husbandry>, AppError> {
     let xml_path = path.join("placeables.xml");
     let content = std::fs::read_to_string(&xml_path).map_err(|e| AppError::IoError {
