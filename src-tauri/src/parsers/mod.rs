@@ -1,3 +1,4 @@
+pub mod attrs;
 pub mod career;
 pub mod collectible;
 pub mod contract;

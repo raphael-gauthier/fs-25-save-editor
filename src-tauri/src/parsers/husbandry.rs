@@ -6,26 +6,7 @@ use quick_xml::Reader;
 use crate::error::AppError;
 use crate::models::husbandry::{AnimalCluster, FillStock, Husbandry, MeadowStock};
 use crate::models::placeable::{display_name_from_unique_id, placeable_display_name};
-
-fn attr_str(e: &quick_xml::events::BytesStart, key: &str) -> String {
-    e.attributes()
-        .flatten()
-        .find(|a| a.key.as_ref() == key.as_bytes())
-        .map(|a| String::from_utf8_lossy(&a.value).to_string())
-        .unwrap_or_default()
-}
-
-fn attr_f64(e: &quick_xml::events::BytesStart, key: &str) -> f64 {
-    attr_str(e, key).parse().unwrap_or(0.0)
-}
-
-fn attr_u8(e: &quick_xml::events::BytesStart, key: &str) -> u8 {
-    attr_str(e, key).parse().unwrap_or(0)
-}
-
-fn attr_u32(e: &quick_xml::events::BytesStart, key: &str) -> u32 {
-    attr_str(e, key).parse().unwrap_or(0)
-}
+use crate::parsers::attrs::{attr_f64, attr_str, attr_u32, attr_u8};
 
 /// Extracts every animal husbandry from placeables.xml.
 ///

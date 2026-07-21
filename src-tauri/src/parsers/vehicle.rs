@@ -8,26 +8,7 @@ use crate::models::common::{Position, Rotation};
 use crate::models::vehicle::{
     vehicle_display_name, AttachedImplement, FillUnit, Vehicle, VehicleConfiguration, PropertyState,
 };
-
-fn attr_str(e: &quick_xml::events::BytesStart, key: &str) -> String {
-    e.attributes()
-        .flatten()
-        .find(|a| a.key.as_ref() == key.as_bytes())
-        .map(|a| String::from_utf8_lossy(&a.value).to_string())
-        .unwrap_or_default()
-}
-
-fn attr_f64(e: &quick_xml::events::BytesStart, key: &str) -> f64 {
-    attr_str(e, key).parse().unwrap_or(0.0)
-}
-
-fn attr_u8(e: &quick_xml::events::BytesStart, key: &str) -> u8 {
-    attr_str(e, key).parse().unwrap_or(0)
-}
-
-fn attr_u32(e: &quick_xml::events::BytesStart, key: &str) -> u32 {
-    attr_str(e, key).parse().unwrap_or(0)
-}
+use crate::parsers::attrs::{attr_f64, attr_str, attr_u32, attr_u8};
 
 /// Parses a space-separated `"x y z"` attribute. Returns `None` when absent or malformed.
 fn parse_vec3(e: &quick_xml::events::BytesStart, key: &str) -> Option<[f64; 3]> {
