@@ -5,10 +5,5 @@
       <boughtConfiguration name="design" id="1" />
     </boughtConfigurations>
   </item>
-  <item xmlFilename="data/vehicles/johnDeere/johnDeere6M/johnDeere6M.xml" age="20" price="95000" damage="0.050000" wear="0.100000" operatingTime="100.000000" timeLeft="5" isGenerated="false">
-    <boughtConfigurations>
-      <boughtConfiguration name="wheel" id="2" />
-      <boughtConfiguration name="color" id="1" />
-    </boughtConfigurations>
-  </item>
+  <item xmlFilename="data/vehicles/johnDeere/johnDeere6M/johnDeere6M.xml" age="20" price="95000" damage="0.050000" wear="0.100000" operatingTime="100.000000" timeLeft="5" isGenerated="false"/>
 </sales>
