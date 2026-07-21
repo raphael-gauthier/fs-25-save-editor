@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Separator } from "@/components/ui/separator";
-import { Trophy } from "lucide-vue-next";
+import { Trophy } from "@lucide/vue";
 
 const { t } = useI18n();
 const store = useMissionStore();

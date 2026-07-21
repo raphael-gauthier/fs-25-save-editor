@@ -26,7 +26,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Plus } from "lucide-vue-next";
+import { Plus } from "@lucide/vue";
 
 const { t } = useI18n();
 const router = useRouter();

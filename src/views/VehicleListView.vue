@@ -27,7 +27,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { Search, RotateCcw } from "lucide-vue-next";
+import { Search, RotateCcw } from "@lucide/vue";
 
 const { t } = useI18n();
 const store = useVehicleStore();

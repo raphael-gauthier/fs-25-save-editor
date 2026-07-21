@@ -36,7 +36,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { ClipboardList, CheckCircle, TriangleAlert } from "lucide-vue-next";
+import { ClipboardList, CheckCircle, TriangleAlert } from "@lucide/vue";
 
 interface Props {
   mission: Mission | null;

@@ -21,7 +21,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
-import { ClipboardList } from "lucide-vue-next";
+import { ClipboardList } from "@lucide/vue";
 
 const { t } = useI18n();
 const store = useMissionStore();

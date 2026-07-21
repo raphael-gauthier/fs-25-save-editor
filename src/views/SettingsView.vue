@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { FolderOpen, Search, Trash2, RefreshCw } from "lucide-vue-next";
+import { FolderOpen, Search, Trash2, RefreshCw } from "@lucide/vue";
 import { getVersion } from "@tauri-apps/api/app";
 import { useUpdateChecker } from "@/composables/useUpdateChecker";
 

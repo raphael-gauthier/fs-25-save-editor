@@ -44,7 +44,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Sun, CloudRain, Cloud, Snowflake, Tornado, Trash2 } from "lucide-vue-next";
+import { Sun, CloudRain, Cloud, Snowflake, Tornado, Trash2 } from "@lucide/vue";
 
 const { t } = useI18n();
 const store = useWorldStore();

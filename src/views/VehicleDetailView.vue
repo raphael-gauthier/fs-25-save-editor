@@ -52,7 +52,7 @@ import {
   ChevronRight,
   AlertTriangle,
   Info,
-} from "lucide-vue-next";
+} from "@lucide/vue";
 
 const { t } = useI18n();
 const route = useRoute();

@@ -30,7 +30,7 @@ import {
   Settings,
   PiggyBank,
   type LucideIcon,
-} from "lucide-vue-next";
+} from "@lucide/vue";
 
 interface NavItem {
   labelKey: string;

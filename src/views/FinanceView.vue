@@ -23,7 +23,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { Banknote, RotateCcw } from "lucide-vue-next";
+import { Banknote, RotateCcw } from "@lucide/vue";
 
 const { t } = useI18n();
 const finance = useFinanceStore();
