@@ -11,7 +11,6 @@ use crate::models::changes::{AnimalClusterChange, FillStockChange, HusbandryChan
 /// Runs as a separate pass from `write_placeable_changes`, reading whatever that pass
 /// wrote. Targets are found by `(placeable_index, cluster_index)` because `<animal>`
 /// carries no identifier.
-#[allow(dead_code)]
 pub fn write_husbandry_changes(
     path: &Path,
     changes: &[HusbandryChange],

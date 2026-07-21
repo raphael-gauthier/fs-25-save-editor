@@ -453,6 +453,22 @@ pub fn save_changes(path: String, changes: SavegameChanges) -> Result<SaveResult
         }
     }
 
+    // Apply husbandry changes — second pass over placeables.xml, after the placeable pass
+    if let Some(ref husbandry_changes) = changes.husbandries {
+        match writers::husbandry::write_husbandry_changes(&save_path, husbandry_changes) {
+            Ok(()) => {
+                if !files_modified.contains(&"placeables.xml".to_string()) {
+                    files_modified.push("placeables.xml".to_string());
+                }
+            }
+            Err(e) => errors.push(
+                LocalizedMessage::new("errors.fileWriteError")
+                    .with_param("file", "placeables.xml")
+                    .with_param("details", e),
+            ),
+        }
+    }
+
     // Apply mission changes
     if let Some(ref mission_changes) = changes.missions {
         match writers::mission::write_mission_changes(&save_path, mission_changes) {
@@ -981,6 +997,78 @@ mod tests {
         // Verify finance change was applied
         let data = load_savegame(path.clone()).unwrap();
         assert!((data.career.money - 999999.0).abs() < 0.01);
+
+        cleanup_writable_fixture(&path);
+    }
+
+    #[test]
+    fn test_save_changes_applies_placeable_and_husbandry_edits_together() {
+        // Both write_placeable_changes and write_husbandry_changes rewrite
+        // placeables.xml in separate sequential passes. The husbandry pass MUST run
+        // after the placeable pass, or it would read a stale file and its rewrite
+        // would silently discard the building edit. This test proves the two passes
+        // compose correctly within a single save_changes call.
+        let path = setup_writable_fixture("placeable_and_husbandry");
+        let dst = PathBuf::from(&path);
+
+        let before_husbandries = parse_husbandries(&dst).unwrap();
+        let barn = before_husbandries
+            .iter()
+            .find(|h| h.display_name.contains("Chicken Barn Big"))
+            .unwrap();
+        let barn_placeable_index = barn.placeable_index;
+
+        let changes = SavegameChanges {
+            finance: None,
+            vehicles: None,
+            sales: None,
+            sale_additions: None,
+            fields: None,
+            farmlands: None,
+            placeables: Some(vec![crate::models::changes::PlaceableChange {
+                index: 0,
+                farm_id: Some(2),
+                price: None,
+                complete_construction: false,
+                production_storage: None,
+            }]),
+            husbandries: Some(vec![crate::models::changes::HusbandryChange {
+                placeable_index: barn_placeable_index,
+                clusters: Some(vec![crate::models::changes::AnimalClusterChange {
+                    index: 0,
+                    num_animals: Some(500),
+                    age: None,
+                    health: None,
+                    reproduction: None,
+                }]),
+                food: None,
+                water: None,
+                meadow: None,
+            }]),
+            missions: None,
+            collectibles: None,
+            contract_settings: None,
+            environment: None,
+            economy: None,
+        };
+        let result = save_changes(path.clone(), changes).unwrap();
+        assert!(result.success, "save_changes failed: {:?}", result.errors);
+
+        let after_placeables = parse_placeables(&dst).unwrap();
+        assert_eq!(
+            after_placeables[0].farm_id, 2,
+            "placeable farm_id edit was lost"
+        );
+
+        let after_husbandries = parse_husbandries(&dst).unwrap();
+        let barn_after = after_husbandries
+            .iter()
+            .find(|h| h.display_name.contains("Chicken Barn Big"))
+            .unwrap();
+        assert_eq!(
+            barn_after.clusters[0].num_animals, 500,
+            "husbandry num_animals edit was lost"
+        );
 
         cleanup_writable_fixture(&path);
     }
