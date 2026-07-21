@@ -242,6 +242,25 @@ it already counts clusters. Worth doing if a real save ever exhibits the shape.
 
 Clusters do not have this problem: they carry an explicit positional `index`.
 
+## Known Test Coverage Gap: cross-placeable bleed
+
+If the husbandry writer failed to clear its active change when moving between placeables, one
+edit would bleed into every later husbandry in the file. No test catches that, and one was
+attempted and honestly abandoned rather than faked.
+
+The reason it cannot be caught: `current` is reassigned on every `<placeable>`, and
+`</placeable>` clears it, so staleness can only survive past a **self-closing** `<placeable/>`
+— which has no children, therefore no `<husbandry>`, therefore is never itself a husbandry.
+Corruption would require a mis-aimed change landing on a self-closing placeable that is
+immediately followed by a husbandry. Scanning the reference save: 63 of 171 placeables are
+self-closing, and **zero** of them are followed by a husbandry.
+
+Building that adjacency into the fixture was rejected. Both shapes are real, but their
+adjacency is not observed, and this project's entire bug history comes from fixtures shaped by
+assumption rather than evidence. The mis-aimed-change failure mode is already covered by
+`test_write_husbandry_change_aimed_at_a_non_husbandry_is_inert`. If a save is ever captured
+with that adjacency, add it and the gap closes.
+
 ## Known Test Coverage Gap
 
 The husbandry parser gates water collection on being inside a `<husbandry>` element, because
