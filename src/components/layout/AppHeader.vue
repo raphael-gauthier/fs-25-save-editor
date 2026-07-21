@@ -46,7 +46,7 @@ const worldStore = useWorldStore();
 const economyStore = useEconomyStore();
 const settings = useSettingsStore();
 const { invokeCommand } = useTauri();
-const { isDirty, changeCount, collectAllChanges, confirmDiscardIfDirty } =
+const { isDirty, changeCount, collectAllChanges, confirmDiscardIfDirty, resetAll } =
   useUnsavedChanges();
 
 const isSaving = ref(false);
@@ -172,12 +172,7 @@ async function handleSave() {
 async function handleDiscard() {
   const confirmed = await confirmDiscardIfDirty();
   if (confirmed) {
-    financeStore.resetChanges();
-    vehicleStore.resetChanges();
-    saleStore.resetChanges();
-    fieldStore.resetChanges();
-    worldStore.resetChanges();
-    economyStore.resetChanges();
+    resetAll();
   }
 }
 
