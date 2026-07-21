@@ -26,3 +26,6 @@ dist-ssr
 # Documentation (internal)
 docs/implementation/
 .grepai/
+
+# Superpowers brainstorming sessions
+.superpowers/
