@@ -1,58 +1,107 @@
-<?xml version="1.0" encoding="utf-8" standalone="no"?>
+﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
 <missions version="0">
     <meta>
-        <destructibleRockMission nextDay="60"/>
+        <destructibleRockMission nextDay="69"/>
     </meta>
-    <treeTransportMission numTrees="29" uniqueId="mission0a0f54071bf0b9e0cf843e20cca295b5" status="CREATED" finishState="NONE" spotIndex="3" numDeliveredTrees="0" numDeletedTrees="0">
-        <info reward="7395" reimbursement="0.000000" completion="0.000000"/>
+    <treeTransportMission numTrees="13" uniqueId="mission217ae0a2bdae956fd95167160c47a9aa" status="CREATED" finishState="NONE" spotIndex="4" numDeliveredTrees="0" numDeletedTrees="0">
+        <info reward="3315" reimbursement="0.000000" completion="0.000000"/>
         <vehicles spawned="false" group="1"/>
-        <endDate endDay="55" endDayTime="46800000"/>
-        <sellingStation uniqueId="preplaced_paperMill_f91429739d9b166e9109c834b9500697" unloadingStationIndex="1"/>
+        <endDate endDay="66" endDayTime="64800000"/>
+        <sellingStation uniqueId="preplaced_carpenterUS_7ed62cb62f3c73fb7eb4232094fd0b02" unloadingStationIndex="1"/>
     </treeTransportMission>
-    <deadwoodMission uniqueId="mission0bfe97547a03ad1e933c4ba09378f505" status="CREATED" finishState="NONE" spotIndex="16">
-        <info reward="750" reimbursement="0.000000" completion="0.000000"/>
+    <deadwoodMission uniqueId="missione08ecf66a85252c2333058814b55e01c" status="CREATED" finishState="NONE" spotIndex="4">
+        <info reward="1200" reimbursement="0.000000" completion="0.000000"/>
         <vehicles spawned="false" group="1"/>
-        <endDate endDay="55" endDayTime="64800000"/>
-        <originalTree splitShapePart1="1" splitShapePart2="6799" splitShapePart3="0"/>
+        <endDate endDay="66" endDayTime="46800000"/>
+        <originalTree splitShapePart1="1" splitShapePart2="2105" splitShapePart3="0"/>
+        <originalTree splitShapePart1="1" splitShapePart2="2100" splitShapePart3="0"/>
+        <originalTree splitShapePart1="1" splitShapePart2="2090" splitShapePart3="0"/>
+        <originalTree splitShapePart1="1" splitShapePart2="2083" splitShapePart3="0"/>
+        <originalTree splitShapePart1="1" splitShapePart2="2111" splitShapePart3="0"/>
+        <originalTree splitShapePart1="1" splitShapePart2="2071" splitShapePart3="0"/>
+        <originalTree splitShapePart1="1" splitShapePart2="2146" splitShapePart3="0"/>
+        <originalTree splitShapePart1="1" splitShapePart2="2104" splitShapePart3="0"/>
     </deadwoodMission>
-    <harvestMission uniqueId="missionf9d5b1b89b620efcc0d79ecb327984e2" status="CREATED" finishState="NONE">
-        <harvest fruitType="SPINACH" expectedLiters="0.000000" depositedLiters="0.000000" sellingStationPlaceableUniqueId="placeable815f3cf5a9e8c3cb9f01b0d7a9bb4a77" unloadingStationIndex="1"/>
+    <herbicideMission uniqueId="missionabee9597f66d8aa96720acf17690a3f7" status="CREATED" finishState="NONE" targetWeedState="9">
         <info reward="0" reimbursement="0.000000" completion="0.000000"/>
-        <vehicles spawned="false" group="64"/>
-        <endDate endDay="54" endDayTime="86399999"/>
-        <field id="9"/>
+        <vehicles spawned="false" group="8"/>
+        <endDate endDay="65" endDayTime="86399999"/>
+        <field id="89"/>
+    </herbicideMission>
+    <baleMission uniqueId="mission839e18e9c4d89b03ea7d46b92c84ad6c" status="CREATED" finishState="NONE" fruitType="OAT" needRoundbaler="false" spawnedLiters="0.000000" finishedSwathSpawning="false">
+        <info reward="0" reimbursement="0.000000" completion="0.000000"/>
+        <vehicles spawned="false" group="25"/>
+        <endDate endDay="65" endDayTime="86399999"/>
+        <field id="40"/>
+    </baleMission>
+    <baleWrapMission uniqueId="mission357c009f9682441bc19c3267be5d3a40" status="CREATED" finishState="NONE" baleTypeIndex="8" numOfBales="16">
+        <info reward="0" reimbursement="0.000000" completion="0.000000"/>
+        <vehicles spawned="false" group="17"/>
+        <endDate endDay="65" endDayTime="86399999"/>
+        <field id="11"/>
+    </baleWrapMission>
+    <harvestMission uniqueId="mission7f062a02db0a0920eed88113a9b6726c" status="CREATED" finishState="NONE">
+        <harvest fruitType="SPINACH" expectedLiters="0.000000" depositedLiters="0.000000" sellingStationPlaceableUniqueId="placeabled8c1f07bf1314f9a5a6c827ced8eb65a" unloadingStationIndex="1"/>
+        <info reward="0" reimbursement="0.000000" completion="0.000000"/>
+        <vehicles spawned="false" group="65"/>
+        <endDate endDay="65" endDayTime="86399999"/>
+        <field id="10"/>
     </harvestMission>
-    <plowMission uniqueId="missionedc6763dcc4b6e01039d589fb98e358b" status="CREATED" finishState="NONE">
+    <baleWrapMission uniqueId="missionc3f000b2dbce1323238f52ae0d889830" status="CREATED" finishState="NONE" baleTypeIndex="8" numOfBales="26">
         <info reward="0" reimbursement="0.000000" completion="0.000000"/>
-        <vehicles spawned="false" group="7"/>
-        <endDate endDay="54" endDayTime="86399999"/>
-        <field id="86"/>
-    </plowMission>
-    <cultivateMission uniqueId="mission8beb115277aa0c1ac7278bde46e5a1dd" status="CREATED" finishState="NONE">
+        <vehicles spawned="false" group="20"/>
+        <endDate endDay="65" endDayTime="86399999"/>
+        <field id="84"/>
+    </baleWrapMission>
+    <herbicideMission uniqueId="mission1f4e8996f00a2093f4473cde74ee75bc" status="CREATED" finishState="NONE" targetWeedState="9">
         <info reward="0" reimbursement="0.000000" completion="0.000000"/>
-        <vehicles spawned="false" group="5"/>
-        <endDate endDay="54" endDayTime="86399999"/>
-        <field id="49"/>
-    </cultivateMission>
-    <cultivateMission uniqueId="missionbc1865f3910b85e69dcbc659d63f6c93" status="RUNNING" finishState="NONE" farmId="1" activeId="2">
-        <info reward="0" reimbursement="0.000000" completion="0.021665"/>
-        <vehicles spawned="true" group="13">
-            <vehicle uniqueId="vehicle5631775767e5c95604fc5328ed935f33"/>
-            <vehicle uniqueId="vehiclefb161d35e88a1f7498aa18cb9682c639"/>
-        </vehicles>
-        <endDate endDay="54" endDayTime="86399999"/>
-        <field id="87"/>
-    </cultivateMission>
-    <stonePickMission uniqueId="mission72b6878841ab8619fc976f76a7e7fd5c" status="CREATED" finishState="NONE">
+        <vehicles spawned="false" group="4"/>
+        <endDate endDay="65" endDayTime="86399999"/>
+        <field id="51"/>
+    </herbicideMission>
+    <mowMission uniqueId="mission8fe98d7f06103ba01a3ffaf98ba88753" status="CREATED" finishState="NONE" fruitType="GRASS">
+        <info reward="0" reimbursement="0.000000" completion="0.000000"/>
+        <vehicles spawned="false" group="10"/>
+        <endDate endDay="65" endDayTime="86399999"/>
+        <field id="35"/>
+    </mowMission>
+    <harvestMission uniqueId="missionbd7a2e6c67f38fc834ac2c70f08ca70e" status="CREATED" finishState="NONE">
+        <harvest fruitType="SPINACH" expectedLiters="0.000000" depositedLiters="0.000000" sellingStationPlaceableUniqueId="placeabled8c1f07bf1314f9a5a6c827ced8eb65a" unloadingStationIndex="1"/>
+        <info reward="0" reimbursement="0.000000" completion="0.000000"/>
+        <vehicles spawned="false" group="16"/>
+        <endDate endDay="65" endDayTime="86399999"/>
+        <field id="14"/>
+    </harvestMission>
+    <plowMission uniqueId="missionab120bc81e0fd4706f27d6b16b3f5882" status="CREATED" finishState="NONE">
         <info reward="0" reimbursement="0.000000" completion="0.000000"/>
         <vehicles spawned="false" group="3"/>
-        <endDate endDay="54" endDayTime="86399999"/>
-        <field id="36"/>
-    </stonePickMission>
-    <herbicideMission uniqueId="mission61c6e3bc633b392585d7b1c23d2acf43" status="CREATED" finishState="NONE" targetWeedState="9">
+        <endDate endDay="65" endDayTime="86399999"/>
+        <field id="41"/>
+    </plowMission>
+    <harvestMission uniqueId="missionda6695aa428d0df1ad007b0c7c722c3f" status="CREATED" finishState="NONE">
+        <harvest fruitType="OAT" expectedLiters="0.000000" depositedLiters="0.000000" sellingStationPlaceableUniqueId="preplaced_grainFlourMillUS_1b34012227b9f300527609ff06517123" unloadingStationIndex="1"/>
         <info reward="0" reimbursement="0.000000" completion="0.000000"/>
-        <vehicles spawned="false" group="11"/>
-        <endDate endDay="54" endDayTime="86399999"/>
-        <field id="19"/>
-    </herbicideMission>
+        <vehicles spawned="false" group="77"/>
+        <endDate endDay="65" endDayTime="86399999"/>
+        <field id="86"/>
+    </harvestMission>
+    <harvestMission uniqueId="missionb7d20cd88eeb56b8213bd6cc8c813aa0" status="CREATED" finishState="NONE">
+        <harvest fruitType="PEA" expectedLiters="0.000000" depositedLiters="0.000000" sellingStationPlaceableUniqueId="placeable0601289d6db656b35df6e8b7593b2771" unloadingStationIndex="1"/>
+        <info reward="0" reimbursement="0.000000" completion="0.000000"/>
+        <vehicles spawned="false" group="81"/>
+        <endDate endDay="65" endDayTime="86399999"/>
+        <field id="65"/>
+    </harvestMission>
+    <stonePickMission uniqueId="mission5768a718a8546ef44d25139dfcb756df" status="CREATED" finishState="NONE">
+        <info reward="0" reimbursement="0.000000" completion="0.000000"/>
+        <vehicles spawned="false" group="3"/>
+        <endDate endDay="65" endDayTime="86399999"/>
+        <field id="22"/>
+    </stonePickMission>
+    <baleMission uniqueId="mission57efbf87aea7d6afd1ee850b82cdb0a3" status="CREATED" finishState="NONE" fruitType="BARLEY" needRoundbaler="true" spawnedLiters="0.000000" finishedSwathSpawning="false">
+        <info reward="0" reimbursement="0.000000" completion="0.000000"/>
+        <vehicles spawned="false" group="27"/>
+        <endDate endDay="65" endDayTime="86399999"/>
+        <field id="87"/>
+    </baleMission>
 </missions>

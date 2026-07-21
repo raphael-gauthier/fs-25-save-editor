@@ -1,0 +1,3115 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<economy>
+    <greatDemands>
+        <greatDemand/>
+        <greatDemand/>
+        <greatDemand uniqueId="sellingStationTrain01" fillTypeName="SEEDS" demandMultiplier="1.200000" demandStartDay="66" demandStartHour="12" demandDuration="6" isRunning="false" isValid="true"/>
+    </greatDemands>
+    <fillTypes>
+        <fillType fillType="UNKNOWN"/>
+        <fillType fillType="WHEAT" totalAmount="44762">
+            <history>
+                <period period="EARLY_SPRING">357</period>
+                <period period="MID_SPRING">358</period>
+                <period period="LATE_SPRING">334</period>
+                <period period="EARLY_SUMMER">310</period>
+                <period period="MID_SUMMER">292</period>
+                <period period="LATE_SUMMER">281</period>
+                <period period="EARLY_AUTUMN">312</period>
+                <period period="MID_AUTUMN">354</period>
+                <period period="LATE_AUTUMN">380</period>
+                <period period="EARLY_WINTER">404</period>
+                <period period="MID_WINTER">370</period>
+                <period period="LATE_WINTER">356</period>
+            </history>
+        </fillType>
+        <fillType fillType="BARLEY" totalAmount="73972">
+            <history>
+                <period period="EARLY_SPRING">324</period>
+                <period period="MID_SPRING">325</period>
+                <period period="LATE_SPRING">304</period>
+                <period period="EARLY_SUMMER">283</period>
+                <period period="MID_SUMMER">264</period>
+                <period period="LATE_SUMMER">258</period>
+                <period period="EARLY_AUTUMN">289</period>
+                <period period="MID_AUTUMN">326</period>
+                <period period="LATE_AUTUMN">346</period>
+                <period period="EARLY_WINTER">369</period>
+                <period period="MID_WINTER">340</period>
+                <period period="LATE_WINTER">325</period>
+            </history>
+        </fillType>
+        <fillType fillType="OAT" totalAmount="63067">
+            <history>
+                <period period="EARLY_SPRING">552</period>
+                <period period="MID_SPRING">552</period>
+                <period period="LATE_SPRING">515</period>
+                <period period="EARLY_SUMMER">479</period>
+                <period period="MID_SUMMER">449</period>
+                <period period="LATE_SUMMER">438</period>
+                <period period="EARLY_AUTUMN">490</period>
+                <period period="MID_AUTUMN">553</period>
+                <period period="LATE_AUTUMN">589</period>
+                <period period="EARLY_WINTER">627</period>
+                <period period="MID_WINTER">576</period>
+                <period period="LATE_WINTER">550</period>
+            </history>
+        </fillType>
+        <fillType fillType="CANOLA" totalAmount="26557">
+            <history>
+                <period period="EARLY_SPRING">628</period>
+                <period period="MID_SPRING">585</period>
+                <period period="LATE_SPRING">543</period>
+                <period period="EARLY_SUMMER">501</period>
+                <period period="MID_SUMMER">494</period>
+                <period period="LATE_SUMMER">562</period>
+                <period period="EARLY_AUTUMN">630</period>
+                <period period="MID_AUTUMN">672</period>
+                <period period="LATE_AUTUMN">717</period>
+                <period period="EARLY_WINTER">704</period>
+                <period period="MID_WINTER">608</period>
+                <period period="LATE_WINTER">627</period>
+            </history>
+        </fillType>
+        <fillType fillType="SORGHUM" totalAmount="15508">
+            <history>
+                <period period="EARLY_SPRING">463</period>
+                <period period="MID_SPRING">421</period>
+                <period period="LATE_SPRING">382</period>
+                <period period="EARLY_SUMMER">352</period>
+                <period period="MID_SUMMER">339</period>
+                <period period="LATE_SUMMER">351</period>
+                <period period="EARLY_AUTUMN">387</period>
+                <period period="MID_AUTUMN">435</period>
+                <period period="LATE_AUTUMN">478</period>
+                <period period="EARLY_WINTER">509</period>
+                <period period="MID_WINTER">519</period>
+                <period period="LATE_WINTER">501</period>
+            </history>
+        </fillType>
+        <fillType fillType="SUNFLOWER" totalAmount="23531">
+            <history>
+                <period period="EARLY_SPRING">804</period>
+                <period period="MID_SPRING">753</period>
+                <period period="LATE_SPRING">641</period>
+                <period period="EARLY_SUMMER">600</period>
+                <period period="MID_SUMMER">638</period>
+                <period period="LATE_SUMMER">702</period>
+                <period period="EARLY_AUTUMN">751</period>
+                <period period="MID_AUTUMN">745</period>
+                <period period="LATE_AUTUMN">577</period>
+                <period period="EARLY_WINTER">444</period>
+                <period period="MID_WINTER">754</period>
+                <period period="LATE_WINTER">791</period>
+            </history>
+        </fillType>
+        <fillType fillType="SOYBEAN" totalAmount="37332">
+            <history>
+                <period period="EARLY_SPRING">808</period>
+                <period period="MID_SPRING">859</period>
+                <period period="LATE_SPRING">1005</period>
+                <period period="EARLY_SUMMER">1199</period>
+                <period period="MID_SUMMER">1206</period>
+                <period period="LATE_SUMMER">776</period>
+                <period period="EARLY_AUTUMN">655</period>
+                <period period="MID_AUTUMN">617</period>
+                <period period="LATE_AUTUMN">647</period>
+                <period period="EARLY_WINTER">642</period>
+                <period period="MID_WINTER">505</period>
+                <period period="LATE_WINTER">631</period>
+            </history>
+        </fillType>
+        <fillType fillType="MAIZE" totalAmount="118650">
+            <history>
+                <period period="EARLY_SPRING">419</period>
+                <period period="MID_SPRING">399</period>
+                <period period="LATE_SPRING">408</period>
+                <period period="EARLY_SUMMER">470</period>
+                <period period="MID_SUMMER">484</period>
+                <period period="LATE_SUMMER">352</period>
+                <period period="EARLY_AUTUMN">303</period>
+                <period period="MID_AUTUMN">241</period>
+                <period period="LATE_AUTUMN">276</period>
+                <period period="EARLY_WINTER">430</period>
+                <period period="MID_WINTER">369</period>
+                <period period="LATE_WINTER">390</period>
+            </history>
+        </fillType>
+        <fillType fillType="POTATO">
+            <history>
+                <period period="EARLY_SPRING">217</period>
+                <period period="MID_SPRING">205</period>
+                <period period="LATE_SPRING">204</period>
+                <period period="EARLY_SUMMER">216</period>
+                <period period="MID_SUMMER">222</period>
+                <period period="LATE_SUMMER">220</period>
+                <period period="EARLY_AUTUMN">226</period>
+                <period period="MID_AUTUMN">237</period>
+                <period period="LATE_AUTUMN">250</period>
+                <period period="EARLY_WINTER">251</period>
+                <period period="MID_WINTER">233</period>
+                <period period="LATE_WINTER">228</period>
+            </history>
+        </fillType>
+        <fillType fillType="SUGARBEET">
+            <history>
+                <period period="EARLY_SPRING">165</period>
+                <period period="MID_SPRING">156</period>
+                <period period="LATE_SPRING">156</period>
+                <period period="EARLY_SUMMER">166</period>
+                <period period="MID_SUMMER">170</period>
+                <period period="LATE_SUMMER">171</period>
+                <period period="EARLY_AUTUMN">175</period>
+                <period period="MID_AUTUMN">183</period>
+                <period period="LATE_AUTUMN">192</period>
+                <period period="EARLY_WINTER">192</period>
+                <period period="MID_WINTER">178</period>
+                <period period="LATE_WINTER">174</period>
+            </history>
+        </fillType>
+        <fillType fillType="BEETROOT">
+            <history>
+                <period period="EARLY_SPRING">126</period>
+                <period period="MID_SPRING">120</period>
+                <period period="LATE_SPRING">114</period>
+                <period period="EARLY_SUMMER">113</period>
+                <period period="MID_SUMMER">118</period>
+                <period period="LATE_SUMMER">122</period>
+                <period period="EARLY_AUTUMN">122</period>
+                <period period="MID_AUTUMN">125</period>
+                <period period="LATE_AUTUMN">131</period>
+                <period period="EARLY_WINTER">138</period>
+                <period period="MID_WINTER">136</period>
+                <period period="LATE_WINTER">133</period>
+            </history>
+        </fillType>
+        <fillType fillType="CARROT">
+            <history>
+                <period period="EARLY_SPRING">134</period>
+                <period period="MID_SPRING">128</period>
+                <period period="LATE_SPRING">121</period>
+                <period period="EARLY_SUMMER">120</period>
+                <period period="MID_SUMMER">126</period>
+                <period period="LATE_SUMMER">131</period>
+                <period period="EARLY_AUTUMN">130</period>
+                <period period="MID_AUTUMN">133</period>
+                <period period="LATE_AUTUMN">140</period>
+                <period period="EARLY_WINTER">147</period>
+                <period period="MID_WINTER">144</period>
+                <period period="LATE_WINTER">141</period>
+            </history>
+        </fillType>
+        <fillType fillType="PARSNIP">
+            <history>
+                <period period="EARLY_SPRING">135</period>
+                <period period="MID_SPRING">129</period>
+                <period period="LATE_SPRING">121</period>
+                <period period="EARLY_SUMMER">121</period>
+                <period period="MID_SUMMER">126</period>
+                <period period="LATE_SUMMER">133</period>
+                <period period="EARLY_AUTUMN">133</period>
+                <period period="MID_AUTUMN">135</period>
+                <period period="LATE_AUTUMN">142</period>
+                <period period="EARLY_WINTER">149</period>
+                <period period="MID_WINTER">145</period>
+                <period period="LATE_WINTER">142</period>
+            </history>
+        </fillType>
+        <fillType fillType="COTTON" totalAmount="5434">
+            <history>
+                <period period="EARLY_SPRING">1356</period>
+                <period period="MID_SPRING">1281</period>
+                <period period="LATE_SPRING">1277</period>
+                <period period="EARLY_SUMMER">1208</period>
+                <period period="MID_SUMMER">1125</period>
+                <period period="LATE_SUMMER">1100</period>
+                <period period="EARLY_AUTUMN">1163</period>
+                <period period="MID_AUTUMN">1277</period>
+                <period period="LATE_AUTUMN">1288</period>
+                <period period="EARLY_WINTER">1258</period>
+                <period period="MID_WINTER">1333</period>
+                <period period="LATE_WINTER">1363</period>
+            </history>
+        </fillType>
+        <fillType fillType="RICELONGGRAIN">
+            <history>
+                <period period="EARLY_SPRING">495</period>
+                <period period="MID_SPRING">516</period>
+                <period period="LATE_SPRING">531</period>
+                <period period="EARLY_SUMMER">541</period>
+                <period period="MID_SUMMER">553</period>
+                <period period="LATE_SUMMER">553</period>
+                <period period="EARLY_AUTUMN">554</period>
+                <period period="MID_AUTUMN">543</period>
+                <period period="LATE_AUTUMN">533</period>
+                <period period="EARLY_WINTER">520</period>
+                <period period="MID_WINTER">496</period>
+                <period period="LATE_WINTER">493</period>
+            </history>
+        </fillType>
+        <fillType fillType="RICE">
+            <history>
+                <period period="EARLY_SPRING">1047</period>
+                <period period="MID_SPRING">1087</period>
+                <period period="LATE_SPRING">1115</period>
+                <period period="EARLY_SUMMER">1135</period>
+                <period period="MID_SUMMER">1157</period>
+                <period period="LATE_SUMMER">1159</period>
+                <period period="EARLY_AUTUMN">1161</period>
+                <period period="MID_AUTUMN">1143</period>
+                <period period="LATE_AUTUMN">1132</period>
+                <period period="EARLY_WINTER">1105</period>
+                <period period="MID_WINTER">1040</period>
+                <period period="LATE_WINTER">1035</period>
+            </history>
+        </fillType>
+        <fillType fillType="GREENBEAN">
+            <history>
+                <period period="EARLY_SPRING">673</period>
+                <period period="MID_SPRING">682</period>
+                <period period="LATE_SPRING">711</period>
+                <period period="EARLY_SUMMER">732</period>
+                <period period="MID_SUMMER">738</period>
+                <period period="LATE_SUMMER">752</period>
+                <period period="EARLY_AUTUMN">748</period>
+                <period period="MID_AUTUMN">750</period>
+                <period period="LATE_AUTUMN">741</period>
+                <period period="EARLY_WINTER">731</period>
+                <period period="MID_WINTER">703</period>
+                <period period="LATE_WINTER">686</period>
+            </history>
+        </fillType>
+        <fillType fillType="PEA" totalAmount="2023">
+            <history>
+                <period period="EARLY_SPRING">991</period>
+                <period period="MID_SPRING">989</period>
+                <period period="LATE_SPRING">1038</period>
+                <period period="EARLY_SUMMER">1049</period>
+                <period period="MID_SUMMER">1036</period>
+                <period period="LATE_SUMMER">1046</period>
+                <period period="EARLY_AUTUMN">1067</period>
+                <period period="MID_AUTUMN">1105</period>
+                <period period="LATE_AUTUMN">1136</period>
+                <period period="EARLY_WINTER">1125</period>
+                <period period="MID_WINTER">1062</period>
+                <period period="LATE_WINTER">1040</period>
+            </history>
+        </fillType>
+        <fillType fillType="SPINACH" totalAmount="29159">
+            <history>
+                <period period="EARLY_SPRING">205</period>
+                <period period="MID_SPRING">206</period>
+                <period period="LATE_SPRING">216</period>
+                <period period="EARLY_SUMMER">221</period>
+                <period period="MID_SUMMER">221</period>
+                <period period="LATE_SUMMER">232</period>
+                <period period="EARLY_AUTUMN">232</period>
+                <period period="MID_AUTUMN">232</period>
+                <period period="LATE_AUTUMN">227</period>
+                <period period="EARLY_WINTER">224</period>
+                <period period="MID_WINTER">212</period>
+                <period period="LATE_WINTER">209</period>
+            </history>
+        </fillType>
+        <fillType fillType="SUGARCANE">
+            <history>
+                <period period="EARLY_SPRING">114</period>
+                <period period="MID_SPRING">118</period>
+                <period period="LATE_SPRING">121</period>
+                <period period="EARLY_SUMMER">123</period>
+                <period period="MID_SUMMER">126</period>
+                <period period="LATE_SUMMER">126</period>
+                <period period="EARLY_AUTUMN">126</period>
+                <period period="MID_AUTUMN">124</period>
+                <period period="LATE_AUTUMN">122</period>
+                <period period="EARLY_WINTER">119</period>
+                <period period="MID_WINTER">113</period>
+                <period period="LATE_WINTER">113</period>
+            </history>
+        </fillType>
+        <fillType fillType="WOOD" totalAmount="79907">
+            <history>
+                <period period="EARLY_SPRING">972</period>
+                <period period="MID_SPRING">972</period>
+                <period period="LATE_SPRING">965</period>
+                <period period="EARLY_SUMMER">962</period>
+                <period period="MID_SUMMER">961</period>
+                <period period="LATE_SUMMER">968</period>
+                <period period="EARLY_AUTUMN">961</period>
+                <period period="MID_AUTUMN">970</period>
+                <period period="LATE_AUTUMN">983</period>
+                <period period="EARLY_WINTER">983</period>
+                <period period="MID_WINTER">957</period>
+                <period period="LATE_WINTER">961</period>
+            </history>
+        </fillType>
+        <fillType fillType="WOODCHIPS">
+            <history>
+                <period period="EARLY_SPRING">355</period>
+                <period period="MID_SPRING">276</period>
+                <period period="LATE_SPRING">214</period>
+                <period period="EARLY_SUMMER">180</period>
+                <period period="MID_SUMMER">167</period>
+                <period period="LATE_SUMMER">175</period>
+                <period period="EARLY_AUTUMN">217</period>
+                <period period="MID_AUTUMN">302</period>
+                <period period="LATE_AUTUMN">407</period>
+                <period period="EARLY_WINTER">499</period>
+                <period period="MID_WINTER">529</period>
+                <period period="LATE_WINTER">468</period>
+            </history>
+        </fillType>
+        <fillType fillType="SUGARBEET_CUT">
+            <history>
+                <period period="EARLY_SPRING">218</period>
+                <period period="MID_SPRING">206</period>
+                <period period="LATE_SPRING">206</period>
+                <period period="EARLY_SUMMER">218</period>
+                <period period="MID_SUMMER">223</period>
+                <period period="LATE_SUMMER">222</period>
+                <period period="EARLY_AUTUMN">228</period>
+                <period period="MID_AUTUMN">239</period>
+                <period period="LATE_AUTUMN">251</period>
+                <period period="EARLY_WINTER">252</period>
+                <period period="MID_WINTER">235</period>
+                <period period="LATE_WINTER">229</period>
+            </history>
+        </fillType>
+        <fillType fillType="SILAGE" totalAmount="2239860">
+            <history>
+                <period period="EARLY_SPRING">122</period>
+                <period period="MID_SPRING">122</period>
+                <period period="LATE_SPRING">122</period>
+                <period period="EARLY_SUMMER">122</period>
+                <period period="MID_SUMMER">123</period>
+                <period period="LATE_SUMMER">120</period>
+                <period period="EARLY_AUTUMN">120</period>
+                <period period="MID_AUTUMN">120</period>
+                <period period="LATE_AUTUMN">121</period>
+                <period period="EARLY_WINTER">121</period>
+                <period period="MID_WINTER">121</period>
+                <period period="LATE_WINTER">121</period>
+            </history>
+        </fillType>
+        <fillType fillType="GRASS">
+            <history>
+                <period period="EARLY_SPRING">47</period>
+                <period period="MID_SPRING">46</period>
+                <period period="LATE_SPRING">43</period>
+                <period period="EARLY_SUMMER">42</period>
+                <period period="MID_SUMMER">41</period>
+                <period period="LATE_SUMMER">41</period>
+                <period period="EARLY_AUTUMN">42</period>
+                <period period="MID_AUTUMN">45</period>
+                <period period="LATE_AUTUMN">47</period>
+                <period period="EARLY_WINTER">49</period>
+                <period period="MID_WINTER">50</period>
+                <period period="LATE_WINTER">50</period>
+            </history>
+        </fillType>
+        <fillType fillType="MEADOW">
+            <history>
+                <period period="EARLY_SPRING">45</period>
+                <period period="MID_SPRING">45</period>
+                <period period="LATE_SPRING">45</period>
+                <period period="EARLY_SUMMER">45</period>
+                <period period="MID_SUMMER">45</period>
+                <period period="LATE_SUMMER">45</period>
+                <period period="EARLY_AUTUMN">45</period>
+                <period period="MID_AUTUMN">45</period>
+                <period period="LATE_AUTUMN">45</period>
+                <period period="EARLY_WINTER">45</period>
+                <period period="MID_WINTER">45</period>
+                <period period="LATE_WINTER">45</period>
+            </history>
+        </fillType>
+        <fillType fillType="GRASS_WINDROW">
+            <history>
+                <period period="EARLY_SPRING">47</period>
+                <period period="MID_SPRING">44</period>
+                <period period="LATE_SPRING">43</period>
+                <period period="EARLY_SUMMER">41</period>
+                <period period="MID_SUMMER">41</period>
+                <period period="LATE_SUMMER">40</period>
+                <period period="EARLY_AUTUMN">43</period>
+                <period period="MID_AUTUMN">45</period>
+                <period period="LATE_AUTUMN">47</period>
+                <period period="EARLY_WINTER">49</period>
+                <period period="MID_WINTER">50</period>
+                <period period="LATE_WINTER">48</period>
+            </history>
+        </fillType>
+        <fillType fillType="DRYGRASS">
+            <history>
+                <period period="EARLY_SPRING">50</period>
+                <period period="MID_SPRING">49</period>
+                <period period="LATE_SPRING">46</period>
+                <period period="EARLY_SUMMER">45</period>
+                <period period="MID_SUMMER">43</period>
+                <period period="LATE_SUMMER">43</period>
+                <period period="EARLY_AUTUMN">45</period>
+                <period period="MID_AUTUMN">48</period>
+                <period period="LATE_AUTUMN">50</period>
+                <period period="EARLY_WINTER">52</period>
+                <period period="MID_WINTER">53</period>
+                <period period="LATE_WINTER">53</period>
+            </history>
+        </fillType>
+        <fillType fillType="DRYGRASS_WINDROW">
+            <history>
+                <period period="EARLY_SPRING">58</period>
+                <period period="MID_SPRING">56</period>
+                <period period="LATE_SPRING">53</period>
+                <period period="EARLY_SUMMER">51</period>
+                <period period="MID_SUMMER">51</period>
+                <period period="LATE_SUMMER">51</period>
+                <period period="EARLY_AUTUMN">54</period>
+                <period period="MID_AUTUMN">57</period>
+                <period period="LATE_AUTUMN">60</period>
+                <period period="EARLY_WINTER">62</period>
+                <period period="MID_WINTER">62</period>
+                <period period="LATE_WINTER">61</period>
+            </history>
+        </fillType>
+        <fillType fillType="STRAW" totalAmount="959506">
+            <history>
+                <period period="EARLY_SPRING">43</period>
+                <period period="MID_SPRING">43</period>
+                <period period="LATE_SPRING">40</period>
+                <period period="EARLY_SUMMER">37</period>
+                <period period="MID_SUMMER">35</period>
+                <period period="LATE_SUMMER">35</period>
+                <period period="EARLY_AUTUMN">38</period>
+                <period period="MID_AUTUMN">43</period>
+                <period period="LATE_AUTUMN">46</period>
+                <period period="EARLY_WINTER">49</period>
+                <period period="MID_WINTER">45</period>
+                <period period="LATE_WINTER">43</period>
+            </history>
+        </fillType>
+        <fillType fillType="WHEAT_CUT">
+            <history>
+                <period period="EARLY_SPRING">41</period>
+                <period period="MID_SPRING">41</period>
+                <period period="LATE_SPRING">41</period>
+                <period period="EARLY_SUMMER">41</period>
+                <period period="MID_SUMMER">41</period>
+                <period period="LATE_SUMMER">41</period>
+                <period period="EARLY_AUTUMN">41</period>
+                <period period="MID_AUTUMN">41</period>
+                <period period="LATE_AUTUMN">41</period>
+                <period period="EARLY_WINTER">41</period>
+                <period period="MID_WINTER">41</period>
+                <period period="LATE_WINTER">41</period>
+            </history>
+        </fillType>
+        <fillType fillType="BARLEY_CUT">
+            <history>
+                <period period="EARLY_SPRING">41</period>
+                <period period="MID_SPRING">41</period>
+                <period period="LATE_SPRING">41</period>
+                <period period="EARLY_SUMMER">41</period>
+                <period period="MID_SUMMER">41</period>
+                <period period="LATE_SUMMER">41</period>
+                <period period="EARLY_AUTUMN">41</period>
+                <period period="MID_AUTUMN">41</period>
+                <period period="LATE_AUTUMN">41</period>
+                <period period="EARLY_WINTER">41</period>
+                <period period="MID_WINTER">41</period>
+                <period period="LATE_WINTER">41</period>
+            </history>
+        </fillType>
+        <fillType fillType="OAT_CUT">
+            <history>
+                <period period="EARLY_SPRING">41</period>
+                <period period="MID_SPRING">41</period>
+                <period period="LATE_SPRING">41</period>
+                <period period="EARLY_SUMMER">41</period>
+                <period period="MID_SUMMER">41</period>
+                <period period="LATE_SUMMER">41</period>
+                <period period="EARLY_AUTUMN">41</period>
+                <period period="MID_AUTUMN">41</period>
+                <period period="LATE_AUTUMN">41</period>
+                <period period="EARLY_WINTER">41</period>
+                <period period="MID_WINTER">41</period>
+                <period period="LATE_WINTER">41</period>
+            </history>
+        </fillType>
+        <fillType fillType="CANOLA_CUT">
+            <history>
+                <period period="EARLY_SPRING">41</period>
+                <period period="MID_SPRING">41</period>
+                <period period="LATE_SPRING">41</period>
+                <period period="EARLY_SUMMER">41</period>
+                <period period="MID_SUMMER">41</period>
+                <period period="LATE_SUMMER">41</period>
+                <period period="EARLY_AUTUMN">41</period>
+                <period period="MID_AUTUMN">41</period>
+                <period period="LATE_AUTUMN">41</period>
+                <period period="EARLY_WINTER">41</period>
+                <period period="MID_WINTER">41</period>
+                <period period="LATE_WINTER">41</period>
+            </history>
+        </fillType>
+        <fillType fillType="SOYBEAN_CUT">
+            <history>
+                <period period="EARLY_SPRING">41</period>
+                <period period="MID_SPRING">41</period>
+                <period period="LATE_SPRING">41</period>
+                <period period="EARLY_SUMMER">41</period>
+                <period period="MID_SUMMER">41</period>
+                <period period="LATE_SUMMER">41</period>
+                <period period="EARLY_AUTUMN">41</period>
+                <period period="MID_AUTUMN">41</period>
+                <period period="LATE_AUTUMN">41</period>
+                <period period="EARLY_WINTER">41</period>
+                <period period="MID_WINTER">41</period>
+                <period period="LATE_WINTER">41</period>
+            </history>
+        </fillType>
+        <fillType fillType="GRAPE">
+            <history>
+                <period period="EARLY_SPRING">643</period>
+                <period period="MID_SPRING">692</period>
+                <period period="LATE_SPRING">702</period>
+                <period period="EARLY_SUMMER">647</period>
+                <period period="MID_SUMMER">617</period>
+                <period period="LATE_SUMMER">545</period>
+                <period period="EARLY_AUTUMN">487</period>
+                <period period="MID_AUTUMN">476</period>
+                <period period="LATE_AUTUMN">521</period>
+                <period period="EARLY_WINTER">554</period>
+                <period period="MID_WINTER">600</period>
+                <period period="LATE_WINTER">617</period>
+            </history>
+        </fillType>
+        <fillType fillType="OLIVE">
+            <history>
+                <period period="EARLY_SPRING">611</period>
+                <period period="MID_SPRING">636</period>
+                <period period="LATE_SPRING">687</period>
+                <period period="EARLY_SUMMER">694</period>
+                <period period="MID_SUMMER">648</period>
+                <period period="LATE_SUMMER">592</period>
+                <period period="EARLY_AUTUMN">543</period>
+                <period period="MID_AUTUMN">484</period>
+                <period period="LATE_AUTUMN">470</period>
+                <period period="EARLY_WINTER">514</period>
+                <period period="MID_WINTER">568</period>
+                <period period="LATE_WINTER">582</period>
+            </history>
+        </fillType>
+        <fillType fillType="MILK">
+            <history>
+                <period period="EARLY_SPRING">721</period>
+                <period period="MID_SPRING">690</period>
+                <period period="LATE_SPRING">643</period>
+                <period period="EARLY_SUMMER">629</period>
+                <period period="MID_SUMMER">646</period>
+                <period period="LATE_SUMMER">711</period>
+                <period period="EARLY_AUTUMN">767</period>
+                <period period="MID_AUTUMN">739</period>
+                <period period="LATE_AUTUMN">671</period>
+                <period period="EARLY_WINTER">710</period>
+                <period period="MID_WINTER">744</period>
+                <period period="LATE_WINTER">747</period>
+            </history>
+        </fillType>
+        <fillType fillType="GOATMILK" totalAmount="18000">
+            <history>
+                <period period="EARLY_SPRING">2954</period>
+                <period period="MID_SPRING">2797</period>
+                <period period="LATE_SPRING">2605</period>
+                <period period="EARLY_SUMMER">2614</period>
+                <period period="MID_SUMMER">2723</period>
+                <period period="LATE_SUMMER">2815</period>
+                <period period="EARLY_AUTUMN">3043</period>
+                <period period="MID_AUTUMN">2962</period>
+                <period period="LATE_AUTUMN">2731</period>
+                <period period="EARLY_WINTER">2890</period>
+                <period period="MID_WINTER">3014</period>
+                <period period="LATE_WINTER">3035</period>
+            </history>
+        </fillType>
+        <fillType fillType="BUFFALOMILK">
+            <history>
+                <period period="EARLY_SPRING">3606</period>
+                <period period="MID_SPRING">3449</period>
+                <period period="LATE_SPRING">3232</period>
+                <period period="EARLY_SUMMER">3195</period>
+                <period period="MID_SUMMER">3299</period>
+                <period period="LATE_SUMMER">3446</period>
+                <period period="EARLY_AUTUMN">3716</period>
+                <period period="MID_AUTUMN">3636</period>
+                <period period="LATE_AUTUMN">3375</period>
+                <period period="EARLY_WINTER">3572</period>
+                <period period="MID_WINTER">3695</period>
+                <period period="LATE_WINTER">3697</period>
+            </history>
+        </fillType>
+        <fillType fillType="WOOL">
+            <history>
+                <period period="EARLY_SPRING">1123</period>
+                <period period="MID_SPRING">1207</period>
+                <period period="LATE_SPRING">1175</period>
+                <period period="EARLY_SUMMER">1017</period>
+                <period period="MID_SUMMER">898</period>
+                <period period="LATE_SUMMER">803</period>
+                <period period="EARLY_AUTUMN">733</period>
+                <period period="MID_AUTUMN">750</period>
+                <period period="LATE_AUTUMN">841</period>
+                <period period="EARLY_WINTER">880</period>
+                <period period="MID_WINTER">905</period>
+                <period period="LATE_WINTER">970</period>
+            </history>
+        </fillType>
+        <fillType fillType="EGG" totalAmount="55000">
+            <history>
+                <period period="EARLY_SPRING">815</period>
+                <period period="MID_SPRING">875</period>
+                <period period="LATE_SPRING">1114</period>
+                <period period="EARLY_SUMMER">1239</period>
+                <period period="MID_SUMMER">1204</period>
+                <period period="LATE_SUMMER">1036</period>
+                <period period="EARLY_AUTUMN">1081</period>
+                <period period="MID_AUTUMN">1267</period>
+                <period period="LATE_AUTUMN">1386</period>
+                <period period="EARLY_WINTER">1283</period>
+                <period period="MID_WINTER">1013</period>
+                <period period="LATE_WINTER">940</period>
+            </history>
+        </fillType>
+        <fillType fillType="LIQUIDSEEDTREATMENT">
+            <history>
+                <period period="EARLY_SPRING">665</period>
+                <period period="MID_SPRING">679</period>
+                <period period="LATE_SPRING">700</period>
+                <period period="EARLY_SUMMER">700</period>
+                <period period="MID_SUMMER">735</period>
+                <period period="LATE_SUMMER">770</period>
+                <period period="EARLY_AUTUMN">805</period>
+                <period period="MID_AUTUMN">770</period>
+                <period period="LATE_AUTUMN">770</period>
+                <period period="EARLY_WINTER">735</period>
+                <period period="MID_WINTER">700</period>
+                <period period="LATE_WINTER">679</period>
+            </history>
+        </fillType>
+        <fillType fillType="HONEY">
+            <history>
+                <period period="EARLY_SPRING">1105</period>
+                <period period="MID_SPRING">1043</period>
+                <period period="LATE_SPRING">1002</period>
+                <period period="EARLY_SUMMER">978</period>
+                <period period="MID_SUMMER">950</period>
+                <period period="LATE_SUMMER">912</period>
+                <period period="EARLY_AUTUMN">918</period>
+                <period period="MID_AUTUMN">952</period>
+                <period period="LATE_AUTUMN">984</period>
+                <period period="EARLY_WINTER">1014</period>
+                <period period="MID_WINTER">1070</period>
+                <period period="LATE_WINTER">1097</period>
+            </history>
+        </fillType>
+        <fillType fillType="LETTUCE" totalAmount="16000">
+            <history>
+                <period period="EARLY_SPRING">1027</period>
+                <period period="MID_SPRING">1006</period>
+                <period period="LATE_SPRING">982</period>
+                <period period="EARLY_SUMMER">954</period>
+                <period period="MID_SUMMER">939</period>
+                <period period="LATE_SUMMER">936</period>
+                <period period="EARLY_AUTUMN">880</period>
+                <period period="MID_AUTUMN">914</period>
+                <period period="LATE_AUTUMN">973</period>
+                <period period="EARLY_WINTER">1021</period>
+                <period period="MID_WINTER">1109</period>
+                <period period="LATE_WINTER">1075</period>
+            </history>
+        </fillType>
+        <fillType fillType="TOMATO" totalAmount="17000">
+            <history>
+                <period period="EARLY_SPRING">530</period>
+                <period period="MID_SPRING">518</period>
+                <period period="LATE_SPRING">506</period>
+                <period period="EARLY_SUMMER">487</period>
+                <period period="MID_SUMMER">476</period>
+                <period period="LATE_SUMMER">490</period>
+                <period period="EARLY_AUTUMN">462</period>
+                <period period="MID_AUTUMN">478</period>
+                <period period="LATE_AUTUMN">506</period>
+                <period period="EARLY_WINTER">530</period>
+                <period period="MID_WINTER">573</period>
+                <period period="LATE_WINTER">556</period>
+            </history>
+        </fillType>
+        <fillType fillType="STRAWBERRY" totalAmount="17000">
+            <history>
+                <period period="EARLY_SPRING">465</period>
+                <period period="MID_SPRING">457</period>
+                <period period="LATE_SPRING">448</period>
+                <period period="EARLY_SUMMER">432</period>
+                <period period="MID_SUMMER">424</period>
+                <period period="LATE_SUMMER">432</period>
+                <period period="EARLY_AUTUMN">407</period>
+                <period period="MID_AUTUMN">420</period>
+                <period period="LATE_AUTUMN">444</period>
+                <period period="EARLY_WINTER">466</period>
+                <period period="MID_WINTER">503</period>
+                <period period="LATE_WINTER">488</period>
+            </history>
+        </fillType>
+        <fillType fillType="SPRING_ONION" totalAmount="16000">
+            <history>
+                <period period="EARLY_SPRING">464</period>
+                <period period="MID_SPRING">457</period>
+                <period period="LATE_SPRING">445</period>
+                <period period="EARLY_SUMMER">429</period>
+                <period period="MID_SUMMER">420</period>
+                <period period="LATE_SUMMER">430</period>
+                <period period="EARLY_AUTUMN">404</period>
+                <period period="MID_AUTUMN">418</period>
+                <period period="LATE_AUTUMN">442</period>
+                <period period="EARLY_WINTER">464</period>
+                <period period="MID_WINTER">504</period>
+                <period period="LATE_WINTER">487</period>
+            </history>
+        </fillType>
+        <fillType fillType="NAPACABBAGE" totalAmount="16000">
+            <history>
+                <period period="EARLY_SPRING">366</period>
+                <period period="MID_SPRING">358</period>
+                <period period="LATE_SPRING">349</period>
+                <period period="EARLY_SUMMER">337</period>
+                <period period="MID_SUMMER">330</period>
+                <period period="LATE_SUMMER">336</period>
+                <period period="EARLY_AUTUMN">318</period>
+                <period period="MID_AUTUMN">329</period>
+                <period period="LATE_AUTUMN">347</period>
+                <period period="EARLY_WINTER">364</period>
+                <period period="MID_WINTER">394</period>
+                <period period="LATE_WINTER">383</period>
+            </history>
+        </fillType>
+        <fillType fillType="CHILLI" totalAmount="17000">
+            <history>
+                <period period="EARLY_SPRING">473</period>
+                <period period="MID_SPRING">461</period>
+                <period period="LATE_SPRING">450</period>
+                <period period="EARLY_SUMMER">436</period>
+                <period period="MID_SUMMER">428</period>
+                <period period="LATE_SUMMER">431</period>
+                <period period="EARLY_AUTUMN">405</period>
+                <period period="MID_AUTUMN">419</period>
+                <period period="LATE_AUTUMN">447</period>
+                <period period="EARLY_WINTER">468</period>
+                <period period="MID_WINTER">511</period>
+                <period period="LATE_WINTER">494</period>
+            </history>
+        </fillType>
+        <fillType fillType="GARLIC" totalAmount="17000">
+            <history>
+                <period period="EARLY_SPRING">470</period>
+                <period period="MID_SPRING">462</period>
+                <period period="LATE_SPRING">450</period>
+                <period period="EARLY_SUMMER">435</period>
+                <period period="MID_SUMMER">426</period>
+                <period period="LATE_SUMMER">432</period>
+                <period period="EARLY_AUTUMN">408</period>
+                <period period="MID_AUTUMN">424</period>
+                <period period="LATE_AUTUMN">453</period>
+                <period period="EARLY_WINTER">475</period>
+                <period period="MID_WINTER">508</period>
+                <period period="LATE_WINTER">490</period>
+            </history>
+        </fillType>
+        <fillType fillType="ENOKI">
+            <history>
+                <period period="EARLY_SPRING">440</period>
+                <period period="MID_SPRING">431</period>
+                <period period="LATE_SPRING">420</period>
+                <period period="EARLY_SUMMER">408</period>
+                <period period="MID_SUMMER">401</period>
+                <period period="LATE_SUMMER">404</period>
+                <period period="EARLY_AUTUMN">380</period>
+                <period period="MID_AUTUMN">394</period>
+                <period period="LATE_AUTUMN">417</period>
+                <period period="EARLY_WINTER">437</period>
+                <period period="MID_WINTER">475</period>
+                <period period="LATE_WINTER">461</period>
+            </history>
+        </fillType>
+        <fillType fillType="OYSTER">
+            <history>
+                <period period="EARLY_SPRING">902</period>
+                <period period="MID_SPRING">882</period>
+                <period period="LATE_SPRING">861</period>
+                <period period="EARLY_SUMMER">834</period>
+                <period period="MID_SUMMER">818</period>
+                <period period="LATE_SUMMER">818</period>
+                <period period="EARLY_AUTUMN">769</period>
+                <period period="MID_AUTUMN">802</period>
+                <period period="LATE_AUTUMN">857</period>
+                <period period="EARLY_WINTER">899</period>
+                <period period="MID_WINTER">975</period>
+                <period period="LATE_WINTER">945</period>
+            </history>
+        </fillType>
+        <fillType fillType="BOARDS">
+            <history>
+                <period period="EARLY_SPRING">1175</period>
+                <period period="MID_SPRING">1268</period>
+                <period period="LATE_SPRING">1348</period>
+                <period period="EARLY_SUMMER">1408</period>
+                <period period="MID_SUMMER">1439</period>
+                <period period="LATE_SUMMER">1336</period>
+                <period period="EARLY_AUTUMN">1297</period>
+                <period period="MID_AUTUMN">1256</period>
+                <period period="LATE_AUTUMN">1231</period>
+                <period period="EARLY_WINTER">1205</period>
+                <period period="MID_WINTER">1175</period>
+                <period period="LATE_WINTER">1164</period>
+            </history>
+        </fillType>
+        <fillType fillType="PLANKS">
+            <history>
+                <period period="EARLY_SPRING">1958</period>
+                <period period="MID_SPRING">1956</period>
+                <period period="LATE_SPRING">1960</period>
+                <period period="EARLY_SUMMER">1964</period>
+                <period period="MID_SUMMER">1964</period>
+                <period period="LATE_SUMMER">1961</period>
+                <period period="EARLY_AUTUMN">1967</period>
+                <period period="MID_AUTUMN">1967</period>
+                <period period="LATE_AUTUMN">1970</period>
+                <period period="EARLY_WINTER">1970</period>
+                <period period="MID_WINTER">1963</period>
+                <period period="LATE_WINTER">1957</period>
+            </history>
+        </fillType>
+        <fillType fillType="WOODBEAM">
+            <history>
+                <period period="EARLY_SPRING">2934</period>
+                <period period="MID_SPRING">2928</period>
+                <period period="LATE_SPRING">2942</period>
+                <period period="EARLY_SUMMER">2950</period>
+                <period period="MID_SUMMER">2950</period>
+                <period period="LATE_SUMMER">2936</period>
+                <period period="EARLY_AUTUMN">2934</period>
+                <period period="MID_AUTUMN">2932</period>
+                <period period="LATE_AUTUMN">2928</period>
+                <period period="EARLY_WINTER">2928</period>
+                <period period="MID_WINTER">2948</period>
+                <period period="LATE_WINTER">2942</period>
+            </history>
+        </fillType>
+        <fillType fillType="PREFABWALL">
+            <history>
+                <period period="EARLY_SPRING">5067</period>
+                <period period="MID_SPRING">5060</period>
+                <period period="LATE_SPRING">5057</period>
+                <period period="EARLY_SUMMER">5065</period>
+                <period period="MID_SUMMER">5066</period>
+                <period period="LATE_SUMMER">5020</period>
+                <period period="EARLY_AUTUMN">5036</period>
+                <period period="MID_AUTUMN">5047</period>
+                <period period="LATE_AUTUMN">5046</period>
+                <period period="EARLY_WINTER">5047</period>
+                <period period="MID_WINTER">5091</period>
+                <period period="LATE_WINTER">5065</period>
+            </history>
+        </fillType>
+        <fillType fillType="FLOUR">
+            <history>
+                <period period="EARLY_SPRING">716</period>
+                <period period="MID_SPRING">719</period>
+                <period period="LATE_SPRING">669</period>
+                <period period="EARLY_SUMMER">619</period>
+                <period period="MID_SUMMER">580</period>
+                <period period="LATE_SUMMER">574</period>
+                <period period="EARLY_AUTUMN">632</period>
+                <period period="MID_AUTUMN">714</period>
+                <period period="LATE_AUTUMN">766</period>
+                <period period="EARLY_WINTER">815</period>
+                <period period="MID_WINTER">749</period>
+                <period period="LATE_WINTER">717</period>
+            </history>
+        </fillType>
+        <fillType fillType="RICEFLOUR">
+            <history>
+                <period period="EARLY_SPRING">945</period>
+                <period period="MID_SPRING">943</period>
+                <period period="LATE_SPRING">878</period>
+                <period period="EARLY_SUMMER">812</period>
+                <period period="MID_SUMMER">758</period>
+                <period period="LATE_SUMMER">741</period>
+                <period period="EARLY_AUTUMN">828</period>
+                <period period="MID_AUTUMN">938</period>
+                <period period="LATE_AUTUMN">1003</period>
+                <period period="EARLY_WINTER">1069</period>
+                <period period="MID_WINTER">989</period>
+                <period period="LATE_WINTER">944</period>
+            </history>
+        </fillType>
+        <fillType fillType="BREAD">
+            <history>
+                <period period="EARLY_SPRING">1740</period>
+                <period period="MID_SPRING">1745</period>
+                <period period="LATE_SPRING">1629</period>
+                <period period="EARLY_SUMMER">1513</period>
+                <period period="MID_SUMMER">1419</period>
+                <period period="LATE_SUMMER">1387</period>
+                <period period="EARLY_AUTUMN">1541</period>
+                <period period="MID_AUTUMN">1739</period>
+                <period period="LATE_AUTUMN">1856</period>
+                <period period="EARLY_WINTER">1974</period>
+                <period period="MID_WINTER">1816</period>
+                <period period="LATE_WINTER">1739</period>
+            </history>
+        </fillType>
+        <fillType fillType="CAKE">
+            <history>
+                <period period="EARLY_SPRING">3430</period>
+                <period period="MID_SPRING">3261</period>
+                <period period="LATE_SPRING">3064</period>
+                <period period="EARLY_SUMMER">3043</period>
+                <period period="MID_SUMMER">3140</period>
+                <period period="LATE_SUMMER">3233</period>
+                <period period="EARLY_AUTUMN">3503</period>
+                <period period="MID_AUTUMN">3423</period>
+                <period period="LATE_AUTUMN">3166</period>
+                <period period="EARLY_WINTER">3353</period>
+                <period period="MID_WINTER">3531</period>
+                <period period="LATE_WINTER">3524</period>
+            </history>
+        </fillType>
+        <fillType fillType="MILK_BOTTLED">
+            <history>
+                <period period="EARLY_SPRING">603</period>
+                <period period="MID_SPRING">575</period>
+                <period period="LATE_SPRING">541</period>
+                <period period="EARLY_SUMMER">537</period>
+                <period period="MID_SUMMER">553</period>
+                <period period="LATE_SUMMER">566</period>
+                <period period="EARLY_AUTUMN">616</period>
+                <period period="MID_AUTUMN">603</period>
+                <period period="LATE_AUTUMN">555</period>
+                <period period="EARLY_WINTER">588</period>
+                <period period="MID_WINTER">624</period>
+                <period period="LATE_WINTER">621</period>
+            </history>
+        </fillType>
+        <fillType fillType="GOATMILK_BOTTLED" totalAmount="5000">
+            <history>
+                <period period="EARLY_SPRING">2223</period>
+                <period period="MID_SPRING">2116</period>
+                <period period="LATE_SPRING">1991</period>
+                <period period="EARLY_SUMMER">1981</period>
+                <period period="MID_SUMMER">2045</period>
+                <period period="LATE_SUMMER">2089</period>
+                <period period="EARLY_AUTUMN">2263</period>
+                <period period="MID_AUTUMN">2215</period>
+                <period period="LATE_AUTUMN">2053</period>
+                <period period="EARLY_WINTER">2173</period>
+                <period period="MID_WINTER">2287</period>
+                <period period="LATE_WINTER">2282</period>
+            </history>
+        </fillType>
+        <fillType fillType="BUFFALOMILK_BOTTLED">
+            <history>
+                <period period="EARLY_SPRING">2511</period>
+                <period period="MID_SPRING">2385</period>
+                <period period="LATE_SPRING">2238</period>
+                <period period="EARLY_SUMMER">2231</period>
+                <period period="MID_SUMMER">2309</period>
+                <period period="LATE_SUMMER">2441</period>
+                <period period="EARLY_AUTUMN">2633</period>
+                <period period="MID_AUTUMN">2539</period>
+                <period period="LATE_AUTUMN">2319</period>
+                <period period="EARLY_WINTER">2458</period>
+                <period period="MID_WINTER">2589</period>
+                <period period="LATE_WINTER">2582</period>
+            </history>
+        </fillType>
+        <fillType fillType="BUTTER">
+            <history>
+                <period period="EARLY_SPRING">1159</period>
+                <period period="MID_SPRING">1101</period>
+                <period period="LATE_SPRING">1031</period>
+                <period period="EARLY_SUMMER">1024</period>
+                <period period="MID_SUMMER">1057</period>
+                <period period="LATE_SUMMER">1088</period>
+                <period period="EARLY_AUTUMN">1181</period>
+                <period period="MID_AUTUMN">1157</period>
+                <period period="LATE_AUTUMN">1070</period>
+                <period period="EARLY_WINTER">1133</period>
+                <period period="MID_WINTER">1195</period>
+                <period period="LATE_WINTER">1187</period>
+            </history>
+        </fillType>
+        <fillType fillType="CHEESE">
+            <history>
+                <period period="EARLY_SPRING">1883</period>
+                <period period="MID_SPRING">1792</period>
+                <period period="LATE_SPRING">1686</period>
+                <period period="EARLY_SUMMER">1674</period>
+                <period period="MID_SUMMER">1726</period>
+                <period period="LATE_SUMMER">1789</period>
+                <period period="EARLY_AUTUMN">1933</period>
+                <period period="MID_AUTUMN">1881</period>
+                <period period="LATE_AUTUMN">1734</period>
+                <period period="EARLY_WINTER">1836</period>
+                <period period="MID_WINTER">1936</period>
+                <period period="LATE_WINTER">1933</period>
+            </history>
+        </fillType>
+        <fillType fillType="BUFFALOMOZZARELLA">
+            <history>
+                <period period="EARLY_SPRING">7822</period>
+                <period period="MID_SPRING">7439</period>
+                <period period="LATE_SPRING">6994</period>
+                <period period="EARLY_SUMMER">6953</period>
+                <period period="MID_SUMMER">7178</period>
+                <period period="LATE_SUMMER">7412</period>
+                <period period="EARLY_AUTUMN">8030</period>
+                <period period="MID_AUTUMN">7839</period>
+                <period period="LATE_AUTUMN">7242</period>
+                <period period="EARLY_WINTER">7665</period>
+                <period period="MID_WINTER">8063</period>
+                <period period="LATE_WINTER">8040</period>
+            </history>
+        </fillType>
+        <fillType fillType="GOATCHEESE" totalAmount="11000">
+            <history>
+                <period period="EARLY_SPRING">1847</period>
+                <period period="MID_SPRING">1756</period>
+                <period period="LATE_SPRING">1651</period>
+                <period period="EARLY_SUMMER">1633</period>
+                <period period="MID_SUMMER">1680</period>
+                <period period="LATE_SUMMER">1747</period>
+                <period period="EARLY_AUTUMN">1891</period>
+                <period period="MID_AUTUMN">1848</period>
+                <period period="LATE_AUTUMN">1710</period>
+                <period period="EARLY_WINTER">1809</period>
+                <period period="MID_WINTER">1903</period>
+                <period period="LATE_WINTER">1898</period>
+            </history>
+        </fillType>
+        <fillType fillType="CHOCOLATE">
+            <history>
+                <period period="EARLY_SPRING">1955</period>
+                <period period="MID_SPRING">2013</period>
+                <period period="LATE_SPRING">2086</period>
+                <period period="EARLY_SUMMER">1989</period>
+                <period period="MID_SUMMER">1820</period>
+                <period period="LATE_SUMMER">1874</period>
+                <period period="EARLY_AUTUMN">1861</period>
+                <period period="MID_AUTUMN">1844</period>
+                <period period="LATE_AUTUMN">1925</period>
+                <period period="EARLY_WINTER">2002</period>
+                <period period="MID_WINTER">2119</period>
+                <period period="LATE_WINTER">2032</period>
+            </history>
+        </fillType>
+        <fillType fillType="POTATOCHIPS">
+            <history>
+                <period period="EARLY_SPRING">1493</period>
+                <period period="MID_SPRING">1493</period>
+                <period period="LATE_SPRING">1493</period>
+                <period period="EARLY_SUMMER">1494</period>
+                <period period="MID_SUMMER">1495</period>
+                <period period="LATE_SUMMER">1493</period>
+                <period period="EARLY_AUTUMN">1494</period>
+                <period period="MID_AUTUMN">1493</period>
+                <period period="LATE_AUTUMN">1493</period>
+                <period period="EARLY_WINTER">1493</period>
+                <period period="MID_WINTER">1493</period>
+                <period period="LATE_WINTER">1493</period>
+            </history>
+        </fillType>
+        <fillType fillType="RICEROLLS">
+            <history>
+                <period period="EARLY_SPRING">1538</period>
+                <period period="MID_SPRING">1538</period>
+                <period period="LATE_SPRING">1538</period>
+                <period period="EARLY_SUMMER">1537</period>
+                <period period="MID_SUMMER">1536</period>
+                <period period="LATE_SUMMER">1554</period>
+                <period period="EARLY_AUTUMN">1552</period>
+                <period period="MID_AUTUMN">1544</period>
+                <period period="LATE_AUTUMN">1539</period>
+                <period period="EARLY_WINTER">1539</period>
+                <period period="MID_WINTER">1538</period>
+                <period period="LATE_WINTER">1538</period>
+            </history>
+        </fillType>
+        <fillType fillType="FERMENTEDNAPACABBAGE">
+            <history>
+                <period period="EARLY_SPRING">645</period>
+                <period period="MID_SPRING">645</period>
+                <period period="LATE_SPRING">646</period>
+                <period period="EARLY_SUMMER">649</period>
+                <period period="MID_SUMMER">651</period>
+                <period period="LATE_SUMMER">645</period>
+                <period period="EARLY_AUTUMN">645</period>
+                <period period="MID_AUTUMN">646</period>
+                <period period="LATE_AUTUMN">646</period>
+                <period period="EARLY_WINTER">645</period>
+                <period period="MID_WINTER">645</period>
+                <period period="LATE_WINTER">645</period>
+            </history>
+        </fillType>
+        <fillType fillType="PRESERVEDCARROTS">
+            <history>
+                <period period="EARLY_SPRING">586</period>
+                <period period="MID_SPRING">586</period>
+                <period period="LATE_SPRING">586</period>
+                <period period="EARLY_SUMMER">585</period>
+                <period period="MID_SUMMER">585</period>
+                <period period="LATE_SUMMER">585</period>
+                <period period="EARLY_AUTUMN">585</period>
+                <period period="MID_AUTUMN">585</period>
+                <period period="LATE_AUTUMN">586</period>
+                <period period="EARLY_WINTER">586</period>
+                <period period="MID_WINTER">586</period>
+                <period period="LATE_WINTER">586</period>
+            </history>
+        </fillType>
+        <fillType fillType="PRESERVEDPARSNIP">
+            <history>
+                <period period="EARLY_SPRING">582</period>
+                <period period="MID_SPRING">581</period>
+                <period period="LATE_SPRING">581</period>
+                <period period="EARLY_SUMMER">579</period>
+                <period period="MID_SUMMER">578</period>
+                <period period="LATE_SUMMER">584</period>
+                <period period="EARLY_AUTUMN">584</period>
+                <period period="MID_AUTUMN">584</period>
+                <period period="LATE_AUTUMN">583</period>
+                <period period="EARLY_WINTER">583</period>
+                <period period="MID_WINTER">583</period>
+                <period period="LATE_WINTER">582</period>
+            </history>
+        </fillType>
+        <fillType fillType="PRESERVEDBEETROOT">
+            <history>
+                <period period="EARLY_SPRING">560</period>
+                <period period="MID_SPRING">560</period>
+                <period period="LATE_SPRING">560</period>
+                <period period="EARLY_SUMMER">560</period>
+                <period period="MID_SUMMER">560</period>
+                <period period="LATE_SUMMER">559</period>
+                <period period="EARLY_AUTUMN">559</period>
+                <period period="MID_AUTUMN">560</period>
+                <period period="LATE_AUTUMN">561</period>
+                <period period="EARLY_WINTER">561</period>
+                <period period="MID_WINTER">560</period>
+                <period period="LATE_WINTER">560</period>
+            </history>
+        </fillType>
+        <fillType fillType="NOODLESOUP">
+            <history>
+                <period period="EARLY_SPRING">1556</period>
+                <period period="MID_SPRING">1556</period>
+                <period period="LATE_SPRING">1556</period>
+                <period period="EARLY_SUMMER">1556</period>
+                <period period="MID_SUMMER">1556</period>
+                <period period="LATE_SUMMER">1573</period>
+                <period period="EARLY_AUTUMN">1572</period>
+                <period period="MID_AUTUMN">1563</period>
+                <period period="LATE_AUTUMN">1555</period>
+                <period period="EARLY_WINTER">1555</period>
+                <period period="MID_WINTER">1556</period>
+                <period period="LATE_WINTER">1556</period>
+            </history>
+        </fillType>
+        <fillType fillType="SOUPCANSMIXED">
+            <history>
+                <period period="EARLY_SPRING">925</period>
+                <period period="MID_SPRING">925</period>
+                <period period="LATE_SPRING">925</period>
+                <period period="EARLY_SUMMER">928</period>
+                <period period="MID_SUMMER">930</period>
+                <period period="LATE_SUMMER">926</period>
+                <period period="EARLY_AUTUMN">926</period>
+                <period period="MID_AUTUMN">925</period>
+                <period period="LATE_AUTUMN">924</period>
+                <period period="EARLY_WINTER">924</period>
+                <period period="MID_WINTER">925</period>
+                <period period="LATE_WINTER">925</period>
+            </history>
+        </fillType>
+        <fillType fillType="SOUPCANSCARROTS">
+            <history>
+                <period period="EARLY_SPRING">894</period>
+                <period period="MID_SPRING">894</period>
+                <period period="LATE_SPRING">895</period>
+                <period period="EARLY_SUMMER">897</period>
+                <period period="MID_SUMMER">899</period>
+                <period period="LATE_SUMMER">882</period>
+                <period period="EARLY_AUTUMN">882</period>
+                <period period="MID_AUTUMN">885</period>
+                <period period="LATE_AUTUMN">889</period>
+                <period period="EARLY_WINTER">890</period>
+                <period period="MID_WINTER">891</period>
+                <period period="LATE_WINTER">892</period>
+            </history>
+        </fillType>
+        <fillType fillType="SOUPCANSPARSNIP">
+            <history>
+                <period period="EARLY_SPRING">868</period>
+                <period period="MID_SPRING">868</period>
+                <period period="LATE_SPRING">868</period>
+                <period period="EARLY_SUMMER">869</period>
+                <period period="MID_SUMMER">870</period>
+                <period period="LATE_SUMMER">876</period>
+                <period period="EARLY_AUTUMN">876</period>
+                <period period="MID_AUTUMN">873</period>
+                <period period="LATE_AUTUMN">869</period>
+                <period period="EARLY_WINTER">868</period>
+                <period period="MID_WINTER">867</period>
+                <period period="LATE_WINTER">867</period>
+            </history>
+        </fillType>
+        <fillType fillType="SOUPCANSBEETROOT">
+            <history>
+                <period period="EARLY_SPRING">839</period>
+                <period period="MID_SPRING">839</period>
+                <period period="LATE_SPRING">839</period>
+                <period period="EARLY_SUMMER">840</period>
+                <period period="MID_SUMMER">841</period>
+                <period period="LATE_SUMMER">841</period>
+                <period period="EARLY_AUTUMN">840</period>
+                <period period="MID_AUTUMN">840</period>
+                <period period="LATE_AUTUMN">839</period>
+                <period period="EARLY_WINTER">839</period>
+                <period period="MID_WINTER">839</period>
+                <period period="LATE_WINTER">839</period>
+            </history>
+        </fillType>
+        <fillType fillType="SOUPCANSPOTATO">
+            <history>
+                <period period="EARLY_SPRING">1243</period>
+                <period period="MID_SPRING">1243</period>
+                <period period="LATE_SPRING">1243</period>
+                <period period="EARLY_SUMMER">1243</period>
+                <period period="MID_SUMMER">1243</period>
+                <period period="LATE_SUMMER">1231</period>
+                <period period="EARLY_AUTUMN">1233</period>
+                <period period="MID_AUTUMN">1237</period>
+                <period period="LATE_AUTUMN">1242</period>
+                <period period="EARLY_WINTER">1242</period>
+                <period period="MID_WINTER">1242</period>
+                <period period="LATE_WINTER">1243</period>
+            </history>
+        </fillType>
+        <fillType fillType="FABRIC">
+            <history>
+                <period period="EARLY_SPRING">4963</period>
+                <period period="MID_SPRING">5321</period>
+                <period period="LATE_SPRING">5230</period>
+                <period period="EARLY_SUMMER">4534</period>
+                <period period="MID_SUMMER">3993</period>
+                <period period="LATE_SUMMER">3620</period>
+                <period period="EARLY_AUTUMN">3299</period>
+                <period period="MID_AUTUMN">3360</period>
+                <period period="LATE_AUTUMN">3762</period>
+                <period period="EARLY_WINTER">3930</period>
+                <period period="MID_WINTER">4093</period>
+                <period period="LATE_WINTER">4355</period>
+            </history>
+        </fillType>
+        <fillType fillType="CLOTHES">
+            <history>
+                <period period="EARLY_SPRING">10291</period>
+                <period period="MID_SPRING">11026</period>
+                <period period="LATE_SPRING">10805</period>
+                <period period="EARLY_SUMMER">9462</period>
+                <period period="MID_SUMMER">8426</period>
+                <period period="LATE_SUMMER">7442</period>
+                <period period="EARLY_AUTUMN">6787</period>
+                <period period="MID_AUTUMN">6943</period>
+                <period period="LATE_AUTUMN">7789</period>
+                <period period="EARLY_WINTER">8139</period>
+                <period period="MID_WINTER">8383</period>
+                <period period="LATE_WINTER">9014</period>
+            </history>
+        </fillType>
+        <fillType fillType="SUGAR">
+            <history>
+                <period period="EARLY_SPRING">476</period>
+                <period period="MID_SPRING">494</period>
+                <period period="LATE_SPRING">510</period>
+                <period period="EARLY_SUMMER">519</period>
+                <period period="MID_SUMMER">527</period>
+                <period period="LATE_SUMMER">524</period>
+                <period period="EARLY_AUTUMN">526</period>
+                <period period="MID_AUTUMN">518</period>
+                <period period="LATE_AUTUMN">510</period>
+                <period period="EARLY_WINTER">498</period>
+                <period period="MID_WINTER">477</period>
+                <period period="LATE_WINTER">472</period>
+            </history>
+        </fillType>
+        <fillType fillType="CEREAL">
+            <history>
+                <period period="EARLY_SPRING">4237</period>
+                <period period="MID_SPRING">3899</period>
+                <period period="LATE_SPRING">3737</period>
+                <period period="EARLY_SUMMER">3697</period>
+                <period period="MID_SUMMER">3610</period>
+                <period period="LATE_SUMMER">3698</period>
+                <period period="EARLY_AUTUMN">3655</period>
+                <period period="MID_AUTUMN">3802</period>
+                <period period="LATE_AUTUMN">3756</period>
+                <period period="EARLY_WINTER">3880</period>
+                <period period="MID_WINTER">4093</period>
+                <period period="LATE_WINTER">4196</period>
+            </history>
+        </fillType>
+        <fillType fillType="FURNITURE">
+            <history>
+                <period period="EARLY_SPRING">1758</period>
+                <period period="MID_SPRING">1906</period>
+                <period period="LATE_SPRING">2029</period>
+                <period period="EARLY_SUMMER">2114</period>
+                <period period="MID_SUMMER">2158</period>
+                <period period="LATE_SUMMER">1988</period>
+                <period period="EARLY_AUTUMN">1930</period>
+                <period period="MID_AUTUMN">1870</period>
+                <period period="LATE_AUTUMN">1835</period>
+                <period period="EARLY_WINTER">1796</period>
+                <period period="MID_WINTER">1762</period>
+                <period period="LATE_WINTER">1742</period>
+            </history>
+        </fillType>
+        <fillType fillType="CARTONROLL">
+            <history>
+                <period period="EARLY_SPRING">2934</period>
+                <period period="MID_SPRING">2937</period>
+                <period period="LATE_SPRING">2937</period>
+                <period period="EARLY_SUMMER">2938</period>
+                <period period="MID_SUMMER">2939</period>
+                <period period="LATE_SUMMER">2859</period>
+                <period period="EARLY_AUTUMN">2859</period>
+                <period period="MID_AUTUMN">2882</period>
+                <period period="LATE_AUTUMN">2908</period>
+                <period period="EARLY_WINTER">2912</period>
+                <period period="MID_WINTER">2923</period>
+                <period period="LATE_WINTER">2928</period>
+            </history>
+        </fillType>
+        <fillType fillType="PAPERROLL">
+            <history>
+                <period period="EARLY_SPRING">3142</period>
+                <period period="MID_SPRING">3142</period>
+                <period period="LATE_SPRING">3142</period>
+                <period period="EARLY_SUMMER">3142</period>
+                <period period="MID_SUMMER">3142</period>
+                <period period="LATE_SUMMER">3202</period>
+                <period period="EARLY_AUTUMN">3191</period>
+                <period period="MID_AUTUMN">3162</period>
+                <period period="LATE_AUTUMN">3142</period>
+                <period period="EARLY_WINTER">3142</period>
+                <period period="MID_WINTER">3142</period>
+                <period period="LATE_WINTER">3142</period>
+            </history>
+        </fillType>
+        <fillType fillType="PIANO">
+            <history>
+                <period period="EARLY_SPRING">0</period>
+                <period period="MID_SPRING">0</period>
+                <period period="LATE_SPRING">0</period>
+                <period period="EARLY_SUMMER">0</period>
+                <period period="MID_SUMMER">0</period>
+                <period period="LATE_SUMMER">0</period>
+                <period period="EARLY_AUTUMN">0</period>
+                <period period="MID_AUTUMN">0</period>
+                <period period="LATE_AUTUMN">0</period>
+                <period period="EARLY_WINTER">0</period>
+                <period period="MID_WINTER">0</period>
+                <period period="LATE_WINTER">0</period>
+            </history>
+        </fillType>
+        <fillType fillType="WAGON">
+            <history>
+                <period period="EARLY_SPRING">0</period>
+                <period period="MID_SPRING">0</period>
+                <period period="LATE_SPRING">0</period>
+                <period period="EARLY_SUMMER">0</period>
+                <period period="MID_SUMMER">0</period>
+                <period period="LATE_SUMMER">0</period>
+                <period period="EARLY_AUTUMN">0</period>
+                <period period="MID_AUTUMN">0</period>
+                <period period="LATE_AUTUMN">0</period>
+                <period period="EARLY_WINTER">0</period>
+                <period period="MID_WINTER">0</period>
+                <period period="LATE_WINTER">0</period>
+            </history>
+        </fillType>
+        <fillType fillType="TOYTRACTOR">
+            <history>
+                <period period="EARLY_SPRING">0</period>
+                <period period="MID_SPRING">0</period>
+                <period period="LATE_SPRING">0</period>
+                <period period="EARLY_SUMMER">0</period>
+                <period period="MID_SUMMER">0</period>
+                <period period="LATE_SUMMER">0</period>
+                <period period="EARLY_AUTUMN">0</period>
+                <period period="MID_AUTUMN">0</period>
+                <period period="LATE_AUTUMN">0</period>
+                <period period="EARLY_WINTER">0</period>
+                <period period="MID_WINTER">0</period>
+                <period period="LATE_WINTER">0</period>
+            </history>
+        </fillType>
+        <fillType fillType="SUNFLOWER_OIL">
+            <history>
+                <period period="EARLY_SPRING">2110</period>
+                <period period="MID_SPRING">1977</period>
+                <period period="LATE_SPRING">1687</period>
+                <period period="EARLY_SUMMER">1581</period>
+                <period period="MID_SUMMER">1681</period>
+                <period period="LATE_SUMMER">1847</period>
+                <period period="EARLY_AUTUMN">1968</period>
+                <period period="MID_AUTUMN">1952</period>
+                <period period="LATE_AUTUMN">1512</period>
+                <period period="EARLY_WINTER">1161</period>
+                <period period="MID_WINTER">1978</period>
+                <period period="LATE_WINTER">2077</period>
+            </history>
+        </fillType>
+        <fillType fillType="CANOLA_OIL">
+            <history>
+                <period period="EARLY_SPRING">1697</period>
+                <period period="MID_SPRING">1581</period>
+                <period period="LATE_SPRING">1466</period>
+                <period period="EARLY_SUMMER">1347</period>
+                <period period="MID_SUMMER">1326</period>
+                <period period="LATE_SUMMER">1511</period>
+                <period period="EARLY_AUTUMN">1699</period>
+                <period period="MID_AUTUMN">1810</period>
+                <period period="LATE_AUTUMN">1927</period>
+                <period period="EARLY_WINTER">1891</period>
+                <period period="MID_WINTER">1638</period>
+                <period period="LATE_WINTER">1692</period>
+            </history>
+        </fillType>
+        <fillType fillType="OLIVE_OIL">
+            <history>
+                <period period="EARLY_SPRING">2439</period>
+                <period period="MID_SPRING">2543</period>
+                <period period="LATE_SPRING">2741</period>
+                <period period="EARLY_SUMMER">2790</period>
+                <period period="MID_SUMMER">2618</period>
+                <period period="LATE_SUMMER">2360</period>
+                <period period="EARLY_AUTUMN">2161</period>
+                <period period="MID_AUTUMN">1922</period>
+                <period period="LATE_AUTUMN">1871</period>
+                <period period="EARLY_WINTER">2050</period>
+                <period period="MID_WINTER">2270</period>
+                <period period="LATE_WINTER">2318</period>
+            </history>
+        </fillType>
+        <fillType fillType="RICE_OIL">
+            <history>
+                <period period="EARLY_SPRING">1802</period>
+                <period period="MID_SPRING">1879</period>
+                <period period="LATE_SPRING">2024</period>
+                <period period="EARLY_SUMMER">2058</period>
+                <period period="MID_SUMMER">1931</period>
+                <period period="LATE_SUMMER">1733</period>
+                <period period="EARLY_AUTUMN">1591</period>
+                <period period="MID_AUTUMN">1420</period>
+                <period period="LATE_AUTUMN">1385</period>
+                <period period="EARLY_WINTER">1516</period>
+                <period period="MID_WINTER">1677</period>
+                <period period="LATE_WINTER">1712</period>
+            </history>
+        </fillType>
+        <fillType fillType="RAISINS">
+            <history>
+                <period period="EARLY_SPRING">1743</period>
+                <period period="MID_SPRING">1717</period>
+                <period period="LATE_SPRING">1634</period>
+                <period period="EARLY_SUMMER">1538</period>
+                <period period="MID_SUMMER">1530</period>
+                <period period="LATE_SUMMER">1690</period>
+                <period period="EARLY_AUTUMN">1798</period>
+                <period period="MID_AUTUMN">1762</period>
+                <period period="LATE_AUTUMN">1622</period>
+                <period period="EARLY_WINTER">1485</period>
+                <period period="MID_WINTER">1595</period>
+                <period period="LATE_WINTER">1672</period>
+            </history>
+        </fillType>
+        <fillType fillType="GRAPEJUICE">
+            <history>
+                <period period="EARLY_SPRING">1698</period>
+                <period period="MID_SPRING">1735</period>
+                <period period="LATE_SPRING">1694</period>
+                <period period="EARLY_SUMMER">1585</period>
+                <period period="MID_SUMMER">1552</period>
+                <period period="LATE_SUMMER">1668</period>
+                <period period="EARLY_AUTUMN">1720</period>
+                <period period="MID_AUTUMN">1773</period>
+                <period period="LATE_AUTUMN">1741</period>
+                <period period="EARLY_WINTER">1620</period>
+                <period period="MID_WINTER">1856</period>
+                <period period="LATE_WINTER">1786</period>
+            </history>
+        </fillType>
+        <fillType fillType="CEMENT">
+            <history>
+                <period period="EARLY_SPRING">1053</period>
+                <period period="MID_SPRING">1054</period>
+                <period period="LATE_SPRING">1054</period>
+                <period period="EARLY_SUMMER">1054</period>
+                <period period="MID_SUMMER">1054</period>
+                <period period="LATE_SUMMER">1055</period>
+                <period period="EARLY_AUTUMN">1056</period>
+                <period period="MID_AUTUMN">1054</period>
+                <period period="LATE_AUTUMN">1052</period>
+                <period period="EARLY_WINTER">1052</period>
+                <period period="MID_WINTER">1055</period>
+                <period period="LATE_WINTER">1053</period>
+            </history>
+        </fillType>
+        <fillType fillType="BARREL">
+            <history>
+                <period period="EARLY_SPRING">1752</period>
+                <period period="MID_SPRING">1752</period>
+                <period period="LATE_SPRING">1752</period>
+                <period period="EARLY_SUMMER">1752</period>
+                <period period="MID_SUMMER">1752</period>
+                <period period="LATE_SUMMER">1767</period>
+                <period period="EARLY_AUTUMN">1766</period>
+                <period period="MID_AUTUMN">1758</period>
+                <period period="LATE_AUTUMN">1752</period>
+                <period period="EARLY_WINTER">1752</period>
+                <period period="MID_WINTER">1752</period>
+                <period period="LATE_WINTER">1752</period>
+            </history>
+        </fillType>
+        <fillType fillType="BATHTUB">
+            <history>
+                <period period="EARLY_SPRING">1695</period>
+                <period period="MID_SPRING">1696</period>
+                <period period="LATE_SPRING">1696</period>
+                <period period="EARLY_SUMMER">1698</period>
+                <period period="MID_SUMMER">1699</period>
+                <period period="LATE_SUMMER">1684</period>
+                <period period="EARLY_AUTUMN">1682</period>
+                <period period="MID_AUTUMN">1685</period>
+                <period period="LATE_AUTUMN">1689</period>
+                <period period="EARLY_WINTER">1689</period>
+                <period period="MID_WINTER">1692</period>
+                <period period="LATE_WINTER">1693</period>
+            </history>
+        </fillType>
+        <fillType fillType="BUCKET">
+            <history>
+                <period period="EARLY_SPRING">1295</period>
+                <period period="MID_SPRING">1297</period>
+                <period period="LATE_SPRING">1298</period>
+                <period period="EARLY_SUMMER">1302</period>
+                <period period="MID_SUMMER">1304</period>
+                <period period="LATE_SUMMER">1283</period>
+                <period period="EARLY_AUTUMN">1284</period>
+                <period period="MID_AUTUMN">1286</period>
+                <period period="LATE_AUTUMN">1288</period>
+                <period period="EARLY_WINTER">1289</period>
+                <period period="MID_WINTER">1291</period>
+                <period period="LATE_WINTER">1293</period>
+            </history>
+        </fillType>
+        <fillType fillType="ROOFPLATES">
+            <history>
+                <period period="EARLY_SPRING">1594</period>
+                <period period="MID_SPRING">1599</period>
+                <period period="LATE_SPRING">1594</period>
+                <period period="EARLY_SUMMER">1596</period>
+                <period period="MID_SUMMER">1601</period>
+                <period period="LATE_SUMMER">1611</period>
+                <period period="EARLY_AUTUMN">1610</period>
+                <period period="MID_AUTUMN">1609</period>
+                <period period="LATE_AUTUMN">1607</period>
+                <period period="EARLY_WINTER">1607</period>
+                <period period="MID_WINTER">1596</period>
+                <period period="LATE_WINTER">1599</period>
+            </history>
+        </fillType>
+        <fillType fillType="ROPE">
+            <history>
+                <period period="EARLY_SPRING">5287</period>
+                <period period="MID_SPRING">5312</period>
+                <period period="LATE_SPRING">5260</period>
+                <period period="EARLY_SUMMER">5217</period>
+                <period period="MID_SUMMER">5213</period>
+                <period period="LATE_SUMMER">5290</period>
+                <period period="EARLY_AUTUMN">5311</period>
+                <period period="MID_AUTUMN">5275</period>
+                <period period="LATE_AUTUMN">5222</period>
+                <period period="EARLY_WINTER">5221</period>
+                <period period="MID_WINTER">5305</period>
+                <period period="LATE_WINTER">5291</period>
+            </history>
+        </fillType>
+        <fillType fillType="CANNED_PEAS">
+            <history>
+                <period period="EARLY_SPRING">2616</period>
+                <period period="MID_SPRING">2616</period>
+                <period period="LATE_SPRING">2615</period>
+                <period period="EARLY_SUMMER">2612</period>
+                <period period="MID_SUMMER">2610</period>
+                <period period="LATE_SUMMER">2623</period>
+                <period period="EARLY_AUTUMN">2625</period>
+                <period period="MID_AUTUMN">2623</period>
+                <period period="LATE_AUTUMN">2620</period>
+                <period period="EARLY_WINTER">2620</period>
+                <period period="MID_WINTER">2618</period>
+                <period period="LATE_WINTER">2617</period>
+            </history>
+        </fillType>
+        <fillType fillType="CEMENTBRICKS">
+            <history>
+                <period period="EARLY_SPRING">1582</period>
+                <period period="MID_SPRING">1601</period>
+                <period period="LATE_SPRING">1604</period>
+                <period period="EARLY_SUMMER">1588</period>
+                <period period="MID_SUMMER">1582</period>
+                <period period="LATE_SUMMER">1638</period>
+                <period period="EARLY_AUTUMN">1627</period>
+                <period period="MID_AUTUMN">1610</period>
+                <period period="LATE_AUTUMN">1593</period>
+                <period period="EARLY_WINTER">1592</period>
+                <period period="MID_WINTER">1610</period>
+                <period period="LATE_WINTER">1594</period>
+            </history>
+        </fillType>
+        <fillType fillType="SPINACH_BAGS">
+            <history>
+                <period period="EARLY_SPRING">780</period>
+                <period period="MID_SPRING">780</period>
+                <period period="LATE_SPRING">780</period>
+                <period period="EARLY_SUMMER">781</period>
+                <period period="MID_SUMMER">782</period>
+                <period period="LATE_SUMMER">772</period>
+                <period period="EARLY_AUTUMN">772</period>
+                <period period="MID_AUTUMN">775</period>
+                <period period="LATE_AUTUMN">778</period>
+                <period period="EARLY_WINTER">778</period>
+                <period period="MID_WINTER">779</period>
+                <period period="LATE_WINTER">779</period>
+            </history>
+        </fillType>
+        <fillType fillType="JARRED_GREENBEAN">
+            <history>
+                <period period="EARLY_SPRING">1920</period>
+                <period period="MID_SPRING">1921</period>
+                <period period="LATE_SPRING">1922</period>
+                <period period="EARLY_SUMMER">1923</period>
+                <period period="MID_SUMMER">1924</period>
+                <period period="LATE_SUMMER">1872</period>
+                <period period="EARLY_AUTUMN">1872</period>
+                <period period="MID_AUTUMN">1891</period>
+                <period period="LATE_AUTUMN">1910</period>
+                <period period="EARLY_WINTER">1911</period>
+                <period period="MID_WINTER">1916</period>
+                <period period="LATE_WINTER">1918</period>
+            </history>
+        </fillType>
+        <fillType fillType="RICE_BAGS">
+            <history>
+                <period period="EARLY_SPRING">1470</period>
+                <period period="MID_SPRING">1467</period>
+                <period period="LATE_SPRING">1465</period>
+                <period period="EARLY_SUMMER">1458</period>
+                <period period="MID_SUMMER">1453</period>
+                <period period="LATE_SUMMER">1475</period>
+                <period period="EARLY_AUTUMN">1475</period>
+                <period period="MID_AUTUMN">1476</period>
+                <period period="LATE_AUTUMN">1477</period>
+                <period period="EARLY_WINTER">1477</period>
+                <period period="MID_WINTER">1476</period>
+                <period period="LATE_WINTER">1474</period>
+            </history>
+        </fillType>
+        <fillType fillType="RICE_BOXES">
+            <history>
+                <period period="EARLY_SPRING">2727</period>
+                <period period="MID_SPRING">2729</period>
+                <period period="LATE_SPRING">2730</period>
+                <period period="EARLY_SUMMER">2729</period>
+                <period period="MID_SUMMER">2728</period>
+                <period period="LATE_SUMMER">2709</period>
+                <period period="EARLY_AUTUMN">2713</period>
+                <period period="MID_AUTUMN">2713</period>
+                <period period="LATE_AUTUMN">2713</period>
+                <period period="EARLY_WINTER">2714</period>
+                <period period="MID_WINTER">2719</period>
+                <period period="LATE_WINTER">2722</period>
+            </history>
+        </fillType>
+        <fillType fillType="SEEDS">
+            <history>
+                <period period="EARLY_SPRING">332</period>
+                <period period="MID_SPRING">334</period>
+                <period period="LATE_SPRING">318</period>
+                <period period="EARLY_SUMMER">301</period>
+                <period period="MID_SUMMER">274</period>
+                <period period="LATE_SUMMER">269</period>
+                <period period="EARLY_AUTUMN">307</period>
+                <period period="MID_AUTUMN">338</period>
+                <period period="LATE_AUTUMN">354</period>
+                <period period="EARLY_WINTER">386</period>
+                <period period="MID_WINTER">344</period>
+                <period period="LATE_WINTER">330</period>
+            </history>
+        </fillType>
+        <fillType fillType="STONE">
+            <history>
+                <period period="EARLY_SPRING">50</period>
+                <period period="MID_SPRING">50</period>
+                <period period="LATE_SPRING">50</period>
+                <period period="EARLY_SUMMER">50</period>
+                <period period="MID_SUMMER">50</period>
+                <period period="LATE_SUMMER">50</period>
+                <period period="EARLY_AUTUMN">50</period>
+                <period period="MID_AUTUMN">50</period>
+                <period period="LATE_AUTUMN">52</period>
+                <period period="EARLY_WINTER">52</period>
+                <period period="MID_WINTER">52</period>
+                <period period="LATE_WINTER">50</period>
+            </history>
+        </fillType>
+        <fillType fillType="MANURE">
+            <history>
+                <period period="EARLY_SPRING">34</period>
+                <period period="MID_SPRING">33</period>
+                <period period="LATE_SPRING">31</period>
+                <period period="EARLY_SUMMER">29</period>
+                <period period="MID_SUMMER">29</period>
+                <period period="LATE_SUMMER">30</period>
+                <period period="EARLY_AUTUMN">32</period>
+                <period period="MID_AUTUMN">33</period>
+                <period period="LATE_AUTUMN">35</period>
+                <period period="EARLY_WINTER">36</period>
+                <period period="MID_WINTER">37</period>
+                <period period="LATE_WINTER">36</period>
+            </history>
+        </fillType>
+        <fillType fillType="LIQUIDMANURE">
+            <history>
+                <period period="EARLY_SPRING">35</period>
+                <period period="MID_SPRING">33</period>
+                <period period="LATE_SPRING">30</period>
+                <period period="EARLY_SUMMER">29</period>
+                <period period="MID_SUMMER">29</period>
+                <period period="LATE_SUMMER">30</period>
+                <period period="EARLY_AUTUMN">31</period>
+                <period period="MID_AUTUMN">33</period>
+                <period period="LATE_AUTUMN">35</period>
+                <period period="EARLY_WINTER">36</period>
+                <period period="MID_WINTER">36</period>
+                <period period="LATE_WINTER">36</period>
+            </history>
+        </fillType>
+        <fillType fillType="DIGESTATE">
+            <history>
+                <period period="EARLY_SPRING">35</period>
+                <period period="MID_SPRING">34</period>
+                <period period="LATE_SPRING">32</period>
+                <period period="EARLY_SUMMER">30</period>
+                <period period="MID_SUMMER">29</period>
+                <period period="LATE_SUMMER">29</period>
+                <period period="EARLY_AUTUMN">31</period>
+                <period period="MID_AUTUMN">32</period>
+                <period period="LATE_AUTUMN">35</period>
+                <period period="EARLY_WINTER">36</period>
+                <period period="MID_WINTER">37</period>
+                <period period="LATE_WINTER">37</period>
+            </history>
+        </fillType>
+        <fillType fillType="FORAGE">
+            <history>
+                <period period="EARLY_SPRING">124</period>
+                <period period="MID_SPRING">124</period>
+                <period period="LATE_SPRING">124</period>
+                <period period="EARLY_SUMMER">124</period>
+                <period period="MID_SUMMER">124</period>
+                <period period="LATE_SUMMER">125</period>
+                <period period="EARLY_AUTUMN">125</period>
+                <period period="MID_AUTUMN">125</period>
+                <period period="LATE_AUTUMN">125</period>
+                <period period="EARLY_WINTER">125</period>
+                <period period="MID_WINTER">125</period>
+                <period period="LATE_WINTER">125</period>
+            </history>
+        </fillType>
+        <fillType fillType="FORAGE_MIXING">
+            <history>
+                <period period="EARLY_SPRING">39</period>
+                <period period="MID_SPRING">39</period>
+                <period period="LATE_SPRING">39</period>
+                <period period="EARLY_SUMMER">39</period>
+                <period period="MID_SUMMER">39</period>
+                <period period="LATE_SUMMER">39</period>
+                <period period="EARLY_AUTUMN">39</period>
+                <period period="MID_AUTUMN">39</period>
+                <period period="LATE_AUTUMN">39</period>
+                <period period="EARLY_WINTER">39</period>
+                <period period="MID_WINTER">39</period>
+                <period period="LATE_WINTER">39</period>
+            </history>
+        </fillType>
+        <fillType fillType="WATER">
+            <history>
+                <period period="EARLY_SPRING">95</period>
+                <period period="MID_SPRING">100</period>
+                <period period="LATE_SPRING">101</period>
+                <period period="EARLY_SUMMER">102</period>
+                <period period="MID_SUMMER">105</period>
+                <period period="LATE_SUMMER">113</period>
+                <period period="EARLY_AUTUMN">112</period>
+                <period period="MID_AUTUMN">110</period>
+                <period period="LATE_AUTUMN">109</period>
+                <period period="EARLY_WINTER">104</period>
+                <period period="MID_WINTER">98</period>
+                <period period="LATE_WINTER">96</period>
+            </history>
+        </fillType>
+        <fillType fillType="CHAFF">
+            <history>
+                <period period="EARLY_SPRING">43</period>
+                <period period="MID_SPRING">42</period>
+                <period period="LATE_SPRING">40</period>
+                <period period="EARLY_SUMMER">40</period>
+                <period period="MID_SUMMER">41</period>
+                <period period="LATE_SUMMER">38</period>
+                <period period="EARLY_AUTUMN">40</period>
+                <period period="MID_AUTUMN">44</period>
+                <period period="LATE_AUTUMN">45</period>
+                <period period="EARLY_WINTER">46</period>
+                <period period="MID_WINTER">46</period>
+                <period period="LATE_WINTER">45</period>
+            </history>
+        </fillType>
+        <fillType fillType="TREESAPLINGS">
+            <history>
+                <period period="EARLY_SPRING">100</period>
+                <period period="MID_SPRING">100</period>
+                <period period="LATE_SPRING">100</period>
+                <period period="EARLY_SUMMER">100</period>
+                <period period="MID_SUMMER">100</period>
+                <period period="LATE_SUMMER">100</period>
+                <period period="EARLY_AUTUMN">100</period>
+                <period period="MID_AUTUMN">100</period>
+                <period period="LATE_AUTUMN">100</period>
+                <period period="EARLY_WINTER">100</period>
+                <period period="MID_WINTER">100</period>
+                <period period="LATE_WINTER">100</period>
+            </history>
+        </fillType>
+        <fillType fillType="TREE">
+            <history>
+                <period period="EARLY_SPRING">100</period>
+                <period period="MID_SPRING">100</period>
+                <period period="LATE_SPRING">100</period>
+                <period period="EARLY_SUMMER">100</period>
+                <period period="MID_SUMMER">100</period>
+                <period period="LATE_SUMMER">100</period>
+                <period period="EARLY_AUTUMN">100</period>
+                <period period="MID_AUTUMN">100</period>
+                <period period="LATE_AUTUMN">100</period>
+                <period period="EARLY_WINTER">100</period>
+                <period period="MID_WINTER">100</period>
+                <period period="LATE_WINTER">100</period>
+            </history>
+        </fillType>
+        <fillType fillType="OILSEEDRADISH">
+            <history>
+                <period period="EARLY_SPRING">250</period>
+                <period period="MID_SPRING">250</period>
+                <period period="LATE_SPRING">250</period>
+                <period period="EARLY_SUMMER">250</period>
+                <period period="MID_SUMMER">250</period>
+                <period period="LATE_SUMMER">250</period>
+                <period period="EARLY_AUTUMN">250</period>
+                <period period="MID_AUTUMN">250</period>
+                <period period="LATE_AUTUMN">250</period>
+                <period period="EARLY_WINTER">250</period>
+                <period period="MID_WINTER">250</period>
+                <period period="LATE_WINTER">250</period>
+            </history>
+        </fillType>
+        <fillType fillType="POPLAR">
+            <history>
+                <period period="EARLY_SPRING">40</period>
+                <period period="MID_SPRING">40</period>
+                <period period="LATE_SPRING">40</period>
+                <period period="EARLY_SUMMER">40</period>
+                <period period="MID_SUMMER">40</period>
+                <period period="LATE_SUMMER">40</period>
+                <period period="EARLY_AUTUMN">40</period>
+                <period period="MID_AUTUMN">40</period>
+                <period period="LATE_AUTUMN">40</period>
+                <period period="EARLY_WINTER">40</period>
+                <period period="MID_WINTER">40</period>
+                <period period="LATE_WINTER">40</period>
+            </history>
+        </fillType>
+        <fillType fillType="DIESEL">
+            <history>
+                <period period="EARLY_SPRING">1500</period>
+                <period period="MID_SPRING">1500</period>
+                <period period="LATE_SPRING">1500</period>
+                <period period="EARLY_SUMMER">1500</period>
+                <period period="MID_SUMMER">1500</period>
+                <period period="LATE_SUMMER">1500</period>
+                <period period="EARLY_AUTUMN">1500</period>
+                <period period="MID_AUTUMN">1500</period>
+                <period period="LATE_AUTUMN">1500</period>
+                <period period="EARLY_WINTER">1500</period>
+                <period period="MID_WINTER">1500</period>
+                <period period="LATE_WINTER">1500</period>
+            </history>
+        </fillType>
+        <fillType fillType="DEF">
+            <history>
+                <period period="EARLY_SPRING">900</period>
+                <period period="MID_SPRING">900</period>
+                <period period="LATE_SPRING">900</period>
+                <period period="EARLY_SUMMER">900</period>
+                <period period="MID_SUMMER">900</period>
+                <period period="LATE_SUMMER">900</period>
+                <period period="EARLY_AUTUMN">900</period>
+                <period period="MID_AUTUMN">900</period>
+                <period period="LATE_AUTUMN">900</period>
+                <period period="EARLY_WINTER">900</period>
+                <period period="MID_WINTER">900</period>
+                <period period="LATE_WINTER">900</period>
+            </history>
+        </fillType>
+        <fillType fillType="AIR">
+            <history>
+                <period period="EARLY_SPRING">0</period>
+                <period period="MID_SPRING">0</period>
+                <period period="LATE_SPRING">0</period>
+                <period period="EARLY_SUMMER">0</period>
+                <period period="MID_SUMMER">0</period>
+                <period period="LATE_SUMMER">0</period>
+                <period period="EARLY_AUTUMN">0</period>
+                <period period="MID_AUTUMN">0</period>
+                <period period="LATE_AUTUMN">0</period>
+                <period period="EARLY_WINTER">0</period>
+                <period period="MID_WINTER">0</period>
+                <period period="LATE_WINTER">0</period>
+            </history>
+        </fillType>
+        <fillType fillType="ELECTRICCHARGE">
+            <history>
+                <period period="EARLY_SPRING">350</period>
+                <period period="MID_SPRING">350</period>
+                <period period="LATE_SPRING">350</period>
+                <period period="EARLY_SUMMER">350</period>
+                <period period="MID_SUMMER">350</period>
+                <period period="LATE_SUMMER">350</period>
+                <period period="EARLY_AUTUMN">350</period>
+                <period period="MID_AUTUMN">350</period>
+                <period period="LATE_AUTUMN">350</period>
+                <period period="EARLY_WINTER">350</period>
+                <period period="MID_WINTER">350</period>
+                <period period="LATE_WINTER">350</period>
+            </history>
+        </fillType>
+        <fillType fillType="METHANE">
+            <history>
+                <period period="EARLY_SPRING">450</period>
+                <period period="MID_SPRING">450</period>
+                <period period="LATE_SPRING">450</period>
+                <period period="EARLY_SUMMER">450</period>
+                <period period="MID_SUMMER">450</period>
+                <period period="LATE_SUMMER">450</period>
+                <period period="EARLY_AUTUMN">450</period>
+                <period period="MID_AUTUMN">450</period>
+                <period period="LATE_AUTUMN">450</period>
+                <period period="EARLY_WINTER">450</period>
+                <period period="MID_WINTER">450</period>
+                <period period="LATE_WINTER">450</period>
+            </history>
+        </fillType>
+        <fillType fillType="SNOW">
+            <history>
+                <period period="EARLY_SPRING">0</period>
+                <period period="MID_SPRING">0</period>
+                <period period="LATE_SPRING">0</period>
+                <period period="EARLY_SUMMER">0</period>
+                <period period="MID_SUMMER">0</period>
+                <period period="LATE_SUMMER">0</period>
+                <period period="EARLY_AUTUMN">0</period>
+                <period period="MID_AUTUMN">0</period>
+                <period period="LATE_AUTUMN">0</period>
+                <period period="EARLY_WINTER">0</period>
+                <period period="MID_WINTER">0</period>
+                <period period="LATE_WINTER">0</period>
+            </history>
+        </fillType>
+        <fillType fillType="ROADSALT">
+            <history>
+                <period period="EARLY_SPRING">0</period>
+                <period period="MID_SPRING">0</period>
+                <period period="LATE_SPRING">0</period>
+                <period period="EARLY_SUMMER">0</period>
+                <period period="MID_SUMMER">0</period>
+                <period period="LATE_SUMMER">0</period>
+                <period period="EARLY_AUTUMN">0</period>
+                <period period="MID_AUTUMN">0</period>
+                <period period="LATE_AUTUMN">0</period>
+                <period period="EARLY_WINTER">0</period>
+                <period period="MID_WINTER">0</period>
+                <period period="LATE_WINTER">0</period>
+            </history>
+        </fillType>
+        <fillType fillType="ROUNDBALE">
+            <history>
+                <period period="EARLY_SPRING">1000</period>
+                <period period="MID_SPRING">1000</period>
+                <period period="LATE_SPRING">1000</period>
+                <period period="EARLY_SUMMER">1000</period>
+                <period period="MID_SUMMER">1000</period>
+                <period period="LATE_SUMMER">1000</period>
+                <period period="EARLY_AUTUMN">1000</period>
+                <period period="MID_AUTUMN">1000</period>
+                <period period="LATE_AUTUMN">1000</period>
+                <period period="EARLY_WINTER">1000</period>
+                <period period="MID_WINTER">1000</period>
+                <period period="LATE_WINTER">1000</period>
+            </history>
+        </fillType>
+        <fillType fillType="ROUNDBALE_GRASS">
+            <history>
+                <period period="EARLY_SPRING">1000</period>
+                <period period="MID_SPRING">1000</period>
+                <period period="LATE_SPRING">1000</period>
+                <period period="EARLY_SUMMER">1000</period>
+                <period period="MID_SUMMER">1000</period>
+                <period period="LATE_SUMMER">1000</period>
+                <period period="EARLY_AUTUMN">1000</period>
+                <period period="MID_AUTUMN">1000</period>
+                <period period="LATE_AUTUMN">1000</period>
+                <period period="EARLY_WINTER">1000</period>
+                <period period="MID_WINTER">1000</period>
+                <period period="LATE_WINTER">1000</period>
+            </history>
+        </fillType>
+        <fillType fillType="ROUNDBALE_DRYGRASS">
+            <history>
+                <period period="EARLY_SPRING">1000</period>
+                <period period="MID_SPRING">1000</period>
+                <period period="LATE_SPRING">1000</period>
+                <period period="EARLY_SUMMER">1000</period>
+                <period period="MID_SUMMER">1000</period>
+                <period period="LATE_SUMMER">1000</period>
+                <period period="EARLY_AUTUMN">1000</period>
+                <period period="MID_AUTUMN">1000</period>
+                <period period="LATE_AUTUMN">1000</period>
+                <period period="EARLY_WINTER">1000</period>
+                <period period="MID_WINTER">1000</period>
+                <period period="LATE_WINTER">1000</period>
+            </history>
+        </fillType>
+        <fillType fillType="ROUNDBALE_COTTON">
+            <history>
+                <period period="EARLY_SPRING">1000</period>
+                <period period="MID_SPRING">1000</period>
+                <period period="LATE_SPRING">1000</period>
+                <period period="EARLY_SUMMER">1000</period>
+                <period period="MID_SUMMER">1000</period>
+                <period period="LATE_SUMMER">1000</period>
+                <period period="EARLY_AUTUMN">1000</period>
+                <period period="MID_AUTUMN">1000</period>
+                <period period="LATE_AUTUMN">1000</period>
+                <period period="EARLY_WINTER">1000</period>
+                <period period="MID_WINTER">1000</period>
+                <period period="LATE_WINTER">1000</period>
+            </history>
+        </fillType>
+        <fillType fillType="ROUNDBALE_WOOD">
+            <history>
+                <period period="EARLY_SPRING">1000</period>
+                <period period="MID_SPRING">1000</period>
+                <period period="LATE_SPRING">1000</period>
+                <period period="EARLY_SUMMER">1000</period>
+                <period period="MID_SUMMER">1000</period>
+                <period period="LATE_SUMMER">1000</period>
+                <period period="EARLY_AUTUMN">1000</period>
+                <period period="MID_AUTUMN">1000</period>
+                <period period="LATE_AUTUMN">1000</period>
+                <period period="EARLY_WINTER">1000</period>
+                <period period="MID_WINTER">1000</period>
+                <period period="LATE_WINTER">1000</period>
+            </history>
+        </fillType>
+        <fillType fillType="SQUAREBALE">
+            <history>
+                <period period="EARLY_SPRING">1000</period>
+                <period period="MID_SPRING">1000</period>
+                <period period="LATE_SPRING">1000</period>
+                <period period="EARLY_SUMMER">1000</period>
+                <period period="MID_SUMMER">1000</period>
+                <period period="LATE_SUMMER">1000</period>
+                <period period="EARLY_AUTUMN">1000</period>
+                <period period="MID_AUTUMN">1000</period>
+                <period period="LATE_AUTUMN">1000</period>
+                <period period="EARLY_WINTER">1000</period>
+                <period period="MID_WINTER">1000</period>
+                <period period="LATE_WINTER">1000</period>
+            </history>
+        </fillType>
+        <fillType fillType="SQUAREBALE_GRASS">
+            <history>
+                <period period="EARLY_SPRING">1000</period>
+                <period period="MID_SPRING">1000</period>
+                <period period="LATE_SPRING">1000</period>
+                <period period="EARLY_SUMMER">1000</period>
+                <period period="MID_SUMMER">1000</period>
+                <period period="LATE_SUMMER">1000</period>
+                <period period="EARLY_AUTUMN">1000</period>
+                <period period="MID_AUTUMN">1000</period>
+                <period period="LATE_AUTUMN">1000</period>
+                <period period="EARLY_WINTER">1000</period>
+                <period period="MID_WINTER">1000</period>
+                <period period="LATE_WINTER">1000</period>
+            </history>
+        </fillType>
+        <fillType fillType="SQUAREBALE_DRYGRASS">
+            <history>
+                <period period="EARLY_SPRING">1000</period>
+                <period period="MID_SPRING">1000</period>
+                <period period="LATE_SPRING">1000</period>
+                <period period="EARLY_SUMMER">1000</period>
+                <period period="MID_SUMMER">1000</period>
+                <period period="LATE_SUMMER">1000</period>
+                <period period="EARLY_AUTUMN">1000</period>
+                <period period="MID_AUTUMN">1000</period>
+                <period period="LATE_AUTUMN">1000</period>
+                <period period="EARLY_WINTER">1000</period>
+                <period period="MID_WINTER">1000</period>
+                <period period="LATE_WINTER">1000</period>
+            </history>
+        </fillType>
+        <fillType fillType="SQUAREBALE_COTTON">
+            <history>
+                <period period="EARLY_SPRING">1000</period>
+                <period period="MID_SPRING">1000</period>
+                <period period="LATE_SPRING">1000</period>
+                <period period="EARLY_SUMMER">1000</period>
+                <period period="MID_SUMMER">1000</period>
+                <period period="LATE_SUMMER">1000</period>
+                <period period="EARLY_AUTUMN">1000</period>
+                <period period="MID_AUTUMN">1000</period>
+                <period period="LATE_AUTUMN">1000</period>
+                <period period="EARLY_WINTER">1000</period>
+                <period period="MID_WINTER">1000</period>
+                <period period="LATE_WINTER">1000</period>
+            </history>
+        </fillType>
+        <fillType fillType="SQUAREBALE_WOOD">
+            <history>
+                <period period="EARLY_SPRING">1000</period>
+                <period period="MID_SPRING">1000</period>
+                <period period="LATE_SPRING">1000</period>
+                <period period="EARLY_SUMMER">1000</period>
+                <period period="MID_SUMMER">1000</period>
+                <period period="LATE_SUMMER">1000</period>
+                <period period="EARLY_AUTUMN">1000</period>
+                <period period="MID_AUTUMN">1000</period>
+                <period period="LATE_AUTUMN">1000</period>
+                <period period="EARLY_WINTER">1000</period>
+                <period period="MID_WINTER">1000</period>
+                <period period="LATE_WINTER">1000</period>
+            </history>
+        </fillType>
+        <fillType fillType="BALE_WRAP">
+            <history>
+                <period period="EARLY_SPRING">1000</period>
+                <period period="MID_SPRING">1000</period>
+                <period period="LATE_SPRING">1000</period>
+                <period period="EARLY_SUMMER">1000</period>
+                <period period="MID_SUMMER">1000</period>
+                <period period="LATE_SUMMER">1000</period>
+                <period period="EARLY_AUTUMN">1000</period>
+                <period period="MID_AUTUMN">1000</period>
+                <period period="LATE_AUTUMN">1000</period>
+                <period period="EARLY_WINTER">1000</period>
+                <period period="MID_WINTER">1000</period>
+                <period period="LATE_WINTER">1000</period>
+            </history>
+        </fillType>
+        <fillType fillType="BALE_NET">
+            <history>
+                <period period="EARLY_SPRING">1000</period>
+                <period period="MID_SPRING">1000</period>
+                <period period="LATE_SPRING">1000</period>
+                <period period="EARLY_SUMMER">1000</period>
+                <period period="MID_SUMMER">1000</period>
+                <period period="LATE_SUMMER">1000</period>
+                <period period="EARLY_AUTUMN">1000</period>
+                <period period="MID_AUTUMN">1000</period>
+                <period period="LATE_AUTUMN">1000</period>
+                <period period="EARLY_WINTER">1000</period>
+                <period period="MID_WINTER">1000</period>
+                <period period="LATE_WINTER">1000</period>
+            </history>
+        </fillType>
+        <fillType fillType="BALE_TWINE">
+            <history>
+                <period period="EARLY_SPRING">1000</period>
+                <period period="MID_SPRING">1000</period>
+                <period period="LATE_SPRING">1000</period>
+                <period period="EARLY_SUMMER">1000</period>
+                <period period="MID_SUMMER">1000</period>
+                <period period="LATE_SUMMER">1000</period>
+                <period period="EARLY_AUTUMN">1000</period>
+                <period period="MID_AUTUMN">1000</period>
+                <period period="LATE_AUTUMN">1000</period>
+                <period period="EARLY_WINTER">1000</period>
+                <period period="MID_WINTER">1000</period>
+                <period period="LATE_WINTER">1000</period>
+            </history>
+        </fillType>
+        <fillType fillType="RICESAPLINGS">
+            <history>
+                <period period="EARLY_SPRING">3390</period>
+                <period period="MID_SPRING">3388</period>
+                <period period="LATE_SPRING">3387</period>
+                <period period="EARLY_SUMMER">3388</period>
+                <period period="MID_SUMMER">3389</period>
+                <period period="LATE_SUMMER">3397</period>
+                <period period="EARLY_AUTUMN">3397</period>
+                <period period="MID_AUTUMN">3396</period>
+                <period period="LATE_AUTUMN">3395</period>
+                <period period="EARLY_WINTER">3395</period>
+                <period period="MID_WINTER">3393</period>
+                <period period="LATE_WINTER">3392</period>
+            </history>
+        </fillType>
+        <fillType fillType="FERTILIZER">
+            <history>
+                <period period="EARLY_SPRING">1600</period>
+                <period period="MID_SPRING">1600</period>
+                <period period="LATE_SPRING">1600</period>
+                <period period="EARLY_SUMMER">1600</period>
+                <period period="MID_SUMMER">1600</period>
+                <period period="LATE_SUMMER">1600</period>
+                <period period="EARLY_AUTUMN">1600</period>
+                <period period="MID_AUTUMN">1600</period>
+                <period period="LATE_AUTUMN">1600</period>
+                <period period="EARLY_WINTER">1600</period>
+                <period period="MID_WINTER">1600</period>
+                <period period="LATE_WINTER">1600</period>
+            </history>
+        </fillType>
+        <fillType fillType="LIQUIDFERTILIZER">
+            <history>
+                <period period="EARLY_SPRING">1200</period>
+                <period period="MID_SPRING">1200</period>
+                <period period="LATE_SPRING">1200</period>
+                <period period="EARLY_SUMMER">1200</period>
+                <period period="MID_SUMMER">1200</period>
+                <period period="LATE_SUMMER">1200</period>
+                <period period="EARLY_AUTUMN">1200</period>
+                <period period="MID_AUTUMN">1200</period>
+                <period period="LATE_AUTUMN">1200</period>
+                <period period="EARLY_WINTER">1200</period>
+                <period period="MID_WINTER">1200</period>
+                <period period="LATE_WINTER">1200</period>
+            </history>
+        </fillType>
+        <fillType fillType="PIGFOOD">
+            <history>
+                <period period="EARLY_SPRING">1400</period>
+                <period period="MID_SPRING">1400</period>
+                <period period="LATE_SPRING">1400</period>
+                <period period="EARLY_SUMMER">1400</period>
+                <period period="MID_SUMMER">1400</period>
+                <period period="LATE_SUMMER">1400</period>
+                <period period="EARLY_AUTUMN">1400</period>
+                <period period="MID_AUTUMN">1400</period>
+                <period period="LATE_AUTUMN">1400</period>
+                <period period="EARLY_WINTER">1400</period>
+                <period period="MID_WINTER">1400</period>
+                <period period="LATE_WINTER">1400</period>
+            </history>
+        </fillType>
+        <fillType fillType="TARP">
+            <history>
+                <period period="EARLY_SPRING">0</period>
+                <period period="MID_SPRING">0</period>
+                <period period="LATE_SPRING">0</period>
+                <period period="EARLY_SUMMER">0</period>
+                <period period="MID_SUMMER">0</period>
+                <period period="LATE_SUMMER">0</period>
+                <period period="EARLY_AUTUMN">0</period>
+                <period period="MID_AUTUMN">0</period>
+                <period period="LATE_AUTUMN">0</period>
+                <period period="EARLY_WINTER">0</period>
+                <period period="MID_WINTER">0</period>
+                <period period="LATE_WINTER">0</period>
+            </history>
+        </fillType>
+        <fillType fillType="LIME">
+            <history>
+                <period period="EARLY_SPRING">225</period>
+                <period period="MID_SPRING">225</period>
+                <period period="LATE_SPRING">225</period>
+                <period period="EARLY_SUMMER">225</period>
+                <period period="MID_SUMMER">225</period>
+                <period period="LATE_SUMMER">225</period>
+                <period period="EARLY_AUTUMN">225</period>
+                <period period="MID_AUTUMN">225</period>
+                <period period="LATE_AUTUMN">225</period>
+                <period period="EARLY_WINTER">225</period>
+                <period period="MID_WINTER">225</period>
+                <period period="LATE_WINTER">225</period>
+            </history>
+        </fillType>
+        <fillType fillType="HERBICIDE">
+            <history>
+                <period period="EARLY_SPRING">1200</period>
+                <period period="MID_SPRING">1200</period>
+                <period period="LATE_SPRING">1200</period>
+                <period period="EARLY_SUMMER">1200</period>
+                <period period="MID_SUMMER">1200</period>
+                <period period="LATE_SUMMER">1200</period>
+                <period period="EARLY_AUTUMN">1200</period>
+                <period period="MID_AUTUMN">1200</period>
+                <period period="LATE_AUTUMN">1200</period>
+                <period period="EARLY_WINTER">1200</period>
+                <period period="MID_WINTER">1200</period>
+                <period period="LATE_WINTER">1200</period>
+            </history>
+        </fillType>
+        <fillType fillType="SILAGE_ADDITIVE">
+            <history>
+                <period period="EARLY_SPRING">1200</period>
+                <period period="MID_SPRING">1200</period>
+                <period period="LATE_SPRING">1200</period>
+                <period period="EARLY_SUMMER">1200</period>
+                <period period="MID_SUMMER">1200</period>
+                <period period="LATE_SUMMER">1200</period>
+                <period period="EARLY_AUTUMN">1200</period>
+                <period period="MID_AUTUMN">1200</period>
+                <period period="LATE_AUTUMN">1200</period>
+                <period period="EARLY_WINTER">1200</period>
+                <period period="MID_WINTER">1200</period>
+                <period period="LATE_WINTER">1200</period>
+            </history>
+        </fillType>
+        <fillType fillType="MINERAL_FEED">
+            <history>
+                <period period="EARLY_SPRING">1200</period>
+                <period period="MID_SPRING">1200</period>
+                <period period="LATE_SPRING">1200</period>
+                <period period="EARLY_SUMMER">1200</period>
+                <period period="MID_SUMMER">1200</period>
+                <period period="LATE_SUMMER">1200</period>
+                <period period="EARLY_AUTUMN">1200</period>
+                <period period="MID_AUTUMN">1200</period>
+                <period period="LATE_AUTUMN">1200</period>
+                <period period="EARLY_WINTER">1200</period>
+                <period period="MID_WINTER">1200</period>
+                <period period="LATE_WINTER">1200</period>
+            </history>
+        </fillType>
+        <fillType fillType="WEED">
+            <history>
+                <period period="EARLY_SPRING">0</period>
+                <period period="MID_SPRING">0</period>
+                <period period="LATE_SPRING">0</period>
+                <period period="EARLY_SUMMER">0</period>
+                <period period="MID_SUMMER">0</period>
+                <period period="LATE_SUMMER">0</period>
+                <period period="EARLY_AUTUMN">0</period>
+                <period period="MID_AUTUMN">0</period>
+                <period period="LATE_AUTUMN">0</period>
+                <period period="EARLY_WINTER">0</period>
+                <period period="MID_WINTER">0</period>
+                <period period="LATE_WINTER">0</period>
+            </history>
+        </fillType>
+        <fillType fillType="HORSE_PALOMINO">
+            <history>
+                <period period="EARLY_SPRING">0</period>
+                <period period="MID_SPRING">0</period>
+                <period period="LATE_SPRING">0</period>
+                <period period="EARLY_SUMMER">0</period>
+                <period period="MID_SUMMER">0</period>
+                <period period="LATE_SUMMER">0</period>
+                <period period="EARLY_AUTUMN">0</period>
+                <period period="MID_AUTUMN">0</period>
+                <period period="LATE_AUTUMN">0</period>
+                <period period="EARLY_WINTER">0</period>
+                <period period="MID_WINTER">0</period>
+                <period period="LATE_WINTER">0</period>
+            </history>
+        </fillType>
+        <fillType fillType="HORSE_BLACK">
+            <history>
+                <period period="EARLY_SPRING">0</period>
+                <period period="MID_SPRING">0</period>
+                <period period="LATE_SPRING">0</period>
+                <period period="EARLY_SUMMER">0</period>
+                <period period="MID_SUMMER">0</period>
+                <period period="LATE_SUMMER">0</period>
+                <period period="EARLY_AUTUMN">0</period>
+                <period period="MID_AUTUMN">0</period>
+                <period period="LATE_AUTUMN">0</period>
+                <period period="EARLY_WINTER">0</period>
+                <period period="MID_WINTER">0</period>
+                <period period="LATE_WINTER">0</period>
+            </history>
+        </fillType>
+        <fillType fillType="HORSE_BAY">
+            <history>
+                <period period="EARLY_SPRING">0</period>
+                <period period="MID_SPRING">0</period>
+                <period period="LATE_SPRING">0</period>
+                <period period="EARLY_SUMMER">0</period>
+                <period period="MID_SUMMER">0</period>
+                <period period="LATE_SUMMER">0</period>
+                <period period="EARLY_AUTUMN">0</period>
+                <period period="MID_AUTUMN">0</period>
+                <period period="LATE_AUTUMN">0</period>
+                <period period="EARLY_WINTER">0</period>
+                <period period="MID_WINTER">0</period>
+                <period period="LATE_WINTER">0</period>
+            </history>
+        </fillType>
+        <fillType fillType="HORSE_PINTO">
+            <history>
+                <period period="EARLY_SPRING">0</period>
+                <period period="MID_SPRING">0</period>
+                <period period="LATE_SPRING">0</period>
+                <period period="EARLY_SUMMER">0</period>
+                <period period="MID_SUMMER">0</period>
+                <period period="LATE_SUMMER">0</period>
+                <period period="EARLY_AUTUMN">0</period>
+                <period period="MID_AUTUMN">0</period>
+                <period period="LATE_AUTUMN">0</period>
+                <period period="EARLY_WINTER">0</period>
+                <period period="MID_WINTER">0</period>
+                <period period="LATE_WINTER">0</period>
+            </history>
+        </fillType>
+        <fillType fillType="HORSE_SEAL_BROWN">
+            <history>
+                <period period="EARLY_SPRING">0</period>
+                <period period="MID_SPRING">0</period>
+                <period period="LATE_SPRING">0</period>
+                <period period="EARLY_SUMMER">0</period>
+                <period period="MID_SUMMER">0</period>
+                <period period="LATE_SUMMER">0</period>
+                <period period="EARLY_AUTUMN">0</period>
+                <period period="MID_AUTUMN">0</period>
+                <period period="LATE_AUTUMN">0</period>
+                <period period="EARLY_WINTER">0</period>
+                <period period="MID_WINTER">0</period>
+                <period period="LATE_WINTER">0</period>
+            </history>
+        </fillType>
+        <fillType fillType="HORSE_GRAY">
+            <history>
+                <period period="EARLY_SPRING">0</period>
+                <period period="MID_SPRING">0</period>
+                <period period="LATE_SPRING">0</period>
+                <period period="EARLY_SUMMER">0</period>
+                <period period="MID_SUMMER">0</period>
+                <period period="LATE_SUMMER">0</period>
+                <period period="EARLY_AUTUMN">0</period>
+                <period period="MID_AUTUMN">0</period>
+                <period period="LATE_AUTUMN">0</period>
+                <period period="EARLY_WINTER">0</period>
+                <period period="MID_WINTER">0</period>
+                <period period="LATE_WINTER">0</period>
+            </history>
+        </fillType>
+        <fillType fillType="HORSE_DUN">
+            <history>
+                <period period="EARLY_SPRING">0</period>
+                <period period="MID_SPRING">0</period>
+                <period period="LATE_SPRING">0</period>
+                <period period="EARLY_SUMMER">0</period>
+                <period period="MID_SUMMER">0</period>
+                <period period="LATE_SUMMER">0</period>
+                <period period="EARLY_AUTUMN">0</period>
+                <period period="MID_AUTUMN">0</period>
+                <period period="LATE_AUTUMN">0</period>
+                <period period="EARLY_WINTER">0</period>
+                <period period="MID_WINTER">0</period>
+                <period period="LATE_WINTER">0</period>
+            </history>
+        </fillType>
+        <fillType fillType="HORSE_CHESTNUT">
+            <history>
+                <period period="EARLY_SPRING">0</period>
+                <period period="MID_SPRING">0</period>
+                <period period="LATE_SPRING">0</period>
+                <period period="EARLY_SUMMER">0</period>
+                <period period="MID_SUMMER">0</period>
+                <period period="LATE_SUMMER">0</period>
+                <period period="EARLY_AUTUMN">0</period>
+                <period period="MID_AUTUMN">0</period>
+                <period period="LATE_AUTUMN">0</period>
+                <period period="EARLY_WINTER">0</period>
+                <period period="MID_WINTER">0</period>
+                <period period="LATE_WINTER">0</period>
+            </history>
+        </fillType>
+        <fillType fillType="COW_SWISS_BROWN">
+            <history>
+                <period period="EARLY_SPRING">5000000</period>
+                <period period="MID_SPRING">5000000</period>
+                <period period="LATE_SPRING">5000000</period>
+                <period period="EARLY_SUMMER">5000000</period>
+                <period period="MID_SUMMER">5000000</period>
+                <period period="LATE_SUMMER">5000000</period>
+                <period period="EARLY_AUTUMN">5000000</period>
+                <period period="MID_AUTUMN">5000000</period>
+                <period period="LATE_AUTUMN">5000000</period>
+                <period period="EARLY_WINTER">5000000</period>
+                <period period="MID_WINTER">5000000</period>
+                <period period="LATE_WINTER">5000000</period>
+            </history>
+        </fillType>
+        <fillType fillType="COW_HOLSTEIN">
+            <history>
+                <period period="EARLY_SPRING">5000000</period>
+                <period period="MID_SPRING">5000000</period>
+                <period period="LATE_SPRING">5000000</period>
+                <period period="EARLY_SUMMER">5000000</period>
+                <period period="MID_SUMMER">5000000</period>
+                <period period="LATE_SUMMER">5000000</period>
+                <period period="EARLY_AUTUMN">5000000</period>
+                <period period="MID_AUTUMN">5000000</period>
+                <period period="LATE_AUTUMN">5000000</period>
+                <period period="EARLY_WINTER">5000000</period>
+                <period period="MID_WINTER">5000000</period>
+                <period period="LATE_WINTER">5000000</period>
+            </history>
+        </fillType>
+        <fillType fillType="COW_LIMOUSIN">
+            <history>
+                <period period="EARLY_SPRING">5000000</period>
+                <period period="MID_SPRING">5000000</period>
+                <period period="LATE_SPRING">5000000</period>
+                <period period="EARLY_SUMMER">5000000</period>
+                <period period="MID_SUMMER">5000000</period>
+                <period period="LATE_SUMMER">5000000</period>
+                <period period="EARLY_AUTUMN">5000000</period>
+                <period period="MID_AUTUMN">5000000</period>
+                <period period="LATE_AUTUMN">5000000</period>
+                <period period="EARLY_WINTER">5000000</period>
+                <period period="MID_WINTER">5000000</period>
+                <period period="LATE_WINTER">5000000</period>
+            </history>
+        </fillType>
+        <fillType fillType="COW_ANGUS">
+            <history>
+                <period period="EARLY_SPRING">5000000</period>
+                <period period="MID_SPRING">5000000</period>
+                <period period="LATE_SPRING">5000000</period>
+                <period period="EARLY_SUMMER">5000000</period>
+                <period period="MID_SUMMER">5000000</period>
+                <period period="LATE_SUMMER">5000000</period>
+                <period period="EARLY_AUTUMN">5000000</period>
+                <period period="MID_AUTUMN">5000000</period>
+                <period period="LATE_AUTUMN">5000000</period>
+                <period period="EARLY_WINTER">5000000</period>
+                <period period="MID_WINTER">5000000</period>
+                <period period="LATE_WINTER">5000000</period>
+            </history>
+        </fillType>
+        <fillType fillType="COW_WATERBUFFALO">
+            <history>
+                <period period="EARLY_SPRING">5000000</period>
+                <period period="MID_SPRING">5000000</period>
+                <period period="LATE_SPRING">5000000</period>
+                <period period="EARLY_SUMMER">5000000</period>
+                <period period="MID_SUMMER">5000000</period>
+                <period period="LATE_SUMMER">5000000</period>
+                <period period="EARLY_AUTUMN">5000000</period>
+                <period period="MID_AUTUMN">5000000</period>
+                <period period="LATE_AUTUMN">5000000</period>
+                <period period="EARLY_WINTER">5000000</period>
+                <period period="MID_WINTER">5000000</period>
+                <period period="LATE_WINTER">5000000</period>
+            </history>
+        </fillType>
+        <fillType fillType="COW_HIGHLAND_CATTLE">
+            <history>
+                <period period="EARLY_SPRING">5000000</period>
+                <period period="MID_SPRING">5000000</period>
+                <period period="LATE_SPRING">5000000</period>
+                <period period="EARLY_SUMMER">5000000</period>
+                <period period="MID_SUMMER">5000000</period>
+                <period period="LATE_SUMMER">5000000</period>
+                <period period="EARLY_AUTUMN">5000000</period>
+                <period period="MID_AUTUMN">5000000</period>
+                <period period="LATE_AUTUMN">5000000</period>
+                <period period="EARLY_WINTER">5000000</period>
+                <period period="MID_WINTER">5000000</period>
+                <period period="LATE_WINTER">5000000</period>
+            </history>
+        </fillType>
+        <fillType fillType="SHEEP_LANDRACE">
+            <history>
+                <period period="EARLY_SPRING">4000000</period>
+                <period period="MID_SPRING">4000000</period>
+                <period period="LATE_SPRING">4000000</period>
+                <period period="EARLY_SUMMER">4000000</period>
+                <period period="MID_SUMMER">4000000</period>
+                <period period="LATE_SUMMER">4000000</period>
+                <period period="EARLY_AUTUMN">4000000</period>
+                <period period="MID_AUTUMN">4000000</period>
+                <period period="LATE_AUTUMN">4000000</period>
+                <period period="EARLY_WINTER">4000000</period>
+                <period period="MID_WINTER">4000000</period>
+                <period period="LATE_WINTER">4000000</period>
+            </history>
+        </fillType>
+        <fillType fillType="SHEEP_SWISS_MOUNTAIN">
+            <history>
+                <period period="EARLY_SPRING">4000000</period>
+                <period period="MID_SPRING">4000000</period>
+                <period period="LATE_SPRING">4000000</period>
+                <period period="EARLY_SUMMER">4000000</period>
+                <period period="MID_SUMMER">4000000</period>
+                <period period="LATE_SUMMER">4000000</period>
+                <period period="EARLY_AUTUMN">4000000</period>
+                <period period="MID_AUTUMN">4000000</period>
+                <period period="LATE_AUTUMN">4000000</period>
+                <period period="EARLY_WINTER">4000000</period>
+                <period period="MID_WINTER">4000000</period>
+                <period period="LATE_WINTER">4000000</period>
+            </history>
+        </fillType>
+        <fillType fillType="SHEEP_STEINSCHAF">
+            <history>
+                <period period="EARLY_SPRING">4000000</period>
+                <period period="MID_SPRING">4000000</period>
+                <period period="LATE_SPRING">4000000</period>
+                <period period="EARLY_SUMMER">4000000</period>
+                <period period="MID_SUMMER">4000000</period>
+                <period period="LATE_SUMMER">4000000</period>
+                <period period="EARLY_AUTUMN">4000000</period>
+                <period period="MID_AUTUMN">4000000</period>
+                <period period="LATE_AUTUMN">4000000</period>
+                <period period="EARLY_WINTER">4000000</period>
+                <period period="MID_WINTER">4000000</period>
+                <period period="LATE_WINTER">4000000</period>
+            </history>
+        </fillType>
+        <fillType fillType="SHEEP_BLACK_WELSH">
+            <history>
+                <period period="EARLY_SPRING">4000000</period>
+                <period period="MID_SPRING">4000000</period>
+                <period period="LATE_SPRING">4000000</period>
+                <period period="EARLY_SUMMER">4000000</period>
+                <period period="MID_SUMMER">4000000</period>
+                <period period="LATE_SUMMER">4000000</period>
+                <period period="EARLY_AUTUMN">4000000</period>
+                <period period="MID_AUTUMN">4000000</period>
+                <period period="LATE_AUTUMN">4000000</period>
+                <period period="EARLY_WINTER">4000000</period>
+                <period period="MID_WINTER">4000000</period>
+                <period period="LATE_WINTER">4000000</period>
+            </history>
+        </fillType>
+        <fillType fillType="PIG_LANDRACE">
+            <history>
+                <period period="EARLY_SPRING">3000000</period>
+                <period period="MID_SPRING">3000000</period>
+                <period period="LATE_SPRING">3000000</period>
+                <period period="EARLY_SUMMER">3000000</period>
+                <period period="MID_SUMMER">3000000</period>
+                <period period="LATE_SUMMER">3000000</period>
+                <period period="EARLY_AUTUMN">3000000</period>
+                <period period="MID_AUTUMN">3000000</period>
+                <period period="LATE_AUTUMN">3000000</period>
+                <period period="EARLY_WINTER">3000000</period>
+                <period period="MID_WINTER">3000000</period>
+                <period period="LATE_WINTER">3000000</period>
+            </history>
+        </fillType>
+        <fillType fillType="PIG_BLACK_PIED">
+            <history>
+                <period period="EARLY_SPRING">3000000</period>
+                <period period="MID_SPRING">3000000</period>
+                <period period="LATE_SPRING">3000000</period>
+                <period period="EARLY_SUMMER">3000000</period>
+                <period period="MID_SUMMER">3000000</period>
+                <period period="LATE_SUMMER">3000000</period>
+                <period period="EARLY_AUTUMN">3000000</period>
+                <period period="MID_AUTUMN">3000000</period>
+                <period period="LATE_AUTUMN">3000000</period>
+                <period period="EARLY_WINTER">3000000</period>
+                <period period="MID_WINTER">3000000</period>
+                <period period="LATE_WINTER">3000000</period>
+            </history>
+        </fillType>
+        <fillType fillType="PIG_BERKSHIRE">
+            <history>
+                <period period="EARLY_SPRING">3000000</period>
+                <period period="MID_SPRING">3000000</period>
+                <period period="LATE_SPRING">3000000</period>
+                <period period="EARLY_SUMMER">3000000</period>
+                <period period="MID_SUMMER">3000000</period>
+                <period period="LATE_SUMMER">3000000</period>
+                <period period="EARLY_AUTUMN">3000000</period>
+                <period period="MID_AUTUMN">3000000</period>
+                <period period="LATE_AUTUMN">3000000</period>
+                <period period="EARLY_WINTER">3000000</period>
+                <period period="MID_WINTER">3000000</period>
+                <period period="LATE_WINTER">3000000</period>
+            </history>
+        </fillType>
+        <fillType fillType="CHICKEN">
+            <history>
+                <period period="EARLY_SPRING">0</period>
+                <period period="MID_SPRING">0</period>
+                <period period="LATE_SPRING">0</period>
+                <period period="EARLY_SUMMER">0</period>
+                <period period="MID_SUMMER">0</period>
+                <period period="LATE_SUMMER">0</period>
+                <period period="EARLY_AUTUMN">0</period>
+                <period period="MID_AUTUMN">0</period>
+                <period period="LATE_AUTUMN">0</period>
+                <period period="EARLY_WINTER">0</period>
+                <period period="MID_WINTER">0</period>
+                <period period="LATE_WINTER">0</period>
+            </history>
+        </fillType>
+        <fillType fillType="CHICKEN_ROOSTER">
+            <history>
+                <period period="EARLY_SPRING">0</period>
+                <period period="MID_SPRING">0</period>
+                <period period="LATE_SPRING">0</period>
+                <period period="EARLY_SUMMER">0</period>
+                <period period="MID_SUMMER">0</period>
+                <period period="LATE_SUMMER">0</period>
+                <period period="EARLY_AUTUMN">0</period>
+                <period period="MID_AUTUMN">0</period>
+                <period period="LATE_AUTUMN">0</period>
+                <period period="EARLY_WINTER">0</period>
+                <period period="MID_WINTER">0</period>
+                <period period="LATE_WINTER">0</period>
+            </history>
+        </fillType>
+        <fillType fillType="GOAT">
+            <history>
+                <period period="EARLY_SPRING">0</period>
+                <period period="MID_SPRING">0</period>
+                <period period="LATE_SPRING">0</period>
+                <period period="EARLY_SUMMER">0</period>
+                <period period="MID_SUMMER">0</period>
+                <period period="LATE_SUMMER">0</period>
+                <period period="EARLY_AUTUMN">0</period>
+                <period period="MID_AUTUMN">0</period>
+                <period period="LATE_AUTUMN">0</period>
+                <period period="EARLY_WINTER">0</period>
+                <period period="MID_WINTER">0</period>
+                <period period="LATE_WINTER">0</period>
+            </history>
+        </fillType>
+        <fillType fillType="ONION">
+            <history>
+                <period period="EARLY_SPRING">259</period>
+                <period period="MID_SPRING">259</period>
+                <period period="LATE_SPRING">242</period>
+                <period period="EARLY_SUMMER">224</period>
+                <period period="MID_SUMMER">210</period>
+                <period period="LATE_SUMMER">206</period>
+                <period period="EARLY_AUTUMN">230</period>
+                <period period="MID_AUTUMN">259</period>
+                <period period="LATE_AUTUMN">276</period>
+                <period period="EARLY_WINTER">294</period>
+                <period period="MID_WINTER">270</period>
+                <period period="LATE_WINTER">259</period>
+            </history>
+        </fillType>
+        <fillType fillType="ONION_DIRTY">
+            <history>
+                <period period="EARLY_SPRING">250</period>
+                <period period="MID_SPRING">268</period>
+                <period period="LATE_SPRING">248</period>
+                <period period="EARLY_SUMMER">235</period>
+                <period period="MID_SUMMER">213</period>
+                <period period="LATE_SUMMER">203</period>
+                <period period="EARLY_AUTUMN">215</period>
+                <period period="MID_AUTUMN">248</period>
+                <period period="LATE_AUTUMN">270</period>
+                <period period="EARLY_WINTER">282</period>
+                <period period="MID_WINTER">303</period>
+                <period period="LATE_WINTER">270</period>
+            </history>
+        </fillType>
+        <fillType fillType="COAL">
+            <history>
+                <period period="EARLY_SPRING">514</period>
+                <period period="MID_SPRING">539</period>
+                <period period="LATE_SPRING">563</period>
+                <period period="EARLY_SUMMER">588</period>
+                <period period="MID_SUMMER">613</period>
+                <period period="LATE_SUMMER">588</period>
+                <period period="EARLY_AUTUMN">563</period>
+                <period period="MID_AUTUMN">539</period>
+                <period period="LATE_AUTUMN">514</period>
+                <period period="EARLY_WINTER">490</period>
+                <period period="MID_WINTER">490</period>
+                <period period="LATE_WINTER">490</period>
+            </history>
+        </fillType>
+        <fillType fillType="STONEBIG">
+            <history>
+                <period period="EARLY_SPRING">239</period>
+                <period period="MID_SPRING">252</period>
+                <period period="LATE_SPRING">264</period>
+                <period period="EARLY_SUMMER">277</period>
+                <period period="MID_SUMMER">282</period>
+                <period period="LATE_SUMMER">272</period>
+                <period period="EARLY_AUTUMN">259</period>
+                <period period="MID_AUTUMN">243</period>
+                <period period="LATE_AUTUMN">227</period>
+                <period period="EARLY_WINTER">220</period>
+                <period period="MID_WINTER">221</period>
+                <period period="LATE_WINTER">226</period>
+            </history>
+        </fillType>
+        <fillType fillType="CASTLEROCK">
+            <history>
+                <period period="EARLY_SPRING">1139</period>
+                <period period="MID_SPRING">1193</period>
+                <period period="LATE_SPRING">1247</period>
+                <period period="EARLY_SUMMER">1303</period>
+                <period period="MID_SUMMER">1321</period>
+                <period period="LATE_SUMMER">1255</period>
+                <period period="EARLY_AUTUMN">1200</period>
+                <period period="MID_AUTUMN">1145</period>
+                <period period="LATE_AUTUMN">1086</period>
+                <period period="EARLY_WINTER">1058</period>
+                <period period="MID_WINTER">1060</period>
+                <period period="LATE_WINTER">1083</period>
+            </history>
+        </fillType>
+        <fillType fillType="SHINGLEROOF">
+            <history>
+                <period period="EARLY_SPRING">1560</period>
+                <period period="MID_SPRING">1628</period>
+                <period period="LATE_SPRING">1695</period>
+                <period period="EARLY_SUMMER">1774</period>
+                <period period="MID_SUMMER">1803</period>
+                <period period="LATE_SUMMER">1686</period>
+                <period period="EARLY_AUTUMN">1623</period>
+                <period period="MID_AUTUMN">1560</period>
+                <period period="LATE_AUTUMN">1493</period>
+                <period period="EARLY_WINTER">1458</period>
+                <period period="MID_WINTER">1461</period>
+                <period period="LATE_WINTER">1491</period>
+            </history>
+        </fillType>
+        <fillType fillType="FISHFOOD">
+            <history>
+                <period period="EARLY_SPRING">1246</period>
+                <period period="MID_SPRING">1376</period>
+                <period period="LATE_SPRING">1505</period>
+                <period period="EARLY_SUMMER">1641</period>
+                <period period="MID_SUMMER">1699</period>
+                <period period="LATE_SUMMER">1543</period>
+                <period period="EARLY_AUTUMN">1374</period>
+                <period period="MID_AUTUMN">1249</period>
+                <period period="LATE_AUTUMN">1156</period>
+                <period period="EARLY_WINTER">1089</period>
+                <period period="MID_WINTER">1125</period>
+                <period period="LATE_WINTER">1152</period>
+            </history>
+        </fillType>
+        <fillType fillType="SALMONYOUNG">
+            <history>
+                <period period="EARLY_SPRING">1112</period>
+                <period period="MID_SPRING">1251</period>
+                <period period="LATE_SPRING">1390</period>
+                <period period="EARLY_SUMMER">1529</period>
+                <period period="MID_SUMMER">1668</period>
+                <period period="LATE_SUMMER">1598</period>
+                <period period="EARLY_AUTUMN">1390</period>
+                <period period="MID_AUTUMN">1251</period>
+                <period period="LATE_AUTUMN">1112</period>
+                <period period="EARLY_WINTER">1042</period>
+                <period period="MID_WINTER">973</period>
+                <period period="LATE_WINTER">1042</period>
+            </history>
+        </fillType>
+        <fillType fillType="SALMON">
+            <history>
+                <period period="EARLY_SPRING">3465</period>
+                <period period="MID_SPRING">3595</period>
+                <period period="LATE_SPRING">3725</period>
+                <period period="EARLY_SUMMER">3867</period>
+                <period period="MID_SUMMER">3916</period>
+                <period period="LATE_SUMMER">3725</period>
+                <period period="EARLY_AUTUMN">3599</period>
+                <period period="MID_AUTUMN">3469</period>
+                <period period="LATE_AUTUMN">3340</period>
+                <period period="EARLY_WINTER">3199</period>
+                <period period="MID_WINTER">3272</period>
+                <period period="LATE_WINTER">3335</period>
+            </history>
+        </fillType>
+        <fillType fillType="TROUTYOUNG">
+            <history>
+                <period period="EARLY_SPRING">625</period>
+                <period period="MID_SPRING">714</period>
+                <period period="LATE_SPRING">804</period>
+                <period period="EARLY_SUMMER">893</period>
+                <period period="MID_SUMMER">982</period>
+                <period period="LATE_SUMMER">938</period>
+                <period period="EARLY_AUTUMN">804</period>
+                <period period="MID_AUTUMN">714</period>
+                <period period="LATE_AUTUMN">625</period>
+                <period period="EARLY_WINTER">580</period>
+                <period period="MID_WINTER">536</period>
+                <period period="LATE_WINTER">580</period>
+            </history>
+        </fillType>
+        <fillType fillType="TROUT">
+            <history>
+                <period period="EARLY_SPRING">2127</period>
+                <period period="MID_SPRING">2214</period>
+                <period period="LATE_SPRING">2300</period>
+                <period period="EARLY_SUMMER">2393</period>
+                <period period="MID_SUMMER">2425</period>
+                <period period="LATE_SUMMER">2277</period>
+                <period period="EARLY_AUTUMN">2188</period>
+                <period period="MID_AUTUMN">2111</period>
+                <period period="LATE_AUTUMN">2036</period>
+                <period period="EARLY_WINTER">1944</period>
+                <period period="MID_WINTER">1997</period>
+                <period period="LATE_WINTER">2039</period>
+            </history>
+        </fillType>
+        <fillType fillType="FRIEDONION">
+            <history>
+                <period period="EARLY_SPRING">2006</period>
+                <period period="MID_SPRING">1834</period>
+                <period period="LATE_SPRING">1659</period>
+                <period period="EARLY_SUMMER">1521</period>
+                <period period="MID_SUMMER">1491</period>
+                <period period="LATE_SUMMER">1641</period>
+                <period period="EARLY_AUTUMN">1823</period>
+                <period period="MID_AUTUMN">1998</period>
+                <period period="LATE_AUTUMN">2178</period>
+                <period period="EARLY_WINTER">2268</period>
+                <period period="MID_WINTER">2261</period>
+                <period period="LATE_WINTER">2185</period>
+            </history>
+        </fillType>
+        <fillType fillType="ONIONBAG">
+            <history>
+                <period period="EARLY_SPRING">337</period>
+                <period period="MID_SPRING">313</period>
+                <period period="LATE_SPRING">297</period>
+                <period period="EARLY_SUMMER">279</period>
+                <period period="MID_SUMMER">273</period>
+                <period period="LATE_SUMMER">306</period>
+                <period period="EARLY_AUTUMN">339</period>
+                <period period="MID_AUTUMN">371</period>
+                <period period="LATE_AUTUMN">405</period>
+                <period period="EARLY_WINTER">405</period>
+                <period period="MID_WINTER">386</period>
+                <period period="LATE_WINTER">372</period>
+            </history>
+        </fillType>
+        <fillType fillType="ONIONSALT">
+            <history>
+                <period period="EARLY_SPRING">1669</period>
+                <period period="MID_SPRING">1586</period>
+                <period period="LATE_SPRING">1500</period>
+                <period period="EARLY_SUMMER">1413</period>
+                <period period="MID_SUMMER">1384</period>
+                <period period="LATE_SUMMER">1536</period>
+                <period period="EARLY_AUTUMN">1668</period>
+                <period period="MID_AUTUMN">1794</period>
+                <period period="LATE_AUTUMN">1985</period>
+                <period period="EARLY_WINTER">1985</period>
+                <period period="MID_WINTER">1888</period>
+                <period period="LATE_WINTER">1808</period>
+            </history>
+        </fillType>
+        <fillType fillType="ONIONSOUP">
+            <history>
+                <period period="EARLY_SPRING">1072</period>
+                <period period="MID_SPRING">986</period>
+                <period period="LATE_SPRING">898</period>
+                <period period="EARLY_SUMMER">831</period>
+                <period period="MID_SUMMER">817</period>
+                <period period="LATE_SUMMER">892</period>
+                <period period="EARLY_AUTUMN">982</period>
+                <period period="MID_AUTUMN">1068</period>
+                <period period="LATE_AUTUMN">1158</period>
+                <period period="EARLY_WINTER">1202</period>
+                <period period="MID_WINTER">1199</period>
+                <period period="LATE_WINTER">1161</period>
+            </history>
+        </fillType>
+        <fillType fillType="MOLASSES">
+            <history>
+                <period period="EARLY_SPRING">30</period>
+                <period period="MID_SPRING">30</period>
+                <period period="LATE_SPRING">30</period>
+                <period period="EARLY_SUMMER">30</period>
+                <period period="MID_SUMMER">30</period>
+                <period period="LATE_SUMMER">30</period>
+                <period period="EARLY_AUTUMN">30</period>
+                <period period="MID_AUTUMN">30</period>
+                <period period="LATE_AUTUMN">30</period>
+                <period period="EARLY_WINTER">30</period>
+                <period period="MID_WINTER">30</period>
+                <period period="LATE_WINTER">30</period>
+            </history>
+        </fillType>
+        <fillType fillType="HAY_PELLETS">
+            <history>
+                <period period="EARLY_SPRING">264</period>
+                <period period="MID_SPRING">253</period>
+                <period period="LATE_SPRING">239</period>
+                <period period="EARLY_SUMMER">228</period>
+                <period period="MID_SUMMER">224</period>
+                <period period="LATE_SUMMER">228</period>
+                <period period="EARLY_AUTUMN">240</period>
+                <period period="MID_AUTUMN">256</period>
+                <period period="LATE_AUTUMN">269</period>
+                <period period="EARLY_WINTER">277</period>
+                <period period="MID_WINTER">280</period>
+                <period period="LATE_WINTER">275</period>
+            </history>
+        </fillType>
+        <fillType fillType="STRAW_PELLETS">
+            <history>
+                <period period="EARLY_SPRING">191</period>
+                <period period="MID_SPRING">183</period>
+                <period period="LATE_SPRING">172</period>
+                <period period="EARLY_SUMMER">164</period>
+                <period period="MID_SUMMER">161</period>
+                <period period="LATE_SUMMER">168</period>
+                <period period="EARLY_AUTUMN">176</period>
+                <period period="MID_AUTUMN">186</period>
+                <period period="LATE_AUTUMN">196</period>
+                <period period="EARLY_WINTER">201</period>
+                <period period="MID_WINTER">203</period>
+                <period period="LATE_WINTER">199</period>
+            </history>
+        </fillType>
+    </fillTypes>
+</economy>

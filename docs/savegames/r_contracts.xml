@@ -1,0 +1,6 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<r_contracts>
+    <leaseVehicle>2.000000</leaseVehicle>
+    <missionPerFarm>4.000000</missionPerFarm>
+    <allowClearAdd>2.000000</allowClearAdd>
+</r_contracts>

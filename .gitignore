@@ -29,3 +29,12 @@ docs/implementation/
 
 # Superpowers brainstorming sessions
 .superpowers/
+
+# Reference savegame: keep the XML (parsers are written against it),
+# exclude the binary map data — ~36 MB that would bloat the repo permanently.
+docs/savegames/*.gdm
+docs/savegames/*.grle
+docs/savegames/*.gmss
+docs/savegames/*.cache
+docs/savegames/*.dat
+docs/savegames/*.png

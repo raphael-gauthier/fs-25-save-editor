@@ -1,0 +1,36 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<players>
+    <player uniqueUserId="PLAYER_A" timeLastConnected="2025/01/01 12:00">
+        <style filename="dataS/character/playerM/playerM.xml">
+            <facegear color="1"/>
+            <onepiece color="5" name="jeans"/>
+            <bottom color="5"/>
+            <face color="1" name="head01"/>
+            <top color="10"/>
+            <gloves color="5" name="leather"/>
+            <headgear color="2" name="vintage"/>
+            <glasses color="1" name="empty"/>
+            <footwear color="1" name="workBoots1"/>
+            <hairStyle color="2" name="hair10"/>
+            <beard color="2" name="trimmedBeard_head01"/>
+        </style>
+        <handTools>
+            <handTool uniqueId="HandTool6f20c83f81bc885efad82701d5517198"/>
+        </handTools>
+    </player>
+    <player uniqueUserId="PLAYER_B" timeLastConnected="2025/01/01 12:00">
+        <style filename="dataS/character/playerM/playerM.xml">
+            <facegear color="1"/>
+            <onepiece color="1" name="empty"/>
+            <bottom color="1" name="jeans"/>
+            <face color="1" name="head01"/>
+            <top color="1" name="collaredShirt"/>
+            <gloves color="1" name="empty"/>
+            <headgear color="1" name="empty"/>
+            <glasses color="1" name="empty"/>
+            <footwear color="1" name="workBoots2"/>
+            <hairStyle color="15" name="hair09"/>
+            <beard color="15" name="fullStash_head01"/>
+        </style>
+    </player>
+</players>
