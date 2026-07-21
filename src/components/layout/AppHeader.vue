@@ -23,6 +23,7 @@ import { useVehicleStore } from "@/stores/vehicle";
 import { useSaleStore } from "@/stores/sale";
 import { useFieldStore } from "@/stores/field";
 import { useBuildingStore } from "@/stores/building";
+import { useAnimalStore } from "@/stores/animal";
 import { useMissionStore } from "@/stores/mission";
 import { useWorldStore } from "@/stores/world";
 import { useEconomyStore } from "@/stores/economy";
@@ -39,6 +40,7 @@ const vehicleStore = useVehicleStore();
 const saleStore = useSaleStore();
 const fieldStore = useFieldStore();
 const buildingStore = useBuildingStore();
+const animalStore = useAnimalStore();
 const missionStore = useMissionStore();
 const worldStore = useWorldStore();
 const economyStore = useEconomyStore();
@@ -72,6 +74,7 @@ const breadcrumbKeyMap: Record<string, string> = {
   fields: "sidebar.fields",
   world: "sidebar.world",
   buildings: "sidebar.buildings",
+  animals: "sidebar.animals",
   missions: "sidebar.missions",
   collectibles: "sidebar.collectibles",
   economy: "sidebar.economy",
@@ -138,6 +141,7 @@ async function handleSave() {
     saleStore.commitChanges();
     fieldStore.commitChanges();
     buildingStore.commitChanges();
+    animalStore.commitChanges();
     missionStore.commitChanges();
     worldStore.commitChanges();
     economyStore.commitChanges();

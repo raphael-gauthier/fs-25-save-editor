@@ -28,6 +28,7 @@ import {
   TrendingUp,
   Archive,
   Settings,
+  PiggyBank,
   type LucideIcon,
 } from "lucide-vue-next";
 
@@ -51,6 +52,7 @@ const phase2Nav: NavItem[] = [
   { labelKey: "sidebar.fields", icon: Wheat, route: "/editor/fields" },
   { labelKey: "sidebar.world", icon: Cloud, route: "/editor/world" },
   { labelKey: "sidebar.buildings", icon: Building2, route: "/editor/buildings" },
+  { labelKey: "sidebar.animals", icon: PiggyBank, route: "/editor/animals" },
   { labelKey: "sidebar.missions", icon: ClipboardList, route: "/editor/missions" },
   { labelKey: "sidebar.collectibles", icon: Trophy, route: "/editor/collectibles" },
   { labelKey: "sidebar.economy", icon: TrendingUp, route: "/editor/economy" },
