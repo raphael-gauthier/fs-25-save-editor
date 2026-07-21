@@ -4,7 +4,7 @@ use quick_xml::events::Event;
 use quick_xml::Reader;
 
 use crate::error::AppError;
-use crate::models::husbandry::{AnimalCluster, Husbandry};
+use crate::models::husbandry::{AnimalCluster, FillStock, Husbandry, MeadowStock};
 use crate::models::placeable::{display_name_from_unique_id, placeable_display_name};
 
 // Not yet wired into a command — these exist ahead of the feature that will call them.
@@ -53,6 +53,12 @@ pub fn parse_husbandries(path: &Path) -> Result<Vec<Husbandry>, AppError> {
     let mut current: Option<Husbandry> = None;
     let mut is_husbandry = false;
     let mut in_clusters = false;
+    // <storage>/<node> are also used by silos and production points, so water
+    // collection is gated on being inside <husbandry>.
+    let mut in_husbandry = false;
+    let mut in_husbandry_storage = false;
+    let mut in_food = false;
+    let mut in_meadow = false;
 
     loop {
         let event = reader.read_event().map_err(|e| AppError::XmlParseError {
@@ -74,8 +80,19 @@ pub fn parse_husbandries(path: &Path) -> Result<Vec<Husbandry>, AppError> {
                         current = None;
                         is_husbandry = false;
                         in_clusters = false;
+                        in_husbandry = false;
+                        in_husbandry_storage = false;
+                        in_food = false;
+                        in_meadow = false;
                     }
+                    b"husbandry" => {
+                        in_husbandry = false;
+                        in_husbandry_storage = false;
+                    }
+                    b"storage" if in_husbandry => in_husbandry_storage = false,
                     b"clusters" => in_clusters = false,
+                    b"husbandryFood" => in_food = false,
+                    b"husbandryMeadow" => in_meadow = false,
                     _ => {}
                 }
                 continue;
@@ -95,6 +112,10 @@ pub fn parse_husbandries(path: &Path) -> Result<Vec<Husbandry>, AppError> {
                 }
                 is_husbandry = false;
                 in_clusters = false;
+                in_husbandry = false;
+                in_husbandry_storage = false;
+                in_food = false;
+                in_meadow = false;
 
                 let filename = attr_str(e, "filename");
                 let unique_id = attr_str(e, "uniqueId");
@@ -122,6 +143,7 @@ pub fn parse_husbandries(path: &Path) -> Result<Vec<Husbandry>, AppError> {
             }
             b"husbandry" => {
                 is_husbandry = true;
+                in_husbandry = !is_empty;
                 if let Some(ref mut h) = current {
                     h.production_factor = attr_f64(e, "productionFactor");
                 }
@@ -140,7 +162,40 @@ pub fn parse_husbandries(path: &Path) -> Result<Vec<Husbandry>, AppError> {
                     });
                 }
             }
-            // Food, water and pasture are added in Task 5.
+            b"husbandryFood" => {
+                is_husbandry = true;
+                in_food = !is_empty;
+            }
+            b"fillLevel" if in_food => {
+                if let Some(ref mut h) = current {
+                    h.food.push(FillStock {
+                        fill_type: attr_str(e, "fillType"),
+                        amount: attr_f64(e, "fillLevel"),
+                    });
+                }
+            }
+            b"husbandryMeadow" => {
+                is_husbandry = true;
+                in_meadow = !is_empty;
+            }
+            b"fillType" if in_meadow => {
+                if let Some(ref mut h) = current {
+                    h.meadow.push(MeadowStock {
+                        fill_type: attr_str(e, "name"),
+                        amount: attr_f64(e, "fillLevel"),
+                        capacity: attr_f64(e, "capacity"),
+                    });
+                }
+            }
+            b"storage" if in_husbandry => in_husbandry_storage = !is_empty,
+            b"node" if in_husbandry_storage => {
+                if let Some(ref mut h) = current {
+                    h.water.push(FillStock {
+                        fill_type: attr_str(e, "fillType"),
+                        amount: attr_f64(e, "fillLevel"),
+                    });
+                }
+            }
             _ => {}
         }
     }
@@ -243,6 +298,86 @@ mod tests {
                 .find(|p| p.index == h.placeable_index)
                 .unwrap();
             assert_eq!(p.display_name, h.display_name);
+        }
+    }
+
+    #[test]
+    fn test_parse_husbandries_food_stock() {
+        let path = fixtures_path().join("savegame_complete");
+        let husbandries = parse_husbandries(&path).unwrap();
+
+        let barn = husbandries
+            .iter()
+            .find(|h| h.display_name.contains("Chicken Barn Big"))
+            .unwrap();
+        assert_eq!(barn.food.len(), 1);
+        assert_eq!(barn.food[0].fill_type, "WHEAT");
+        assert!((barn.food[0].amount - 5400.0).abs() < 0.01);
+    }
+
+    #[test]
+    fn test_parse_husbandries_water_and_meadow() {
+        let path = fixtures_path().join("savegame_complete");
+        let husbandries = parse_husbandries(&path).unwrap();
+
+        let barn = husbandries
+            .iter()
+            .find(|h| h.display_name.contains("Sheep Barn Small"))
+            .unwrap();
+
+        assert_eq!(barn.water.len(), 1);
+        assert_eq!(barn.water[0].fill_type, "WATER");
+        assert!((barn.water[0].amount - 1500.0).abs() < 0.01);
+
+        // The meadow is the only stock the savegame gives a capacity for.
+        assert_eq!(barn.meadow.len(), 1);
+        assert_eq!(barn.meadow[0].fill_type, "GRASS_WINDROW");
+        assert!((barn.meadow[0].amount - 21689.705078).abs() < 0.01);
+        assert!((barn.meadow[0].capacity - 25693.414062).abs() < 0.01);
+    }
+
+    #[test]
+    fn test_parse_husbandries_ignores_silo_and_production_storage() {
+        // Fixture index 0 is a silo with <silo><storage><node fillType="WHEAT">, and
+        // index 2 is a production point with its own <storage><node>. Neither is a
+        // husbandry, so neither may leak into the results.
+        let path = fixtures_path().join("savegame_complete");
+        let husbandries = parse_husbandries(&path).unwrap();
+
+        assert!(husbandries.iter().all(|h| h.placeable_index >= 5));
+        for h in &husbandries {
+            assert!(
+                h.water.iter().all(|w| w.fill_type == "WATER"),
+                "silo or production stock leaked into husbandry water"
+            );
+        }
+
+        // Chicken Barn Big has a self-closing <storage farmId="1"/> with no <node>
+        // children, so its water must be empty. This pins the !is_empty handling.
+        let coop = husbandries
+            .iter()
+            .find(|h| h.display_name.contains("Chicken Barn Big"))
+            .unwrap();
+        assert!(
+            coop.water.is_empty(),
+            "a self-closing <storage/> must not produce water entries"
+        );
+
+        // Values that exist only in the silo (placeable 0) and the production
+        // point (placeable 2). If scoping breaks, they surface here by value.
+        let foreign = [20657.392578_f64, 4855.552734, 2500.0, 1200.0];
+        for h in &husbandries {
+            for stock in h.food.iter().chain(h.water.iter()) {
+                for f in foreign {
+                    assert!(
+                        (stock.amount - f).abs() > 0.001,
+                        "{} leaked a foreign stock value {} as {}",
+                        h.display_name,
+                        f,
+                        stock.fill_type
+                    );
+                }
+            }
         }
     }
 
