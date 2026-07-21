@@ -30,6 +30,7 @@
     "fields": "Champs",
     "world": "Monde",
     "buildings": "Bâtiments",
+    "animals": "Élevages",
     "missions": "Missions",
     "collectibles": "Collectibles",
     "economy": "Économie",
@@ -258,6 +259,24 @@
     "timeLeftDays": "Temps restant (jours)",
     "selected": "Sélectionné"
   },
+  "animal": {
+    "title": "Élevages",
+    "subtitle": "{count} animaux au total",
+    "none": "Aucun élevage dans cette sauvegarde",
+    "empty": "Vide",
+    "headcount": "{count} animaux",
+    "clusterCount": "{count} lots",
+    "ageMonths": "{count} mois",
+    "numAnimals": "Nombre",
+    "age": "Âge (mois)",
+    "health": "Santé",
+    "reproduction": "Reproduction",
+    "stocks": "Stocks"
+  },
+  "animalTypes": {
+    "CHICKEN": "Poule",
+    "GOAT": "Chèvre"
+  },
   "fillTypes": {
     "DIESEL": "Diesel",
     "DEF": "AdBlue (DEF)",
@@ -279,6 +298,7 @@
     "CHAFF": "Broyat",
     "STRAW": "Paille",
     "GRASS": "Herbe",
+    "GRASS_WINDROW": "Herbe",
     "MEADOW": "Prairie",
     "MEADOWUS": "Prairie",
     "MEADOWEU": "Prairie",
@@ -552,10 +572,12 @@
     "noMatch": "Aucun bâtiment ne correspond aux filtres.",
     "completeConstruction": "Terminer la construction",
     "completeConstructionDesc": "Tous les matériaux restants seront mis à 0, terminant instantanément la construction.",
-    "constructionStep": "Étape {index}",
-    "materialRemaining": "{remaining} / {total}",
-    "productionInputs": "Stocks d'entrée",
-    "productionOutputs": "Stocks de sortie",
+    "constructionState": "État : {state}",
+    "materialRemaining": "{remaining} L restants",
+    "productions": "Productions",
+    "productionEnabled": "Activée",
+    "productionDisabled": "Désactivée",
+    "productionStorage": "Stocks",
     "position": "Position"
   },
   "mission": {

@@ -13,7 +13,7 @@
     <stonesEnabled>false</stonesEnabled>
     <weedsEnabled>true</weedsEnabled>
     <limeRequired>true</limeRequired>
-    <snowEnabled>true</snowEnabled>
+    <isSnowEnabled>true</isSnowEnabled>
     <fuelUsage>2</fuelUsage>
     <trafficEnabled>true</trafficEnabled>
   </settings>

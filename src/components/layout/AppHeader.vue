@@ -23,6 +23,7 @@ import { useVehicleStore } from "@/stores/vehicle";
 import { useSaleStore } from "@/stores/sale";
 import { useFieldStore } from "@/stores/field";
 import { useBuildingStore } from "@/stores/building";
+import { useAnimalStore } from "@/stores/animal";
 import { useMissionStore } from "@/stores/mission";
 import { useWorldStore } from "@/stores/world";
 import { useEconomyStore } from "@/stores/economy";
@@ -39,12 +40,13 @@ const vehicleStore = useVehicleStore();
 const saleStore = useSaleStore();
 const fieldStore = useFieldStore();
 const buildingStore = useBuildingStore();
+const animalStore = useAnimalStore();
 const missionStore = useMissionStore();
 const worldStore = useWorldStore();
 const economyStore = useEconomyStore();
 const settings = useSettingsStore();
 const { invokeCommand } = useTauri();
-const { isDirty, changeCount, collectAllChanges, confirmDiscardIfDirty } =
+const { isDirty, changeCount, collectAllChanges, confirmDiscardIfDirty, resetAll } =
   useUnsavedChanges();
 
 const isSaving = ref(false);
@@ -72,6 +74,7 @@ const breadcrumbKeyMap: Record<string, string> = {
   fields: "sidebar.fields",
   world: "sidebar.world",
   buildings: "sidebar.buildings",
+  animals: "sidebar.animals",
   missions: "sidebar.missions",
   collectibles: "sidebar.collectibles",
   economy: "sidebar.economy",
@@ -138,6 +141,7 @@ async function handleSave() {
     saleStore.commitChanges();
     fieldStore.commitChanges();
     buildingStore.commitChanges();
+    animalStore.commitChanges();
     missionStore.commitChanges();
     worldStore.commitChanges();
     economyStore.commitChanges();
@@ -168,12 +172,7 @@ async function handleSave() {
 async function handleDiscard() {
   const confirmed = await confirmDiscardIfDirty();
   if (confirmed) {
-    financeStore.resetChanges();
-    vehicleStore.resetChanges();
-    saleStore.resetChanges();
-    fieldStore.resetChanges();
-    worldStore.resetChanges();
-    economyStore.resetChanges();
+    resetAll();
   }
 }
 
@@ -190,6 +189,13 @@ async function handleReload() {
       vehicleStore.hydrate(savegameStore.currentSavegame.vehicles);
       saleStore.hydrate(savegameStore.currentSavegame.sales);
       fieldStore.hydrate(savegameStore.currentSavegame.fields, savegameStore.currentSavegame.farmlands);
+      buildingStore.hydrate(savegameStore.currentSavegame.placeables);
+      missionStore.hydrate(
+        savegameStore.currentSavegame.missions,
+        savegameStore.currentSavegame.collectibles,
+        savegameStore.currentSavegame.contractSettings,
+      );
+      animalStore.hydrate(savegameStore.currentSavegame.husbandries);
       if (savegameStore.currentSavegame.environment) {
         worldStore.hydrate(savegameStore.currentSavegame.environment);
       }

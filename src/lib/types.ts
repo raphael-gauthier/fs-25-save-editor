@@ -342,6 +342,7 @@ export interface EnvironmentChanges {
 
 export interface Placeable {
   index: number;
+  uniqueId: string;
   filename: string;
   displayName: string;
   farmId: number;
@@ -350,26 +351,35 @@ export interface Placeable {
   position: Position | null;
   isPrePlaced: boolean;
   isUnderConstruction: boolean;
-  constructionSteps: ConstructionStep[];
-  productionInputs: ProductionStock[];
-  productionOutputs: ProductionStock[];
+  /** Present only for `<constructible>` placeables; a finished one stays in state "OLD". */
+  construction: ConstructionState | null;
+  productions: ProductionLine[];
+  /**
+   * Flat stock list of a production point. The savegame stores neither the
+   * input/output role nor the capacity — both live in the game's placeable XML.
+   */
+  productionStorage: ProductionStock[];
 }
 
-export interface ConstructionStep {
-  stepIndex: number;
-  materials: ConstructionMaterial[];
+export interface ConstructionState {
+  stateName: string;
+  inputs: ConstructionMaterial[];
 }
 
 export interface ConstructionMaterial {
   fillType: string;
+  /** Amount still to be delivered. The total required is not stored in the savegame. */
   amountRemaining: number;
-  amountTotal: number;
+}
+
+export interface ProductionLine {
+  id: string;
+  isEnabled: boolean;
 }
 
 export interface ProductionStock {
   fillType: string;
   amount: number;
-  capacity: number;
 }
 
 export interface PlaceableChangePayload {
@@ -377,11 +387,68 @@ export interface PlaceableChangePayload {
   farmId?: number;
   price?: number;
   completeConstruction: boolean;
-  productionInputs?: ProductionStockChangePayload[];
-  productionOutputs?: ProductionStockChangePayload[];
+  productionStorage?: ProductionStockChangePayload[];
 }
 
 export interface ProductionStockChangePayload {
+  fillType: string;
+  amount: number;
+}
+
+export interface Husbandry {
+  placeableIndex: number;
+  displayName: string;
+  farmId: number;
+  /** How well the husbandry is producing. Read-only. */
+  productionFactor: number;
+  clusters: AnimalCluster[];
+  /** No capacity is recorded in the savegame. */
+  food: FillStock[];
+  water: FillStock[];
+  /** The only stock that carries a capacity. */
+  meadow: MeadowStock[];
+}
+
+export interface AnimalCluster {
+  index: number;
+  subType: string;
+  numAnimals: number;
+  /** Age in months. */
+  age: number;
+  health: number;
+  reproduction: number;
+}
+
+export interface FillStock {
+  fillType: string;
+  amount: number;
+}
+
+export interface MeadowStock {
+  fillType: string;
+  amount: number;
+  capacity: number;
+}
+
+export interface HusbandryChangePayload {
+  placeableIndex: number;
+  clusters?: AnimalClusterChangePayload[];
+  food?: FillStockChangePayload[];
+  water?: FillStockChangePayload[];
+  meadow?: FillStockChangePayload[];
+}
+
+/** Every field optional so untouched attributes are rewritten verbatim.
+ *  `subType` is absent by design: changing species is out of scope. */
+export interface AnimalClusterChangePayload {
+  index: number;
+  numAnimals?: number;
+  age?: number;
+  health?: number;
+  reproduction?: number;
+}
+
+export interface FillStockChangePayload {
   fillType: string;
   amount: number;
 }
@@ -493,6 +560,7 @@ export interface SavegameData {
   fields: Field[];
   farmlands: Farmland[];
   placeables: Placeable[];
+  husbandries: Husbandry[];
   missions: Mission[];
   collectibles: Collectible[];
   contractSettings: ContractSettings | null;
@@ -578,6 +646,7 @@ export interface SavegameChanges {
   fields?: FieldChangePayload[];
   farmlands?: FarmlandChangePayload[];
   placeables?: PlaceableChangePayload[];
+  husbandries?: HusbandryChangePayload[];
   missions?: MissionChangePayload[];
   collectibles?: CollectibleChangePayload[];
   contractSettings?: ContractSettingsChangePayload;

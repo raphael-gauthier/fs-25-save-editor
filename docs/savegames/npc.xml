@@ -1,0 +1,25 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<npcs>
+    <npc name="GRANDPA" spotUniqueId="GRANDPA_FARMHOUSE">
+        <player uniqueUserId="PLAYER_A" numContacts="12">
+            <conversation uniqueId="df1796eea2" numTriggered="1" lastMonotonicDay="6" lastDate="2025/01/01 12:00"/>
+            <conversation uniqueId="24fbc16fc8" numTriggered="1" lastMonotonicDay="6" lastDate="2025/01/01 12:00"/>
+            <conversation uniqueId="0bc5b0ce93" numTriggered="4" lastMonotonicDay="38" lastDate="2025/01/01 12:00"/>
+            <conversation uniqueId="54d7a45a34" numTriggered="1" lastMonotonicDay="38" lastDate="2025/01/01 12:00"/>
+            <conversation uniqueId="6ac40cfb03" numTriggered="1" lastMonotonicDay="6" lastDate="2025/01/01 12:00"/>
+            <conversation uniqueId="c4e69b3b59" numTriggered="1" lastMonotonicDay="6" lastDate="2025/01/01 12:00"/>
+            <conversation uniqueId="8cd42bc0c4" numTriggered="1" lastMonotonicDay="6" lastDate="2025/01/01 12:00"/>
+            <conversation uniqueId="66409efb3f" numTriggered="1" lastMonotonicDay="6" lastDate="2025/01/01 12:00"/>
+            <conversation uniqueId="14df9c02fe" numTriggered="1" lastMonotonicDay="6" lastDate="2025/01/01 12:00"/>
+        </player>
+    </npc>
+    <npc name="FORESTER" spotUniqueId="FORESTER_SHED">
+        <player uniqueUserId="PLAYER_A" numContacts="1">
+            <conversation uniqueId="ed2564f8ae" numTriggered="1" lastMonotonicDay="7" lastDate="2025/01/01 12:00"/>
+        </player>
+    </npc>
+    <npc name="FARMER" spotUniqueId="FARMER_HOUSE"/>
+    <npc name="HELPER" spotUniqueId="HELPER_HOUSE"/>
+    <npc name="ANIMAL_DEALER" spotUniqueId="ANIMAL_DEALER_SHOP"/>
+    <npc name="FISHERMAN"/>
+</npcs>

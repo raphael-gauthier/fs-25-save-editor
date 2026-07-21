@@ -4,6 +4,7 @@ import { useVehicleStore } from "@/stores/vehicle";
 import { useSaleStore } from "@/stores/sale";
 import { useFieldStore } from "@/stores/field";
 import { useBuildingStore } from "@/stores/building";
+import { useAnimalStore } from "@/stores/animal";
 import { useMissionStore } from "@/stores/mission";
 import { useWorldStore } from "@/stores/world";
 import { useEconomyStore } from "@/stores/economy";
@@ -18,6 +19,7 @@ export function useUnsavedChanges() {
   const saleStore = useSaleStore();
   const fieldStore = useFieldStore();
   const buildingStore = useBuildingStore();
+  const animalStore = useAnimalStore();
   const missionStore = useMissionStore();
   const worldStore = useWorldStore();
   const economyStore = useEconomyStore();
@@ -29,6 +31,7 @@ export function useUnsavedChanges() {
       saleStore.isDirty ||
       fieldStore.isDirty ||
       buildingStore.isDirty ||
+      animalStore.isDirty ||
       missionStore.isDirty ||
       worldStore.isDirty ||
       economyStore.isDirty,
@@ -41,6 +44,7 @@ export function useUnsavedChanges() {
       saleStore.changeCount +
       fieldStore.changeCount +
       buildingStore.changeCount +
+      animalStore.changeCount +
       missionStore.changeCount +
       worldStore.changeCount +
       economyStore.changeCount,
@@ -62,6 +66,8 @@ export function useUnsavedChanges() {
     }
     const buildingChanges = buildingStore.getChanges();
     if (buildingChanges) changes.placeables = buildingChanges;
+    const animalChanges = animalStore.getChanges();
+    if (animalChanges) changes.husbandries = animalChanges;
     const missionChanges = missionStore.getChanges();
     if (missionChanges) {
       if (missionChanges.missions) changes.missions = missionChanges.missions;
@@ -81,6 +87,7 @@ export function useUnsavedChanges() {
     saleStore.resetChanges();
     fieldStore.resetChanges();
     buildingStore.resetChanges();
+    animalStore.resetChanges();
     missionStore.resetChanges();
     worldStore.resetChanges();
     economyStore.resetChanges();

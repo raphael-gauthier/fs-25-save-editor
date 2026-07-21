@@ -6,6 +6,7 @@ use super::common::Position;
 #[serde(rename_all = "camelCase")]
 pub struct Placeable {
     pub index: usize,
+    pub unique_id: String,
     pub filename: String,
     pub display_name: String,
     pub farm_id: u8,
@@ -14,24 +15,36 @@ pub struct Placeable {
     pub position: Option<Position>,
     pub is_pre_placed: bool,
     pub is_under_construction: bool,
-    pub construction_steps: Vec<ConstructionStep>,
-    pub production_inputs: Vec<ProductionStock>,
-    pub production_outputs: Vec<ProductionStock>,
+    /// Construction state, present only for `<constructible>` placeables.
+    /// A finished building keeps its `<constructible>` block with state "OLD" and no inputs.
+    pub construction: Option<ConstructionState>,
+    /// Production lines declared by a `<productionPoint>`, with their enabled flag.
+    pub productions: Vec<ProductionLine>,
+    /// Flat stock list of a `<productionPoint>`. The savegame does not distinguish
+    /// inputs from outputs, nor record capacities — both live in the game's placeable XML.
+    pub production_storage: Vec<ProductionStock>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
-pub struct ConstructionStep {
-    pub step_index: u32,
-    pub materials: Vec<ConstructionMaterial>,
+pub struct ConstructionState {
+    pub state_name: String,
+    pub inputs: Vec<ConstructionMaterial>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ConstructionMaterial {
     pub fill_type: String,
+    /// Amount still to be delivered. The total required is not stored in the savegame.
     pub amount_remaining: f64,
-    pub amount_total: f64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ProductionLine {
+    pub id: String,
+    pub is_enabled: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -39,7 +52,6 @@ pub struct ConstructionMaterial {
 pub struct ProductionStock {
     pub fill_type: String,
     pub amount: f64,
-    pub capacity: f64,
 }
 
 pub fn placeable_display_name(filename: &str) -> String {
@@ -77,4 +89,43 @@ pub fn placeable_display_name(filename: &str) -> String {
     }
 
     result
+}
+
+/// Pre-placed map objects carry no `filename`, so their name must come from the
+/// `uniqueId` — e.g. `preplaced_farmHouse05_306e852a...` becomes "Farm House 05".
+pub fn display_name_from_unique_id(unique_id: &str) -> String {
+    let stem = unique_id.strip_prefix("preplaced_").unwrap_or(unique_id);
+
+    // Drop the trailing 32-character hex hash the game appends to pre-placed ids.
+    let stem = match stem.rsplit_once('_') {
+        Some((head, tail))
+            if tail.len() == 32 && tail.chars().all(|c| c.is_ascii_hexdigit()) =>
+        {
+            head
+        }
+        _ => stem,
+    };
+
+    placeable_display_name(stem)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_display_name_from_unique_id_strips_prefix_and_hash() {
+        assert_eq!(
+            display_name_from_unique_id("preplaced_farmHouse05_306e852a51d90726d144af50a865cbf0"),
+            "Farm House 05"
+        );
+    }
+
+    #[test]
+    fn test_display_name_from_unique_id_without_hash() {
+        assert_eq!(
+            display_name_from_unique_id("sellingStationTrain01"),
+            "Selling Station Train 01"
+        );
+    }
 }

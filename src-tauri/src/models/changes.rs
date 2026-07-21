@@ -12,6 +12,7 @@ pub struct SavegameChanges {
     pub fields: Option<Vec<FieldChange>>,
     pub farmlands: Option<Vec<FarmlandChange>>,
     pub placeables: Option<Vec<PlaceableChange>>,
+    pub husbandries: Option<Vec<HusbandryChange>>,
     pub missions: Option<Vec<MissionChange>>,
     pub collectibles: Option<Vec<CollectibleChange>>,
     pub contract_settings: Option<ContractSettingsChange>,
@@ -116,13 +117,44 @@ pub struct PlaceableChange {
     pub farm_id: Option<u8>,
     pub price: Option<f64>,
     pub complete_construction: bool,
-    pub production_inputs: Option<Vec<ProductionStockChange>>,
-    pub production_outputs: Option<Vec<ProductionStockChange>>,
+    /// Production point stock levels to overwrite, matched by fill type.
+    pub production_storage: Option<Vec<ProductionStockChange>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ProductionStockChange {
+    pub fill_type: String,
+    pub amount: f64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct HusbandryChange {
+    /// Same numbering as `Placeable::index`.
+    pub placeable_index: usize,
+    pub clusters: Option<Vec<AnimalClusterChange>>,
+    pub food: Option<Vec<FillStockChange>>,
+    pub water: Option<Vec<FillStockChange>>,
+    pub meadow: Option<Vec<FillStockChange>>,
+}
+
+/// Every field is optional so untouched attributes are rewritten verbatim.
+/// `subType` is absent by design: changing species is out of scope.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct AnimalClusterChange {
+    /// Position within `<clusters>`.
+    pub index: usize,
+    pub num_animals: Option<u32>,
+    pub age: Option<u32>,
+    pub health: Option<f64>,
+    pub reproduction: Option<f64>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FillStockChange {
     pub fill_type: String,
     pub amount: f64,
 }

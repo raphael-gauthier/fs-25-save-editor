@@ -30,6 +30,7 @@
     "fields": "Fields",
     "world": "World",
     "buildings": "Buildings",
+    "animals": "Husbandries",
     "missions": "Missions",
     "collectibles": "Collectibles",
     "economy": "Economy",
@@ -258,6 +259,24 @@
     "timeLeftDays": "Time left (days)",
     "selected": "Selected"
   },
+  "animal": {
+    "title": "Husbandries",
+    "subtitle": "{count} animals in total",
+    "none": "No husbandry in this savegame",
+    "empty": "Empty",
+    "headcount": "{count} animals",
+    "clusterCount": "{count} groups",
+    "ageMonths": "{count} months",
+    "numAnimals": "Headcount",
+    "age": "Age (months)",
+    "health": "Health",
+    "reproduction": "Reproduction",
+    "stocks": "Stocks"
+  },
+  "animalTypes": {
+    "CHICKEN": "Chicken",
+    "GOAT": "Goat"
+  },
   "fillTypes": {
     "DIESEL": "Diesel",
     "DEF": "AdBlue (DEF)",
@@ -279,6 +298,7 @@
     "CHAFF": "Chaff",
     "STRAW": "Straw",
     "GRASS": "Grass",
+    "GRASS_WINDROW": "Grass",
     "MEADOW": "Meadow",
     "MEADOWUS": "Meadow",
     "MEADOWEU": "Meadow",
@@ -552,10 +572,12 @@
     "noMatch": "No building matches the filters.",
     "completeConstruction": "Complete construction",
     "completeConstructionDesc": "All remaining materials will be set to 0, instantly completing the construction.",
-    "constructionStep": "Step {index}",
-    "materialRemaining": "{remaining} / {total}",
-    "productionInputs": "Input stocks",
-    "productionOutputs": "Output stocks",
+    "constructionState": "State: {state}",
+    "materialRemaining": "{remaining} L remaining",
+    "productions": "Productions",
+    "productionEnabled": "Enabled",
+    "productionDisabled": "Disabled",
+    "productionStorage": "Stocks",
     "position": "Position"
   },
   "mission": {

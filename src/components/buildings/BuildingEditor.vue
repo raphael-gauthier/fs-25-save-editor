@@ -14,7 +14,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Slider } from "@/components/ui/slider";
 import { Separator } from "@/components/ui/separator";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -83,15 +82,10 @@ function handleCompleteConstruction() {
   }
 }
 
-function handleInputStockChange(fillType: string, value: number[] | undefined) {
-  if (value && props.placeable) {
-    store.updateProductionStock(props.placeable.index, "input", fillType, value[0]);
-  }
-}
-
-function handleOutputStockChange(fillType: string, value: number[] | undefined) {
-  if (value && props.placeable) {
-    store.updateProductionStock(props.placeable.index, "output", fillType, value[0]);
+function handleStockChange(fillType: string, event: Event) {
+  const amount = Number((event.target as HTMLInputElement).value);
+  if (props.placeable && Number.isFinite(amount) && amount >= 0) {
+    store.updateProductionStock(props.placeable.index, fillType, amount);
   }
 }
 </script>
@@ -139,7 +133,7 @@ function handleOutputStockChange(fillType: string, value: number[] | undefined) 
           </div>
 
           <!-- Construction section -->
-          <template v-if="placeable.constructionSteps.length > 0">
+          <template v-if="placeable.construction">
             <Separator />
             <div class="space-y-4">
               <div class="flex items-center justify-between">
@@ -155,19 +149,19 @@ function handleOutputStockChange(fillType: string, value: number[] | undefined) 
                 </Badge>
               </div>
 
-              <!-- Construction steps detail -->
-              <div v-for="step in placeable.constructionSteps" :key="step.stepIndex" class="space-y-2">
+              <!-- Materials still to be delivered -->
+              <div v-if="placeable.construction.inputs.length > 0" class="space-y-2">
                 <p class="text-xs font-medium text-muted-foreground">
-                  {{ t("building.constructionStep", { index: step.stepIndex + 1 }) }}
+                  {{ t("building.constructionState", { state: placeable.construction.stateName }) }}
                 </p>
                 <div
-                  v-for="mat in step.materials"
+                  v-for="mat in placeable.construction.inputs"
                   :key="mat.fillType"
                   class="flex items-center justify-between text-sm"
                 >
                   <span>{{ mat.fillType }}</span>
                   <span class="font-mono text-muted-foreground">
-                    {{ t("building.materialRemaining", { remaining: Math.round(mat.amountRemaining), total: Math.round(mat.amountTotal) }) }}
+                    {{ t("building.materialRemaining", { remaining: Math.round(mat.amountRemaining) }) }}
                   </span>
                 </div>
               </div>
@@ -200,51 +194,45 @@ function handleOutputStockChange(fillType: string, value: number[] | undefined) 
 
           <!-- Advanced mode: production stocks -->
           <template v-if="settings.advancedMode">
-            <!-- Production inputs -->
-            <template v-if="placeable.productionInputs.length > 0">
+            <!-- Production lines -->
+            <template v-if="placeable.productions.length > 0">
               <Separator />
               <p class="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                {{ t("building.productionInputs") }}
+                {{ t("building.productions") }}
               </p>
-              <div class="space-y-4">
-                <div v-for="stock in placeable.productionInputs" :key="stock.fillType" class="space-y-2">
-                  <div class="flex items-center justify-between text-sm">
-                    <Label>{{ stock.fillType }}</Label>
-                    <span class="font-mono text-muted-foreground">
-                      {{ Math.round(stock.amount) }} / {{ Math.round(stock.capacity) }}
-                    </span>
-                  </div>
-                  <Slider
-                    :model-value="[stock.amount]"
-                    :max="stock.capacity"
-                    :min="0"
-                    :step="1"
-                    @update:model-value="handleInputStockChange(stock.fillType, $event)"
-                  />
+              <div class="space-y-1">
+                <div
+                  v-for="line in placeable.productions"
+                  :key="line.id"
+                  class="flex items-center justify-between text-sm"
+                >
+                  <span>{{ line.id }}</span>
+                  <Badge :variant="line.isEnabled ? 'default' : 'secondary'">
+                    {{ line.isEnabled ? t("building.productionEnabled") : t("building.productionDisabled") }}
+                  </Badge>
                 </div>
               </div>
             </template>
 
-            <!-- Production outputs -->
-            <template v-if="placeable.productionOutputs.length > 0">
+            <!-- Production stocks (the savegame stores no capacity) -->
+            <template v-if="placeable.productionStorage.length > 0">
               <Separator />
               <p class="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                {{ t("building.productionOutputs") }}
+                {{ t("building.productionStorage") }}
               </p>
-              <div class="space-y-4">
-                <div v-for="stock in placeable.productionOutputs" :key="stock.fillType" class="space-y-2">
-                  <div class="flex items-center justify-between text-sm">
-                    <Label>{{ stock.fillType }}</Label>
-                    <span class="font-mono text-muted-foreground">
-                      {{ Math.round(stock.amount) }} / {{ Math.round(stock.capacity) }}
-                    </span>
-                  </div>
-                  <Slider
-                    :model-value="[stock.amount]"
-                    :max="stock.capacity"
-                    :min="0"
-                    :step="1"
-                    @update:model-value="handleOutputStockChange(stock.fillType, $event)"
+              <div class="space-y-3">
+                <div
+                  v-for="stock in placeable.productionStorage"
+                  :key="stock.fillType"
+                  class="grid grid-cols-2 items-center gap-2"
+                >
+                  <Label>{{ stock.fillType }}</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    step="1"
+                    :model-value="Math.round(stock.amount)"
+                    @change="handleStockChange(stock.fillType, $event)"
                   />
                 </div>
               </div>

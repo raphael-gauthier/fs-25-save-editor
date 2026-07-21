@@ -1,0 +1,6 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<handTools>
+    <handTool filename="data/handTools/stihl/ms261/ms261.xml" uniqueId="HandTool6f20c83f81bc885efad82701d5517198" farmId="1" age="29.000000">
+        <holder uniqueId="PLAYER_A"/>
+    </handTool>
+</handTools>

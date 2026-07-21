@@ -5,6 +5,7 @@ pub mod economy;
 pub mod environment;
 pub mod farm;
 pub mod field;
+pub mod husbandry;
 pub mod mission;
 pub mod placeable;
 pub mod sale;

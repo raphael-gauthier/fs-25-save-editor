@@ -58,6 +58,36 @@ pub fn write_sale_changes(
                     write_event(&mut writer, &xml_path, Event::Start(e.clone().into_owned()))?;
                 }
             }
+            // Real saves write every sale as a self-closing <item .../>, so this
+            // branch — not the Start one above — is what handles them.
+            Ok(Event::Empty(ref e)) => {
+                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+
+                if skip_until_item_end {
+                    continue;
+                }
+
+                if tag == "item" {
+                    let change = change_map.get(&item_index);
+                    item_index += 1;
+                    match change {
+                        Some(change) if change.delete => continue,
+                        Some(change) => {
+                            let elem = patch_item_start(e, change);
+                            write_event(&mut writer, &xml_path, Event::Empty(elem))?;
+                        }
+                        None => {
+                            write_event(
+                                &mut writer,
+                                &xml_path,
+                                Event::Empty(e.clone().into_owned()),
+                            )?;
+                        }
+                    }
+                } else {
+                    write_event(&mut writer, &xml_path, Event::Empty(e.clone().into_owned()))?;
+                }
+            }
             Ok(Event::End(ref e)) => {
                 let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
 
@@ -275,6 +305,31 @@ mod tests {
         let sales = parse_sales(&save).unwrap();
         assert!((sales[1].damage - 0.0).abs() < 0.001);
         assert!((sales[1].wear - 0.0).abs() < 0.001);
+        let _ = std::fs::remove_dir_all(&save);
+    }
+
+    #[test]
+    fn test_write_sale_delete_self_closing_item() {
+        // Real saves emit every sale as a self-closing <item .../>.
+        let save = setup_fixture("sale_delete_empty");
+        let before = parse_sales(&save).unwrap();
+        assert_eq!(before.len(), 2);
+
+        let changes = vec![SaleChange {
+            index: 1,
+            delete: true,
+            price: None,
+            damage: None,
+            wear: None,
+            age: None,
+            operating_time: None,
+            time_left: None,
+        }];
+        write_sale_changes(&save, &changes).unwrap();
+
+        let after = parse_sales(&save).unwrap();
+        assert_eq!(after.len(), 1);
+        assert_eq!(after[0].xml_filename, before[0].xml_filename);
         let _ = std::fs::remove_dir_all(&save);
     }
 

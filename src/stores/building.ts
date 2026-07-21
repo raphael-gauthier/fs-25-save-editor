@@ -66,8 +66,7 @@ export const useBuildingStore = defineStore("building", () => {
       if (p.farmId !== orig.farmId) count++;
       if (p.price !== orig.price) count++;
       if (p.isUnderConstruction !== orig.isUnderConstruction) count++;
-      if (isProductionModified(p.productionInputs, orig.productionInputs)) count++;
-      if (isProductionModified(p.productionOutputs, orig.productionOutputs)) count++;
+      if (isProductionModified(p.productionStorage, orig.productionStorage)) count++;
     }
     return count;
   });
@@ -77,14 +76,13 @@ export const useBuildingStore = defineStore("building", () => {
       p.farmId !== orig.farmId ||
       p.price !== orig.price ||
       p.isUnderConstruction !== orig.isUnderConstruction ||
-      isProductionModified(p.productionInputs, orig.productionInputs) ||
-      isProductionModified(p.productionOutputs, orig.productionOutputs)
+      isProductionModified(p.productionStorage, orig.productionStorage)
     );
   }
 
   function isProductionModified(
-    current: Placeable["productionInputs"],
-    original: Placeable["productionInputs"],
+    current: Placeable["productionStorage"],
+    original: Placeable["productionStorage"],
   ): boolean {
     if (current.length !== original.length) return true;
     return current.some((s, i) => s.amount !== original[i].amount);
@@ -109,24 +107,16 @@ export const useBuildingStore = defineStore("building", () => {
     const p = placeables.value.find((pl) => pl.index === index);
     if (p) {
       p.isUnderConstruction = false;
-      for (const step of p.constructionSteps) {
-        for (const mat of step.materials) {
-          mat.amountRemaining = 0;
-        }
+      for (const input of p.construction?.inputs ?? []) {
+        input.amountRemaining = 0;
       }
     }
   }
 
-  function updateProductionStock(
-    index: number,
-    type: "input" | "output",
-    fillType: string,
-    amount: number,
-  ) {
+  function updateProductionStock(index: number, fillType: string, amount: number) {
     const p = placeables.value.find((pl) => pl.index === index);
     if (!p) return;
-    const stocks = type === "input" ? p.productionInputs : p.productionOutputs;
-    const stock = stocks.find((s) => s.fillType === fillType);
+    const stock = p.productionStorage.find((s) => s.fillType === fillType);
     if (stock) {
       stock.amount = amount;
     }
@@ -173,18 +163,9 @@ export const useBuildingStore = defineStore("building", () => {
       if (p.farmId !== orig.farmId) change.farmId = p.farmId;
       if (p.price !== orig.price) change.price = p.price;
 
-      if (isProductionModified(p.productionInputs, orig.productionInputs)) {
-        change.productionInputs = p.productionInputs
-          .filter((s, i) => s.amount !== orig.productionInputs[i]?.amount)
-          .map((s): ProductionStockChangePayload => ({
-            fillType: s.fillType,
-            amount: s.amount,
-          }));
-      }
-
-      if (isProductionModified(p.productionOutputs, orig.productionOutputs)) {
-        change.productionOutputs = p.productionOutputs
-          .filter((s, i) => s.amount !== orig.productionOutputs[i]?.amount)
+      if (isProductionModified(p.productionStorage, orig.productionStorage)) {
+        change.productionStorage = p.productionStorage
+          .filter((s, i) => s.amount !== orig.productionStorage[i]?.amount)
           .map((s): ProductionStockChangePayload => ({
             fillType: s.fillType,
             amount: s.amount,

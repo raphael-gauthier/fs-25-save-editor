@@ -6,27 +6,29 @@ use quick_xml::Reader;
 use crate::error::AppError;
 use crate::models::common::Position;
 use crate::models::placeable::{
-    placeable_display_name, ConstructionMaterial, ConstructionStep, Placeable, ProductionStock,
+    display_name_from_unique_id, placeable_display_name, ConstructionMaterial, ConstructionState,
+    Placeable, ProductionLine, ProductionStock,
 };
+use crate::parsers::attrs::{attr_f64, attr_str, attr_u8};
 
-fn attr_str(e: &quick_xml::events::BytesStart, key: &str) -> String {
-    e.attributes()
-        .flatten()
-        .find(|a| a.key.as_ref() == key.as_bytes())
-        .map(|a| String::from_utf8_lossy(&a.value).to_string())
-        .unwrap_or_default()
+fn attr_bool(e: &quick_xml::events::BytesStart, key: &str) -> bool {
+    attr_str(e, key) == "true"
 }
 
-fn attr_f64(e: &quick_xml::events::BytesStart, key: &str) -> f64 {
-    attr_str(e, key).parse().unwrap_or(0.0)
-}
-
-fn attr_u8(e: &quick_xml::events::BytesStart, key: &str) -> u8 {
-    attr_str(e, key).parse().unwrap_or(0)
-}
-
-fn attr_u32(e: &quick_xml::events::BytesStart, key: &str) -> u32 {
-    attr_str(e, key).parse().unwrap_or(0)
+/// Parses a `position="x y z"` attribute. Returns `None` when absent or malformed.
+fn parse_position(e: &quick_xml::events::BytesStart) -> Option<Position> {
+    let raw = attr_str(e, "position");
+    if raw.is_empty() {
+        return None;
+    }
+    let coords: Vec<f64> = raw
+        .split_whitespace()
+        .filter_map(|c| c.parse::<f64>().ok())
+        .collect();
+    match coords[..] {
+        [x, y, z] => Some(Position { x, y, z }),
+        _ => None,
+    }
 }
 
 pub fn parse_placeables(path: &Path) -> Result<Vec<Placeable>, AppError> {
@@ -38,203 +40,146 @@ pub fn parse_placeables(path: &Path) -> Result<Vec<Placeable>, AppError> {
     let mut reader = Reader::from_str(&content);
     let mut placeables: Vec<Placeable> = Vec::new();
 
-    // State tracking
     let mut placeable_index: usize = 0;
-    let mut in_placeable = false;
-    let mut current: Option<PlaceableBuilder> = None;
-    let mut current_component_index: Option<String> = None;
-    let mut in_construction = false;
-    let mut current_step: Option<ConstructionStep> = None;
+    let mut current: Option<Placeable> = None;
+    // `<storage>` and `<node>` are shared by silos, husbandries and production points,
+    // so stock collection is gated on being inside a `<productionPoint>`.
+    let mut in_constructible = false;
     let mut in_production_point = false;
-    let mut in_production_input = false;
-    let mut in_production_output = false;
+    let mut in_production_storage = false;
 
     loop {
-        match reader.read_event() {
-            Ok(Event::Start(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
-                match tag.as_str() {
-                    "placeable" if !in_placeable => {
-                        in_placeable = true;
-                        let filename = attr_str(e, "filename");
-                        let display_name = placeable_display_name(&filename);
-                        let farm_id = attr_u8(e, "farmId");
-                        current = Some(PlaceableBuilder {
-                            index: placeable_index,
-                            filename,
-                            display_name,
-                            farm_id,
-                            price: attr_f64(e, "price"),
-                            age: attr_f64(e, "age"),
-                            position: None,
-                            is_pre_placed: farm_id == 0,
-                            is_under_construction: false,
-                            construction_steps: Vec::new(),
-                            production_inputs: Vec::new(),
-                            production_outputs: Vec::new(),
-                        });
-                        placeable_index += 1;
-                    }
-                    "component" if in_placeable => {
-                        current_component_index = Some(attr_str(e, "index"));
-                    }
-                    "constructionPlaceable" if in_placeable => {
-                        in_construction = true;
-                        if let Some(ref mut pb) = current {
-                            pb.is_under_construction = true;
-                        }
-                    }
-                    "step" if in_construction => {
-                        current_step = Some(ConstructionStep {
-                            step_index: attr_u32(e, "index"),
-                            materials: Vec::new(),
-                        });
-                    }
-                    "productionPoint" if in_placeable => {
-                        in_production_point = true;
-                    }
-                    "input" if in_production_point => {
-                        in_production_input = true;
-                    }
-                    "output" if in_production_point => {
-                        in_production_output = true;
-                    }
-                    _ => {}
-                }
-            }
-            Ok(Event::Empty(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
-                if let Some(ref mut pb) = current {
-                    match tag.as_str() {
-                        "sentTranslation"
-                            if current_component_index.as_deref() == Some("1") =>
-                        {
-                            let x = attr_f64(e, "x");
-                            let y = attr_f64(e, "y");
-                            let z = attr_f64(e, "z");
-                            if x != 0.0 || y != 0.0 || z != 0.0 {
-                                pb.position = Some(Position { x, y, z });
-                            }
-                        }
-                        "material" if current_step.is_some() => {
-                            if let Some(ref mut step) = current_step {
-                                let remaining = attr_f64(e, "amountRemaining");
-                                let total = attr_f64(e, "amount");
-                                step.materials.push(ConstructionMaterial {
-                                    fill_type: attr_str(e, "fillType"),
-                                    amount_remaining: remaining,
-                                    amount_total: total,
-                                });
-                            }
-                        }
-                        "storage" if in_production_input => {
-                            let fill_type = attr_str(e, "fillType");
-                            if !fill_type.is_empty() {
-                                pb.production_inputs.push(ProductionStock {
-                                    fill_type,
-                                    amount: attr_f64(e, "fillLevel"),
-                                    capacity: attr_f64(e, "capacity"),
-                                });
-                            }
-                        }
-                        "storage" if in_production_output => {
-                            let fill_type = attr_str(e, "fillType");
-                            if !fill_type.is_empty() {
-                                pb.production_outputs.push(ProductionStock {
-                                    fill_type,
-                                    amount: attr_f64(e, "fillLevel"),
-                                    capacity: attr_f64(e, "capacity"),
-                                });
-                            }
-                        }
-                        _ => {}
-                    }
-                }
-            }
-            Ok(Event::End(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
-                match tag.as_str() {
-                    "placeable" if in_placeable => {
-                        in_placeable = false;
-                        if let Some(pb) = current.take() {
-                            // Check if construction is actually complete (all remaining == 0)
-                            let mut p = pb.build();
-                            if p.is_under_construction {
-                                let all_done = p.construction_steps.iter().all(|s| {
-                                    s.materials.iter().all(|m| m.amount_remaining <= 0.0)
-                                });
-                                if all_done {
-                                    p.is_under_construction = false;
-                                }
-                            }
+        let event = reader.read_event().map_err(|e| AppError::XmlParseError {
+            file: xml_path.display().to_string(),
+            message: e.to_string(),
+        })?;
+
+        let (elem, is_empty) = match &event {
+            Event::Start(e) => (Some(e), false),
+            Event::Empty(e) => (Some(e), true),
+            Event::Eof => break,
+            Event::End(e) => {
+                match e.name().as_ref() {
+                    b"placeable" => {
+                        if let Some(p) = current.take() {
                             placeables.push(p);
                         }
-                    }
-                    "component" => current_component_index = None,
-                    "constructionPlaceable" => in_construction = false,
-                    "step" if in_construction => {
-                        if let Some(step) = current_step.take() {
-                            if let Some(ref mut pb) = current {
-                                pb.construction_steps.push(step);
-                            }
-                        }
-                    }
-                    "productionPoint" => {
+                        in_constructible = false;
                         in_production_point = false;
-                        in_production_input = false;
-                        in_production_output = false;
+                        in_production_storage = false;
                     }
-                    "input" if in_production_point => in_production_input = false,
-                    "output" if in_production_point => in_production_output = false,
+                    b"constructible" => in_constructible = false,
+                    b"productionPoint" => {
+                        in_production_point = false;
+                        in_production_storage = false;
+                    }
+                    b"storage" if in_production_point => in_production_storage = false,
                     _ => {}
                 }
+                continue;
             }
-            Ok(Event::Eof) => break,
-            Err(e) => {
-                return Err(AppError::XmlParseError {
-                    file: xml_path.display().to_string(),
-                    message: e.to_string(),
-                });
+            _ => continue,
+        };
+
+        let Some(e) = elem else { continue };
+        let tag = e.name().as_ref().to_vec();
+
+        match tag.as_slice() {
+            b"placeable" => {
+                if let Some(p) = current.take() {
+                    placeables.push(p);
+                }
+                in_constructible = false;
+                in_production_point = false;
+                in_production_storage = false;
+
+                let filename = attr_str(e, "filename");
+                let unique_id = attr_str(e, "uniqueId");
+                let display_name = if filename.is_empty() {
+                    display_name_from_unique_id(&unique_id)
+                } else {
+                    placeable_display_name(&filename)
+                };
+
+                let placeable = Placeable {
+                    index: placeable_index,
+                    unique_id,
+                    filename,
+                    display_name,
+                    farm_id: attr_u8(e, "farmId"),
+                    price: attr_f64(e, "price"),
+                    age: attr_f64(e, "age"),
+                    position: parse_position(e),
+                    is_pre_placed: attr_bool(e, "isPreplaced"),
+                    is_under_construction: false,
+                    construction: None,
+                    productions: Vec::new(),
+                    production_storage: Vec::new(),
+                };
+
+                placeable_index += 1;
+
+                if is_empty {
+                    placeables.push(placeable);
+                } else {
+                    current = Some(placeable);
+                }
+            }
+            b"constructible" if current.is_some() => in_constructible = !is_empty,
+            b"state" if in_constructible => {
+                if let Some(ref mut p) = current {
+                    p.construction = Some(ConstructionState {
+                        state_name: attr_str(e, "name"),
+                        inputs: Vec::new(),
+                    });
+                }
+            }
+            b"input" if in_constructible => {
+                if let Some(ref mut p) = current {
+                    if let Some(ref mut c) = p.construction {
+                        c.inputs.push(ConstructionMaterial {
+                            fill_type: attr_str(e, "fillType"),
+                            amount_remaining: attr_f64(e, "remainingAmount"),
+                        });
+                    }
+                }
+            }
+            b"productionPoint" if current.is_some() => in_production_point = !is_empty,
+            b"production" if in_production_point => {
+                if let Some(ref mut p) = current {
+                    p.productions.push(ProductionLine {
+                        id: attr_str(e, "id"),
+                        is_enabled: attr_bool(e, "isEnabled"),
+                    });
+                }
+            }
+            b"storage" if in_production_point => in_production_storage = !is_empty,
+            b"node" if in_production_storage => {
+                if let Some(ref mut p) = current {
+                    p.production_storage.push(ProductionStock {
+                        fill_type: attr_str(e, "fillType"),
+                        amount: attr_f64(e, "fillLevel"),
+                    });
+                }
             }
             _ => {}
         }
     }
 
-    Ok(placeables)
-}
-
-struct PlaceableBuilder {
-    index: usize,
-    filename: String,
-    display_name: String,
-    farm_id: u8,
-    price: f64,
-    age: f64,
-    position: Option<Position>,
-    is_pre_placed: bool,
-    is_under_construction: bool,
-    construction_steps: Vec<ConstructionStep>,
-    production_inputs: Vec<ProductionStock>,
-    production_outputs: Vec<ProductionStock>,
-}
-
-impl PlaceableBuilder {
-    fn build(self) -> Placeable {
-        Placeable {
-            index: self.index,
-            filename: self.filename,
-            display_name: self.display_name,
-            farm_id: self.farm_id,
-            price: self.price,
-            age: self.age,
-            position: self.position,
-            is_pre_placed: self.is_pre_placed,
-            is_under_construction: self.is_under_construction,
-            construction_steps: self.construction_steps,
-            production_inputs: self.production_inputs,
-            production_outputs: self.production_outputs,
-        }
+    if let Some(p) = current.take() {
+        placeables.push(p);
     }
+
+    // A finished building keeps its <constructible> block in state "OLD" with no
+    // inputs left, so only outstanding deliveries mark a real construction site.
+    for p in &mut placeables {
+        p.is_under_construction = p
+            .construction
+            .as_ref()
+            .is_some_and(|c| c.inputs.iter().any(|m| m.amount_remaining > 0.0));
+    }
+
+    Ok(placeables)
 }
 
 #[cfg(test)]
@@ -251,7 +196,7 @@ mod tests {
     fn test_parse_placeables_nominal() {
         let path = fixtures_path().join("savegame_complete");
         let placeables = parse_placeables(&path).unwrap();
-        assert_eq!(placeables.len(), 4);
+        assert_eq!(placeables.len(), 9);
 
         // First placeable: silo (completed building)
         let silo = &placeables[0];
@@ -259,7 +204,18 @@ mod tests {
         assert_eq!(silo.farm_id, 1);
         assert!(!silo.is_under_construction);
         assert!(!silo.is_pre_placed);
-        assert!(silo.position.is_some());
+    }
+
+    #[test]
+    fn test_parse_placeables_position_from_attribute() {
+        let path = fixtures_path().join("savegame_complete");
+        let placeables = parse_placeables(&path).unwrap();
+
+        // Position is a space-separated attribute on <placeable>, not a <sentTranslation> child.
+        let pos = placeables[0].position.as_ref().unwrap();
+        assert!((pos.x - 200.5).abs() < 0.001);
+        assert!((pos.y - 0.0).abs() < 0.001);
+        assert!((pos.z - (-100.3)).abs() < 0.001);
     }
 
     #[test]
@@ -272,38 +228,96 @@ mod tests {
         assert_eq!(under_construction.len(), 1);
 
         let barn = under_construction[0];
-        assert!(!barn.construction_steps.is_empty());
-        let step = &barn.construction_steps[0];
-        assert!(!step.materials.is_empty());
-        assert!(step.materials[0].amount_remaining > 0.0);
+        let construction = barn.construction.as_ref().unwrap();
+        assert_eq!(construction.state_name, "SETUP");
+        assert_eq!(construction.inputs.len(), 2);
+        assert_eq!(construction.inputs[0].fill_type, "WOODBEAM");
+        assert!((construction.inputs[0].amount_remaining - 6000.0).abs() < 0.01);
     }
 
     #[test]
-    fn test_parse_placeables_production() {
+    fn test_parse_placeables_finished_constructible_is_not_under_construction() {
         let path = fixtures_path().join("savegame_complete");
         let placeables = parse_placeables(&path).unwrap();
 
-        let production: Vec<&Placeable> = placeables
+        // The water tower carries <constructible><state name="OLD"/> with no inputs left.
+        let tower = placeables
             .iter()
-            .filter(|p| !p.production_inputs.is_empty() || !p.production_outputs.is_empty())
-            .collect();
-        assert_eq!(production.len(), 1);
-
-        let mill = production[0];
-        assert!(!mill.production_inputs.is_empty());
-        assert!(!mill.production_outputs.is_empty());
-        assert!(mill.production_inputs[0].capacity > 0.0);
+            .find(|p| p.display_name.contains("Water Tower"))
+            .unwrap();
+        assert!(!tower.is_under_construction);
+        assert_eq!(tower.construction.as_ref().unwrap().state_name, "OLD");
+        assert!(tower.construction.as_ref().unwrap().inputs.is_empty());
     }
 
     #[test]
-    fn test_parse_placeables_pre_placed() {
+    fn test_parse_placeables_production_lines() {
+        let path = fixtures_path().join("savegame_complete");
+        let placeables = parse_placeables(&path).unwrap();
+
+        let mill = placeables
+            .iter()
+            .find(|p| !p.productions.is_empty())
+            .unwrap();
+        assert_eq!(mill.productions.len(), 2);
+        assert_eq!(mill.productions[0].id, "flour");
+        assert!(mill.productions[0].is_enabled);
+        assert_eq!(mill.productions[1].id, "bread");
+        assert!(!mill.productions[1].is_enabled);
+    }
+
+    #[test]
+    fn test_parse_placeables_production_storage() {
+        let path = fixtures_path().join("savegame_complete");
+        let placeables = parse_placeables(&path).unwrap();
+
+        let mill = placeables
+            .iter()
+            .find(|p| !p.production_storage.is_empty())
+            .unwrap();
+        assert_eq!(mill.production_storage.len(), 2);
+        assert_eq!(mill.production_storage[0].fill_type, "WHEAT");
+        assert!((mill.production_storage[0].amount - 2500.0).abs() < 0.01);
+        assert_eq!(mill.production_storage[1].fill_type, "FLOUR");
+    }
+
+    #[test]
+    fn test_parse_placeables_silo_storage_is_not_production_storage() {
+        let path = fixtures_path().join("savegame_complete");
+        let placeables = parse_placeables(&path).unwrap();
+
+        // The silo's <silo><storage><node> must not be mistaken for production stock.
+        assert!(placeables[0].production_storage.is_empty());
+        assert!(placeables[0].productions.is_empty());
+    }
+
+    #[test]
+    fn test_parse_placeables_pre_placed_uses_attribute_not_farm_id() {
         let path = fixtures_path().join("savegame_complete");
         let placeables = parse_placeables(&path).unwrap();
 
         let pre_placed: Vec<&Placeable> =
             placeables.iter().filter(|p| p.is_pre_placed).collect();
-        assert_eq!(pre_placed.len(), 1);
-        assert_eq!(pre_placed[0].farm_id, 0);
+        assert_eq!(pre_placed.len(), 4);
+
+        // A pre-placed building bought by a farm keeps farmId != 0.
+        let farmhouse = pre_placed.iter().find(|p| p.farm_id == 1).unwrap();
+        assert!(farmhouse.is_pre_placed);
+    }
+
+    #[test]
+    fn test_parse_placeables_display_name_from_unique_id() {
+        let path = fixtures_path().join("savegame_complete");
+        let placeables = parse_placeables(&path).unwrap();
+
+        // Pre-placed entries have no filename: the name comes from uniqueId,
+        // stripped of the "preplaced_" prefix and the trailing hash.
+        let farmhouse = placeables
+            .iter()
+            .find(|p| p.unique_id.starts_with("preplaced_farmHouse05"))
+            .unwrap();
+        assert!(farmhouse.filename.is_empty());
+        assert_eq!(farmhouse.display_name, "Farm House 05");
     }
 
     #[test]

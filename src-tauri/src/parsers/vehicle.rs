@@ -8,25 +8,22 @@ use crate::models::common::{Position, Rotation};
 use crate::models::vehicle::{
     vehicle_display_name, AttachedImplement, FillUnit, Vehicle, VehicleConfiguration, PropertyState,
 };
+use crate::parsers::attrs::{attr_f64, attr_str, attr_u32, attr_u8};
 
-fn attr_str(e: &quick_xml::events::BytesStart, key: &str) -> String {
-    e.attributes()
-        .flatten()
-        .find(|a| a.key.as_ref() == key.as_bytes())
-        .map(|a| String::from_utf8_lossy(&a.value).to_string())
-        .unwrap_or_default()
-}
-
-fn attr_f64(e: &quick_xml::events::BytesStart, key: &str) -> f64 {
-    attr_str(e, key).parse().unwrap_or(0.0)
-}
-
-fn attr_u8(e: &quick_xml::events::BytesStart, key: &str) -> u8 {
-    attr_str(e, key).parse().unwrap_or(0)
-}
-
-fn attr_u32(e: &quick_xml::events::BytesStart, key: &str) -> u32 {
-    attr_str(e, key).parse().unwrap_or(0)
+/// Parses a space-separated `"x y z"` attribute. Returns `None` when absent or malformed.
+fn parse_vec3(e: &quick_xml::events::BytesStart, key: &str) -> Option<[f64; 3]> {
+    let raw = attr_str(e, key);
+    if raw.is_empty() {
+        return None;
+    }
+    let coords: Vec<f64> = raw
+        .split_whitespace()
+        .filter_map(|c| c.parse::<f64>().ok())
+        .collect();
+    match coords[..] {
+        [x, y, z] => Some([x, y, z]),
+        _ => None,
+    }
 }
 
 /// Parse vehicles.xml and return the list of all vehicles.
@@ -43,10 +40,8 @@ pub fn parse_vehicles(path: &Path) -> Result<Vec<Vehicle>, AppError> {
     // State tracking
     let mut in_vehicle = false;
     let mut current_vehicle: Option<VehicleBuilder> = None;
-    let mut current_component_index: Option<String> = None;
     let mut in_fill_unit = false;
     let mut in_attached_implements = false;
-    let mut in_configurations = false;
     let mut in_wearable = false;
 
     loop {
@@ -79,16 +74,24 @@ pub fn parse_vehicles(path: &Path) -> Result<Vec<Vehicle>, AppError> {
                         });
                     }
                     "component" if in_vehicle => {
-                        current_component_index = Some(attr_str(e, "index"));
+                        if attr_str(e, "index") == "1" {
+                            if let Some(ref mut vb) = current_vehicle {
+                                if let Some([x, y, z]) = parse_vec3(e, "position") {
+                                    if x != 0.0 || y != 0.0 || z != 0.0 {
+                                        vb.position = Some(Position { x, y, z });
+                                    }
+                                }
+                                if let Some([x, y, z]) = parse_vec3(e, "rotation") {
+                                    vb.rotation = Some(Rotation { x, y, z });
+                                }
+                            }
+                        }
                     }
                     "fillUnit" if in_vehicle => {
                         in_fill_unit = true;
                     }
                     "attacherJoints" if in_vehicle => {
                         in_attached_implements = true;
-                    }
-                    "boughtConfigurations" if in_vehicle => {
-                        in_configurations = true;
                     }
                     "wearable" if in_vehicle => {
                         in_wearable = true;
@@ -103,19 +106,17 @@ pub fn parse_vehicles(path: &Path) -> Result<Vec<Vehicle>, AppError> {
                 let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
                 if let Some(ref mut vb) = current_vehicle {
                     match tag.as_str() {
-                        "sentTranslation" if current_component_index.as_deref() == Some("1") => {
-                            let x = attr_f64(e, "x");
-                            let y = attr_f64(e, "y");
-                            let z = attr_f64(e, "z");
-                            if x != 0.0 || y != 0.0 || z != 0.0 {
-                                vb.position = Some(Position { x, y, z });
+                        // The root component carries the vehicle transform as
+                        // space-separated `position`/`rotation` attributes.
+                        "component" if attr_str(e, "index") == "1" => {
+                            if let Some([x, y, z]) = parse_vec3(e, "position") {
+                                if x != 0.0 || y != 0.0 || z != 0.0 {
+                                    vb.position = Some(Position { x, y, z });
+                                }
                             }
-                        }
-                        "sentRotation" if current_component_index.as_deref() == Some("1") => {
-                            let x = attr_f64(e, "x");
-                            let y = attr_f64(e, "y");
-                            let z = attr_f64(e, "z");
-                            vb.rotation = Some(Rotation { x, y, z });
+                            if let Some([x, y, z]) = parse_vec3(e, "rotation") {
+                                vb.rotation = Some(Rotation { x, y, z });
+                            }
                         }
                         "unit" if in_fill_unit => {
                             let fill_type = attr_str(e, "fillType");
@@ -131,7 +132,7 @@ pub fn parse_vehicles(path: &Path) -> Result<Vec<Vehicle>, AppError> {
                                 });
                             }
                         }
-                        "attachedVehicle" if in_attached_implements => {
+                        "attachedImplement" if in_attached_implements => {
                             let uid = attr_str(e, "attachedVehicleUniqueId");
                             if !uid.is_empty() {
                                 vb.attached_implements.push(AttachedImplement {
@@ -141,7 +142,8 @@ pub fn parse_vehicles(path: &Path) -> Result<Vec<Vehicle>, AppError> {
                                 });
                             }
                         }
-                        "boughtConfiguration" if in_configurations => {
+                        // Configurations are direct <configuration> children of <vehicle>.
+                        "configuration" if in_vehicle => {
                             vb.configurations.push(VehicleConfiguration {
                                 name: attr_str(e, "name"),
                                 id: attr_str(e, "id"),
@@ -168,10 +170,8 @@ pub fn parse_vehicles(path: &Path) -> Result<Vec<Vehicle>, AppError> {
                             vehicles.push(vb.build());
                         }
                     }
-                    "component" => current_component_index = None,
                     "fillUnit" => in_fill_unit = false,
                     "attacherJoints" => in_attached_implements = false,
-                    "boughtConfigurations" => in_configurations = false,
                     "wearable" => in_wearable = false,
                     _ => {}
                 }
@@ -255,6 +255,61 @@ mod tests {
         // Wearable data
         assert!((tractor.damage - 0.05).abs() < 0.001);
         assert!((tractor.wear - 0.12).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_parse_vehicles_position_from_component_attribute() {
+        let path = fixtures_path().join("savegame_complete");
+        let vehicles = parse_vehicles(&path).unwrap();
+
+        // Transform lives in the root <component>'s space-separated attributes.
+        let tractor = vehicles.iter().find(|v| v.unique_id == "vehicle0001").unwrap();
+        let pos = tractor.position.as_ref().unwrap();
+        assert!((pos.x - 120.5).abs() < 0.001);
+        assert!((pos.z - (-45.3)).abs() < 0.001);
+        let rot = tractor.rotation.as_ref().unwrap();
+        assert!((rot.y - 1.57).abs() < 0.001);
+    }
+
+    #[test]
+    fn test_parse_vehicles_configurations() {
+        let path = fixtures_path().join("savegame_complete");
+        let vehicles = parse_vehicles(&path).unwrap();
+
+        // Configurations are <configuration> children of <vehicle>, not <boughtConfigurations>.
+        let tractor = vehicles.iter().find(|v| v.unique_id == "vehicle0001").unwrap();
+        assert_eq!(tractor.configurations.len(), 2);
+        assert_eq!(tractor.configurations[0].name, "design");
+        assert_eq!(tractor.configurations[0].id, "2");
+    }
+
+    #[test]
+    fn test_parse_vehicles_attached_implements() {
+        let path = fixtures_path().join("savegame_complete");
+        let vehicles = parse_vehicles(&path).unwrap();
+
+        let tractor = vehicles.iter().find(|v| v.unique_id == "vehicle0001").unwrap();
+        assert_eq!(tractor.attached_implements.len(), 1);
+        let implement = &tractor.attached_implements[0];
+        assert_eq!(implement.attached_vehicle_unique_id, "vehicle0003");
+        assert_eq!(implement.joint_index, 1);
+        assert!(implement.move_down);
+    }
+
+    #[test]
+    fn test_parse_vehicles_fill_unit_has_no_capacity() {
+        let path = fixtures_path().join("savegame_complete");
+        let vehicles = parse_vehicles(&path).unwrap();
+
+        // The savegame records fill levels only; capacities live in the game's vehicle XML.
+        let tractor = vehicles.iter().find(|v| v.unique_id == "vehicle0001").unwrap();
+        let diesel = tractor
+            .fill_units
+            .iter()
+            .find(|u| u.fill_type == "DIESEL")
+            .unwrap();
+        assert!((diesel.fill_level - 250.0).abs() < 0.01);
+        assert!(diesel.capacity.is_none());
     }
 
     #[test]

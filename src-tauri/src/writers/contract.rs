@@ -1,6 +1,6 @@
 use std::path::Path;
 
-use quick_xml::events::{BytesStart, Event};
+use quick_xml::events::{BytesStart, BytesText, Event};
 use quick_xml::{Reader, Writer};
 
 use crate::error::AppError;
@@ -18,6 +18,10 @@ pub fn write_contract_settings(
     let mut reader = Reader::from_str(&content);
     let mut writer = Writer::new(Vec::new());
 
+    // Settings live in child elements holding a number; the legacy <settings>
+    // attribute form is still patched for older mod versions.
+    let mut current_tag = String::new();
+
     loop {
         match reader.read_event() {
             Ok(Event::Start(ref e)) => {
@@ -28,6 +32,27 @@ pub fn write_contract_settings(
                 } else {
                     write_event(&mut writer, &xml_path, Event::Start(e.clone().into_owned()))?;
                 }
+                current_tag = tag;
+            }
+            Ok(Event::Text(ref t)) => {
+                let replacement = match current_tag.as_str() {
+                    "leaseVehicle" => changes.lease_vehicle,
+                    "missionPerFarm" => changes.mission_per_farm,
+                    "allowClearAdd" => changes.allow_clear_add,
+                    _ => None,
+                };
+                match replacement {
+                    Some(value) => write_event(
+                        &mut writer,
+                        &xml_path,
+                        Event::Text(BytesText::new(&format!("{:.6}", value)).into_owned()),
+                    )?,
+                    None => write_event(&mut writer, &xml_path, Event::Text(t.clone().into_owned()))?,
+                }
+            }
+            Ok(Event::End(ref e)) => {
+                current_tag.clear();
+                write_event(&mut writer, &xml_path, Event::End(e.clone().into_owned()))?;
             }
             Ok(Event::Empty(ref e)) => {
                 let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
@@ -131,6 +156,26 @@ mod tests {
         assert!((settings.mission_per_farm - 4.0).abs() < 0.01);
         // Unchanged
         assert!((settings.allow_clear_add - 1.0).abs() < 0.01);
+        let _ = std::fs::remove_dir_all(&save);
+    }
+
+    #[test]
+    fn test_write_contract_settings_preserves_document_shape() {
+        let save = setup_fixture("shape");
+        let changes = ContractSettingsChange {
+            lease_vehicle: Some(5.0),
+            mission_per_farm: None,
+            allow_clear_add: None,
+        };
+        write_contract_settings(&save, &changes).unwrap();
+
+        let raw = std::fs::read_to_string(save.join("r_contracts.xml")).unwrap();
+        // The edited value is rewritten in place, as element text.
+        assert!(raw.contains("<leaseVehicle>5.000000</leaseVehicle>"));
+        // Untouched settings keep their original text verbatim.
+        assert!(raw.contains("<missionPerFarm>2.000000</missionPerFarm>"));
+        assert!(raw.contains("<allowClearAdd>1.000000</allowClearAdd>"));
+        assert!(raw.contains("<r_contracts>"));
         let _ = std::fs::remove_dir_all(&save);
     }
 }
