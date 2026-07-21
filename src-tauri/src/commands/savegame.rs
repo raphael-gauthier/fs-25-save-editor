@@ -622,7 +622,7 @@ mod tests {
         assert_eq!(data.sales.len(), 2);
         assert_eq!(data.fields.len(), 4);
         assert_eq!(data.farmlands.len(), 5);
-        assert_eq!(data.placeables.len(), 8);
+        assert_eq!(data.placeables.len(), 9);
         assert_eq!(data.husbandries.len(), 3);
         let total_animals: u32 = data
             .husbandries

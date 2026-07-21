@@ -313,12 +313,12 @@ mod tests {
     #[test]
     fn test_parse_husbandries_ignores_silo_and_production_storage() {
         // Fixture index 0 is a silo with <silo><storage><node fillType="WHEAT">, and
-        // index 2 is a production point with its own <storage><node>. Neither is a
+        // index 3 is a production point with its own <storage><node>. Neither is a
         // husbandry, so neither may leak into the results.
         let path = fixtures_path().join("savegame_complete");
         let husbandries = parse_husbandries(&path).unwrap();
 
-        assert!(husbandries.iter().all(|h| h.placeable_index >= 5));
+        assert!(husbandries.iter().all(|h| h.placeable_index >= 6));
         for h in &husbandries {
             assert!(
                 h.water.iter().all(|w| w.fill_type == "WATER"),

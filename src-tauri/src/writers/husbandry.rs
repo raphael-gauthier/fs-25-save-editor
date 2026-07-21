@@ -390,7 +390,7 @@ mod tests {
 
     #[test]
     fn test_write_husbandry_does_not_touch_silo_or_production_stock() {
-        // Fixture index 0 is a silo holding a WHEAT <node>; index 2 is a production point
+        // Fixture index 0 is a silo holding a WHEAT <node>; index 3 is a production point
         // holding a WHEAT <node>. Both share the tag names husbandry water uses.
         // NOTE: this passes because placeable_index scoping keeps `current` at None
         // while the silo/production placeables are processed — not because of the

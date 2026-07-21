@@ -196,7 +196,7 @@ mod tests {
     fn test_parse_placeables_nominal() {
         let path = fixtures_path().join("savegame_complete");
         let placeables = parse_placeables(&path).unwrap();
-        assert_eq!(placeables.len(), 8);
+        assert_eq!(placeables.len(), 9);
 
         // First placeable: silo (completed building)
         let silo = &placeables[0];
@@ -298,7 +298,7 @@ mod tests {
 
         let pre_placed: Vec<&Placeable> =
             placeables.iter().filter(|p| p.is_pre_placed).collect();
-        assert_eq!(pre_placed.len(), 3);
+        assert_eq!(pre_placed.len(), 4);
 
         // A pre-placed building bought by a farm keeps farmId != 0.
         let farmhouse = pre_placed.iter().find(|p| p.farm_id == 1).unwrap();

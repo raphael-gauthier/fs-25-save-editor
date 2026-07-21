@@ -93,6 +93,31 @@ pub fn write_placeable_changes(
             Ok(Event::Empty(ref e)) => {
                 let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
 
+                // A self-closing <placeable .../> (pre-placed buildings, ~37% of a real
+                // save) never opens a Start/End pair, so it never sets `in_placeable`.
+                // It must still be counted here — otherwise placeable_index drifts out
+                // of sync with the parser and every later edit lands on the wrong
+                // building. It has no children, so only its own attributes are patched.
+                if tag == "placeable" {
+                    let change = change_map.get(&placeable_index).copied();
+                    placeable_index += 1;
+
+                    match change {
+                        Some(change) => {
+                            let elem = patch_placeable_start(e, change);
+                            write_event(&mut writer, &xml_path, Event::Empty(elem))?;
+                        }
+                        None => {
+                            write_event(
+                                &mut writer,
+                                &xml_path,
+                                Event::Empty(e.clone().into_owned()),
+                            )?;
+                        }
+                    }
+                    continue;
+                }
+
                 if let Some(change) = current_change {
                     match tag.as_str() {
                         "input" if in_constructible && change.complete_construction => {
@@ -367,7 +392,7 @@ mod tests {
         assert!(before.contains("fillType=\"SUNFLOWER\" fillLevel=\"4855.552734\""));
 
         let changes = vec![PlaceableChange {
-            index: 2,
+            index: 3,
             farm_id: None,
             price: None,
             complete_construction: false,
@@ -380,7 +405,7 @@ mod tests {
 
         let after = parse_placeables(&save).unwrap();
         // Production point updated...
-        let stock = after[2]
+        let stock = after[3]
             .production_storage
             .iter()
             .find(|s| s.fill_type == "WHEAT")
@@ -389,6 +414,57 @@ mod tests {
         // ...while the silo's own WHEAT node kept its original level.
         let raw = std::fs::read_to_string(save.join("placeables.xml")).unwrap();
         assert!(raw.contains("fillType=\"WHEAT\" fillLevel=\"20657.392578\""));
+        let _ = std::fs::remove_dir_all(&save);
+    }
+
+    #[test]
+    fn test_write_placeable_targets_correct_index_past_a_self_closing_placeable() {
+        // 37% of placeables in a real save are self-closing. The parser counts them;
+        // if the writer does not, every edit after the first one lands on the wrong
+        // building. Fixture index 1 is self-closing, so index 2 is only reachable
+        // if both sides agree.
+        let save = setup_fixture("self_closing_index");
+        let before = parse_placeables(&save).unwrap();
+
+        let target = 2usize;
+        let target_name = before[target].display_name.clone();
+
+        let changes = vec![PlaceableChange {
+            index: target,
+            farm_id: Some(7),
+            price: None,
+            complete_construction: false,
+            production_storage: None,
+        }];
+        write_placeable_changes(&save, &changes).unwrap();
+
+        let after = parse_placeables(&save).unwrap();
+        assert_eq!(after[target].display_name, target_name, "index drifted");
+        assert_eq!(after[target].farm_id, 7, "the edit did not reach its target");
+        for (i, (a, b)) in after.iter().zip(before.iter()).enumerate() {
+            if i != target {
+                assert_eq!(a.farm_id, b.farm_id, "placeable {} was collaterally modified", i);
+            }
+        }
+        let _ = std::fs::remove_dir_all(&save);
+    }
+
+    #[test]
+    fn test_write_placeable_can_edit_a_self_closing_placeable() {
+        // The self-closing pre-placed entries are exactly the ones a player claims
+        // after buying farmland, so they must be writable.
+        let save = setup_fixture("self_closing_edit");
+        let changes = vec![PlaceableChange {
+            index: 1,
+            farm_id: Some(3),
+            price: None,
+            complete_construction: false,
+            production_storage: None,
+        }];
+        write_placeable_changes(&save, &changes).unwrap();
+
+        let after = parse_placeables(&save).unwrap();
+        assert_eq!(after[1].farm_id, 3);
         let _ = std::fs::remove_dir_all(&save);
     }
 

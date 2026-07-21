@@ -8,6 +8,7 @@
             </storage>
         </silo>
     </placeable>
+    <placeable isPreplaced="true" uniqueId="preplaced_oldSmallBarn07_70cb6870eb085c97a2a0691870e3bf35" age="59.000000" price="2000.000000" farmId="15" boughtWithFarmlandOverwrite="true"/>
     <placeable filename="data/placeables/barns/largeBarn/largeBarn.xml" uniqueId="placeable2b3c4d5e6f70819a2b3c4d5e6f70819a" position="210.000 0.000 -95.000" rotation="0.00 0.00 0.00" age="2.000000" price="120000.000000" farmId="1">
         <constructible>
             <state name="SETUP">
