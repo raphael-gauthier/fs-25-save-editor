@@ -6,8 +6,8 @@ use quick_xml::Reader;
 use crate::error::AppError;
 use crate::models::common::Position;
 use crate::models::placeable::{
-    placeable_display_name, ConstructionMaterial, ConstructionState, Placeable, ProductionLine,
-    ProductionStock,
+    display_name_from_unique_id, placeable_display_name, ConstructionMaterial, ConstructionState,
+    Placeable, ProductionLine, ProductionStock,
 };
 
 fn attr_str(e: &quick_xml::events::BytesStart, key: &str) -> String {
@@ -44,24 +44,6 @@ fn parse_position(e: &quick_xml::events::BytesStart) -> Option<Position> {
         [x, y, z] => Some(Position { x, y, z }),
         _ => None,
     }
-}
-
-/// Pre-placed map objects carry no `filename`, so their name must come from the
-/// `uniqueId` — e.g. `preplaced_farmHouse05_306e852a...` becomes "Farm House 05".
-fn display_name_from_unique_id(unique_id: &str) -> String {
-    let stem = unique_id.strip_prefix("preplaced_").unwrap_or(unique_id);
-
-    // Drop the trailing 32-character hex hash the game appends to pre-placed ids.
-    let stem = match stem.rsplit_once('_') {
-        Some((head, tail))
-            if tail.len() == 32 && tail.chars().all(|c| c.is_ascii_hexdigit()) =>
-        {
-            head
-        }
-        _ => stem,
-    };
-
-    placeable_display_name(stem)
 }
 
 pub fn parse_placeables(path: &Path) -> Result<Vec<Placeable>, AppError> {

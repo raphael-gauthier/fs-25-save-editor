@@ -90,3 +90,42 @@ pub fn placeable_display_name(filename: &str) -> String {
 
     result
 }
+
+/// Pre-placed map objects carry no `filename`, so their name must come from the
+/// `uniqueId` — e.g. `preplaced_farmHouse05_306e852a...` becomes "Farm House 05".
+pub fn display_name_from_unique_id(unique_id: &str) -> String {
+    let stem = unique_id.strip_prefix("preplaced_").unwrap_or(unique_id);
+
+    // Drop the trailing 32-character hex hash the game appends to pre-placed ids.
+    let stem = match stem.rsplit_once('_') {
+        Some((head, tail))
+            if tail.len() == 32 && tail.chars().all(|c| c.is_ascii_hexdigit()) =>
+        {
+            head
+        }
+        _ => stem,
+    };
+
+    placeable_display_name(stem)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_display_name_from_unique_id_strips_prefix_and_hash() {
+        assert_eq!(
+            display_name_from_unique_id("preplaced_farmHouse05_306e852a51d90726d144af50a865cbf0"),
+            "Farm House 05"
+        );
+    }
+
+    #[test]
+    fn test_display_name_from_unique_id_without_hash() {
+        assert_eq!(
+            display_name_from_unique_id("sellingStationTrain01"),
+            "Selling Station Train 01"
+        );
+    }
+}
