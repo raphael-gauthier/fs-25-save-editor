@@ -194,6 +194,13 @@ async function handleReload() {
       vehicleStore.hydrate(savegameStore.currentSavegame.vehicles);
       saleStore.hydrate(savegameStore.currentSavegame.sales);
       fieldStore.hydrate(savegameStore.currentSavegame.fields, savegameStore.currentSavegame.farmlands);
+      buildingStore.hydrate(savegameStore.currentSavegame.placeables);
+      missionStore.hydrate(
+        savegameStore.currentSavegame.missions,
+        savegameStore.currentSavegame.collectibles,
+        savegameStore.currentSavegame.contractSettings,
+      );
+      animalStore.hydrate(savegameStore.currentSavegame.husbandries);
       if (savegameStore.currentSavegame.environment) {
         worldStore.hydrate(savegameStore.currentSavegame.environment);
       }
