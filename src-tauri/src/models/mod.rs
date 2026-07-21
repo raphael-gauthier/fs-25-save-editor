@@ -10,6 +10,7 @@ pub mod economy;
 pub mod environment;
 pub mod farm;
 pub mod field;
+pub mod husbandry;
 pub mod mission;
 pub mod placeable;
 pub mod sale;
@@ -26,6 +27,7 @@ use economy::Economy;
 use environment::Environment;
 use farm::Farm;
 use field::{Farmland, Field};
+use husbandry::Husbandry;
 use mission::Mission;
 use placeable::Placeable;
 use sale::SaleItem;
@@ -42,6 +44,7 @@ pub struct SavegameData {
     pub fields: Vec<Field>,
     pub farmlands: Vec<Farmland>,
     pub placeables: Vec<Placeable>,
+    pub husbandries: Vec<Husbandry>,
     pub missions: Vec<Mission>,
     pub collectibles: Vec<Collectible>,
     pub contract_settings: Option<ContractSettings>,

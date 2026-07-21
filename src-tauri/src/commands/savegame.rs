@@ -250,6 +250,7 @@ pub fn load_savegame(path: String) -> Result<SavegameData, AppError> {
         fields,
         farmlands,
         placeables,
+        husbandries: Vec::new(),
         missions,
         collectibles,
         contract_settings,

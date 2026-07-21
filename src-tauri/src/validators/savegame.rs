@@ -172,6 +172,7 @@ mod tests {
             }],
             farmlands: vec![Farmland { id: 1, farm_id: 1 }],
             placeables: vec![],
+            husbandries: vec![],
             missions: vec![],
             collectibles: vec![],
             contract_settings: None,
