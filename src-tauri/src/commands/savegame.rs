@@ -1111,6 +1111,35 @@ mod tests {
         let _ = std::fs::remove_dir_all(save.parent().unwrap());
     }
 
+    /// A building restore and a mission deadline as the frontend sends them.
+    #[test]
+    fn test_save_changes_restores_buildings_and_moves_deadlines_from_frontend_json() {
+        let reference = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("..").join("docs").join("savegames");
+        let save = std::env::temp_dir().join("fs25_test_restore_deadline_json").join("savegame1");
+        let _ = std::fs::remove_dir_all(save.parent().unwrap());
+        std::fs::create_dir_all(&save).unwrap();
+        for file in ["careerSavegame.xml", "placeables.xml", "missions.xml"] {
+            std::fs::copy(reference.join(file), save.join(file)).unwrap();
+        }
+        let deleted = crate::parsers::placeable::parse_placeables(&save).unwrap().into_iter().find(|p| p.is_deleted).unwrap();
+        let mission = crate::parsers::mission::parse_missions(&save).unwrap().into_iter().find(|m| m.end_day.is_some()).unwrap();
+        let end_day = mission.end_day.unwrap() + 7;
+
+        let changes: SavegameChanges = serde_json::from_value(serde_json::json!({
+            "placeables": [{ "index": deleted.index, "completeConstruction": false, "restore": true }],
+            "missions": [{ "uniqueId": mission.unique_id, "endDay": end_day }]
+        }))
+        .unwrap();
+        let result = save_changes(save.display().to_string(), changes).unwrap();
+        assert!(result.errors.is_empty());
+
+        let placeables = crate::parsers::placeable::parse_placeables(&save).unwrap();
+        assert!(!placeables[deleted.index].is_deleted);
+        let missions = crate::parsers::mission::parse_missions(&save).unwrap();
+        assert_eq!(missions.iter().find(|m| m.unique_id == mission.unique_id).unwrap().end_day, Some(end_day));
+        let _ = std::fs::remove_dir_all(save.parent().unwrap());
+    }
+
     #[test]
     fn test_save_changes_applies_placeable_and_husbandry_edits_together() {
         // Both write_placeable_changes and write_husbandry_changes rewrite
