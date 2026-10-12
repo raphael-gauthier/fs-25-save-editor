@@ -15,6 +15,8 @@ pub struct FruitState {
     /// Foliage state name, e.g. "greenSmall" or "harvestReady".
     pub name: String,
     pub is_harvest_ready: bool,
+    /// Ready for haulm topping before harvest (potatoes, beets)
+    pub is_preparable: bool,
     pub is_withered: bool,
     pub is_cut: bool,
 }
@@ -138,6 +140,7 @@ pub fn parse_fruit_growth(xml: &str) -> Option<FruitGrowth> {
                 states.push(FruitState {
                     name: attr_str(&e, "name"),
                     is_harvest_ready: attr_str(&e, "isHarvestReady") == "true",
+                    is_preparable: attr_str(&e, "isPreparable") == "true",
                     is_withered: attr_str(&e, "isWithered") == "true",
                     is_cut: attr_str(&e, "isCut") == "true",
                 });
@@ -264,6 +267,7 @@ mod tests {
         let growth = parse_fruit_growth(POTATO).unwrap();
         assert_eq!(growth.states.len(), 6);
         assert_eq!(growth.harvest_ready_state(), Some(6));
+        assert!(growth.states[2].is_preparable && !growth.states[5].is_preparable);
         assert_eq!(growth.ground_change, None);
         assert_eq!(growth.ground_for_state(6), Some("RIDGE_SOWN"));
     }

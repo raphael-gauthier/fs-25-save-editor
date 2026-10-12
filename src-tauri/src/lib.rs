@@ -49,6 +49,7 @@ pub fn run() {
             commands::catalog::get_vehicle_catalog,
             commands::density::load_field_density_data,
             commands::density::save_density_edits,
+            commands::density::load_map_fruit_types,
             commands::update::check_for_updates,
         ])
         .run(tauri::generate_context!())

@@ -5,6 +5,7 @@ use std::path::{Path, PathBuf};
 use crate::error::AppError;
 use crate::models::density::{
     DensityEditPayload, FieldDensityData, FruitCoverage, GroundCoverage, LevelDistribution,
+    MapFruitType,
 };
 use crate::parsers::density_map_config::{self, GROUND_TYPES};
 use crate::parsers::foliage::{self, FruitGrowth};
@@ -201,6 +202,27 @@ pub(crate) struct MapData {
     farmlands: GrleImage,
     layout: FruitLayout,
     fields: FieldShapes,
+}
+
+/// Crops the map can grow, in fruit layer order: fruit types shown on the
+/// map that have a slot in the fruits density map.
+fn map_fruit_types(layout: &FruitLayout) -> Vec<MapFruitType> {
+    layout
+        .type_names
+        .iter()
+        .filter_map(|name| layout.fruits.get(name))
+        .filter(|fruit| fruit.shown_on_map)
+        .map(|fruit| MapFruitType {
+            name: fruit.name.clone(),
+            states: fruit.states.clone(),
+            harvest_ready_state: fruit.harvest_ready_state(),
+        })
+        .collect()
+}
+
+/// Crops of the map `map_id`, with their growth states.
+pub fn load_map_fruit_types(game_path: &Path, map_id: &str) -> Result<Vec<MapFruitType>, AppError> {
+    Ok(map_fruit_types(&load_map_data(game_path, map_id)?.layout))
 }
 
 /// Load map-specific data: farmlands GRLE, fruit layer layout, field polygons
@@ -1182,6 +1204,7 @@ mod tests {
         let state = |i: u8| crate::parsers::foliage::FruitState {
             name: format!("state{}", i),
             is_harvest_ready: i == ready,
+            is_preparable: false,
             is_withered: i == ready + 1,
             is_cut: i == ready + 2,
         };
@@ -1403,6 +1426,15 @@ mod tests {
     }
 
     #[test]
+    fn test_map_fruit_types_lists_crops_in_layer_order() {
+        let crops = map_fruit_types(&map_us_layout());
+        let names: Vec<&str> = crops.iter().map(|c| c.name.as_str()).collect();
+        assert_eq!(names, vec!["WHEAT", "BARLEY", "POTATO", "CARROT"]);
+        assert_eq!(crops[0].harvest_ready_state, Some(8));
+        assert_eq!(crops[0].states.len(), 10);
+    }
+
+    #[test]
     fn test_set_fruit_rejects_a_fruit_type_the_map_lacks() {
         let save = reference_density_save("unknown_fruit");
         let fruits_before = std::fs::read(save.join("densityMap_fruits.gdm")).unwrap();
@@ -1572,6 +1604,9 @@ mod tests {
         let map_data = load_map_data(&game, &map).unwrap();
         let shapes = map_data.fields.by_farmland.len();
         println!("{} field polygons", shapes);
+        let crops = map_fruit_types(&map_data.layout);
+        println!("crops: {:?}", crops.iter().map(|c| c.name.as_str()).collect::<Vec<_>>());
+        assert!(crops.iter().all(|c| c.harvest_ready_state.is_some() && !c.states.is_empty()));
         assert!(shapes * 10 >= fields.len() * 9, "most fields have a polygon");
 
         // fields.xml is the game's own summary of each field's crop. Fruits
