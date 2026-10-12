@@ -209,6 +209,8 @@ pub struct MissionChange {
     pub status: Option<String>,
     pub reimbursement: Option<f64>,
     pub deposited_liters: Option<f64>,
+    /// New deadline day (`<endDate endDay>`) of a mission that has one
+    pub end_day: Option<u32>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
