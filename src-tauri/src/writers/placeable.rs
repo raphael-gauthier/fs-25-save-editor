@@ -1,11 +1,12 @@
 use std::path::Path;
 
-use quick_xml::events::{BytesStart, Event};
+use quick_xml::events::{BytesEnd, BytesStart, BytesText, Event};
 use quick_xml::{Reader, Writer};
 
 use crate::error::AppError;
 use crate::writers::replace_xml_file;
-use crate::models::changes::{PlaceableChange, ProductionStockChange};
+use crate::models::changes::{PlaceableChange, ProductionStockChange, SiloStockChange};
+use crate::models::placeable::SiloStorageKind;
 
 /// Applies a list of placeable changes to placeables.xml.
 /// Patch strategy: reads original XML, modifies only targeted attributes/elements, rewrites atomically.
@@ -35,13 +36,33 @@ pub fn write_placeable_changes(
     let mut in_constructible = false;
     let mut in_production_point = false;
     let mut in_production_storage = false;
+    let mut in_silo = false;
+    // The silo `<storage>` or `<siloExtension>` open around the current event,
+    // with the fill types whose `<node>` was already written
+    let mut open_silo: Option<(SiloStorageKind, u32, Vec<String>)> = None;
+    // Indentation before the last element, reused for added `<node>`s
+    let mut last_indent = String::from("\n");
 
     loop {
         match reader.read_event() {
+            Ok(Event::Text(ref t)) => {
+                if t.trim().is_empty() {
+                    last_indent = t.to_string();
+                }
+                write_event(&mut writer, &xml_path, Event::Text(t.clone().into_owned()))?;
+            }
             Ok(Event::Start(ref e)) => {
                 let tag = e.name().as_ref().to_string();
 
                 match tag.as_str() {
+                    "silo" if in_placeable => {
+                        in_silo = true;
+                        write_event(&mut writer, &xml_path, Event::Start(e.clone().into_owned()))?;
+                    }
+                    "storage" | "siloExtension" if in_placeable && (in_silo || tag == "siloExtension") => {
+                        open_silo = Some((silo_kind(in_silo), silo_index(e, in_silo), Vec::new()));
+                        write_event(&mut writer, &xml_path, Event::Start(e.clone().into_owned()))?;
+                    }
                     "placeable" if !in_placeable => {
                         in_placeable = true;
                         current_change = change_map.get(&placeable_index).copied();
@@ -119,6 +140,49 @@ pub fn write_placeable_changes(
                     continue;
                 }
 
+                // A silo storage without any fill level is a self-closing element
+                if (tag == "storage" && in_silo) || tag == "siloExtension" {
+                    let key = (silo_kind(in_silo), silo_index(e, in_silo));
+                    let added = silo_additions(current_change, key, &[]);
+                    if added.is_empty() {
+                        write_event(&mut writer, &xml_path, Event::Empty(e.clone().into_owned()))?;
+                    } else {
+                        let indent = last_indent.clone();
+                        write_event(&mut writer, &xml_path, Event::Start(e.clone().into_owned()))?;
+                        for node in added {
+                            write_indent(&mut writer, &xml_path, &format!("{}    ", indent))?;
+                            write_event(&mut writer, &xml_path, Event::Empty(node))?;
+                        }
+                        write_indent(&mut writer, &xml_path, &indent)?;
+                        write_event(&mut writer, &xml_path, Event::End(BytesEnd::new(tag)))?;
+                    }
+                    continue;
+                }
+
+                if tag == "node" {
+                    if let Some((kind, index, ref mut written)) = open_silo {
+                        let fill_type = attr_str(e, "fillType");
+                        let stock = current_change
+                            .and_then(|c| c.silo_stocks.as_ref())
+                            .and_then(|stocks| {
+                                stocks.iter().find(|s| s.kind == kind && s.index == index && s.fill_type == fill_type)
+                            });
+                        written.push(fill_type);
+                        match stock {
+                            // Only fill levels above 0 are saved, as the game does
+                            Some(stock) if stock.amount <= 0.0 => {}
+                            Some(stock) => {
+                                let elem = patch_fill_level(e, stock.amount);
+                                write_event(&mut writer, &xml_path, Event::Empty(elem))?;
+                            }
+                            None => {
+                                write_event(&mut writer, &xml_path, Event::Empty(e.clone().into_owned()))?;
+                            }
+                        }
+                        continue;
+                    }
+                }
+
                 if let Some(change) = current_change {
                     match tag.as_str() {
                         "input" if in_constructible && change.complete_construction => {
@@ -151,6 +215,17 @@ pub fn write_placeable_changes(
             Ok(Event::End(ref e)) => {
                 let tag = e.name().as_ref().to_string();
 
+                if matches!(tag.as_str(), "storage" | "siloExtension") {
+                    if let Some((kind, index, written)) = open_silo.take() {
+                        let indent = last_indent.clone();
+                        for node in silo_additions(current_change, (kind, index), &written) {
+                            write_indent(&mut writer, &xml_path, "    ")?;
+                            write_event(&mut writer, &xml_path, Event::Empty(node))?;
+                            write_indent(&mut writer, &xml_path, &indent)?;
+                        }
+                    }
+                }
+
                 match tag.as_str() {
                     "placeable" if in_placeable => {
                         in_placeable = false;
@@ -158,7 +233,10 @@ pub fn write_placeable_changes(
                         in_constructible = false;
                         in_production_point = false;
                         in_production_storage = false;
+                        in_silo = false;
+                        open_silo = None;
                     }
+                    "silo" => in_silo = false,
                     "constructible" => in_constructible = false,
                     "productionPoint" => {
                         in_production_point = false;
@@ -261,6 +339,61 @@ fn patch_storage_node(e: &BytesStart, change: &ProductionStockChange) -> BytesSt
     elem
 }
 
+fn silo_kind(in_silo: bool) -> SiloStorageKind {
+    if in_silo {
+        SiloStorageKind::Silo
+    } else {
+        SiloStorageKind::Extension
+    }
+}
+
+/// `<storage index>` of a silo storage, 0 for an extension.
+fn silo_index(e: &BytesStart, in_silo: bool) -> u32 {
+    if in_silo {
+        attr_str(e, "index").parse().unwrap_or(0)
+    } else {
+        0
+    }
+}
+
+/// `<node>`s to add to silo storage `key`: changes above 0 for fill types it
+/// did not already hold (`written`).
+fn silo_additions(
+    change: Option<&PlaceableChange>,
+    key: (SiloStorageKind, u32),
+    written: &[String],
+) -> Vec<BytesStart<'static>> {
+    let Some(stocks) = change.and_then(|c| c.silo_stocks.as_ref()) else {
+        return Vec::new();
+    };
+    stocks
+        .iter()
+        .filter(|s| (s.kind, s.index) == key && s.amount > 0.0 && !written.contains(&s.fill_type))
+        .map(|s| {
+            let mut node = BytesStart::new("node");
+            node.push_attribute(("fillType", s.fill_type.as_str()));
+            node.push_attribute(("fillLevel", format!("{:.6}", s.amount).as_str()));
+            node
+        })
+        .collect()
+}
+
+fn patch_fill_level(e: &BytesStart, amount: f64) -> BytesStart<'static> {
+    let mut elem = BytesStart::new("node");
+    for attr in e.attributes().flatten() {
+        if attr.key.as_ref() == "fillLevel" {
+            elem.push_attribute(("fillLevel", format!("{:.6}", amount).as_str()));
+        } else {
+            elem.push_attribute(attr);
+        }
+    }
+    elem
+}
+
+fn write_indent(writer: &mut Writer<Vec<u8>>, xml_path: &Path, indent: &str) -> Result<(), AppError> {
+    write_event(writer, xml_path, Event::Text(BytesText::from_escaped(indent).into_owned()))
+}
+
 fn write_event(
     writer: &mut Writer<Vec<u8>>,
     xml_path: &Path,
@@ -296,6 +429,142 @@ mod tests {
         dst
     }
 
+    fn reference_copy(name: &str) -> std::path::PathBuf {
+        let src = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("..")
+            .join("docs")
+            .join("savegames")
+            .join("placeables.xml");
+        let dst = std::env::temp_dir().join(format!("fs25_test_wp_ref_{}", name));
+        let _ = std::fs::remove_dir_all(&dst);
+        std::fs::create_dir_all(&dst).unwrap();
+        std::fs::copy(src, dst.join("placeables.xml")).unwrap();
+        dst
+    }
+
+    fn silo_change(index: usize, stocks: Vec<SiloStockChange>) -> PlaceableChange {
+        PlaceableChange {
+            index,
+            farm_id: None,
+            price: None,
+            complete_construction: false,
+            production_storage: None,
+            silo_stocks: Some(stocks),
+        }
+    }
+
+    fn set(kind: SiloStorageKind, fill_type: &str, amount: f64) -> SiloStockChange {
+        SiloStockChange { kind, index: if kind == SiloStorageKind::Silo { 1 } else { 0 }, fill_type: fill_type.into(), amount }
+    }
+
+    fn levels(save: &std::path::Path, index: usize, kind: SiloStorageKind) -> Vec<(String, f64)> {
+        let placeables = parse_placeables(save).unwrap();
+        let storage = placeables[index].silo_storages.iter().find(|s| s.kind == kind).unwrap();
+        storage.stocks.iter().map(|s| (s.fill_type.clone(), s.amount)).collect()
+    }
+
+    /// Index of the reference save's placeable whose silo storage matches `pred`.
+    fn silo_placeable(save: &std::path::Path, pred: impl Fn(&crate::models::placeable::SiloStorage) -> bool) -> usize {
+        parse_placeables(save).unwrap().iter().position(|p| p.silo_storages.iter().any(&pred)).unwrap()
+    }
+
+    #[test]
+    fn test_write_silo_levels_set_add_and_remove() {
+        let save = reference_copy("silo_levels");
+        let farm_silo = silo_placeable(&save, |s| s.stocks.len() == 2);
+        let changes = vec![silo_change(farm_silo, vec![
+            set(SiloStorageKind::Silo, "WHEAT", 150000.0),
+            set(SiloStorageKind::Silo, "SUNFLOWER", 0.0),
+            set(SiloStorageKind::Silo, "OAT", 1234.5),
+        ])];
+
+        write_placeable_changes(&save, &changes).unwrap();
+
+        assert_eq!(levels(&save, farm_silo, SiloStorageKind::Silo), vec![("WHEAT".into(), 150000.0), ("OAT".into(), 1234.5)]);
+        let _ = std::fs::remove_dir_all(&save);
+    }
+
+    #[test]
+    fn test_write_silo_fills_an_empty_storage_element() {
+        let save = reference_copy("silo_empty");
+        let empty = silo_placeable(&save, |s| s.stocks.is_empty() && s.farm_id == 1);
+        let changes = vec![silo_change(empty, vec![set(SiloStorageKind::Silo, "BARLEY", 5000.0)])];
+
+        write_placeable_changes(&save, &changes).unwrap();
+
+        assert_eq!(levels(&save, empty, SiloStorageKind::Silo), vec![("BARLEY".into(), 5000.0)]);
+        let xml = std::fs::read_to_string(save.join("placeables.xml")).unwrap();
+        assert!(xml.contains(r#"<node fillType="BARLEY" fillLevel="5000.000000"/>"#));
+        // Added lines reuse the file's own line endings, unescaped
+        assert!(!xml.contains("&#13;") && !xml.contains("&#10;"));
+        let _ = std::fs::remove_dir_all(&save);
+    }
+
+    #[test]
+    fn test_write_silo_extension_levels() {
+        let save = reference_copy("silo_extension");
+        let extension = silo_placeable(&save, |s| s.kind == SiloStorageKind::Extension);
+        let changes = vec![silo_change(extension, vec![
+            set(SiloStorageKind::Extension, "WHEAT", 1000.0),
+            set(SiloStorageKind::Extension, "CANOLA", 2000.0),
+        ])];
+
+        write_placeable_changes(&save, &changes).unwrap();
+
+        assert_eq!(
+            levels(&save, extension, SiloStorageKind::Extension),
+            vec![("WHEAT".into(), 1000.0), ("CANOLA".into(), 2000.0)]
+        );
+        // Other silos are untouched
+        let farm_silo = silo_placeable(&save, |s| s.stocks.len() == 2);
+        assert_eq!(levels(&save, farm_silo, SiloStorageKind::Silo)[0], ("WHEAT".into(), 20657.392578));
+        let _ = std::fs::remove_dir_all(&save);
+    }
+
+    /// Every silo storage of the real savegame `FS25_SAVE` gets OAT added and
+    /// its first fill level raised by 1000, on a copy.
+    #[test]
+    #[ignore = "needs FS25_SAVE pointing at a real savegame"]
+    fn test_real_save_silo_edits_round_trip() {
+        let src = std::path::PathBuf::from(std::env::var("FS25_SAVE").expect("FS25_SAVE"));
+        let save = std::env::temp_dir().join("fs25_real_silo_edits");
+        let _ = std::fs::remove_dir_all(&save);
+        std::fs::create_dir_all(&save).unwrap();
+        std::fs::copy(src.join("placeables.xml"), save.join("placeables.xml")).unwrap();
+        let before = parse_placeables(&save).unwrap();
+
+        let changes: Vec<PlaceableChange> = before
+            .iter()
+            .filter(|p| !p.silo_storages.is_empty())
+            .map(|p| {
+                let stocks = p.silo_storages.iter().flat_map(|s| {
+                    let mut edits = vec![SiloStockChange { kind: s.kind, index: s.index, fill_type: "OAT".into(), amount: 500.0 }];
+                    if let Some(first) = s.stocks.first().filter(|f| f.fill_type != "OAT") {
+                        edits.push(SiloStockChange { kind: s.kind, index: s.index, fill_type: first.fill_type.clone(), amount: first.amount + 1000.0 });
+                    }
+                    edits
+                });
+                silo_change(p.index, stocks.collect())
+            })
+            .collect();
+        assert!(!changes.is_empty());
+        write_placeable_changes(&save, &changes).unwrap();
+
+        let after = parse_placeables(&save).unwrap();
+        assert_eq!(after.len(), before.len());
+        for (b, a) in before.iter().zip(&after) {
+            assert_eq!(a.production_storage, b.production_storage, "{}", b.display_name);
+            for (bs, as_) in b.silo_storages.iter().zip(&a.silo_storages) {
+                let level = |s: &crate::models::placeable::SiloStorage, f: &str| s.stocks.iter().find(|x| x.fill_type == f).map(|x| x.amount);
+                assert_eq!(level(as_, "OAT"), Some(500.0), "{}", b.display_name);
+                if let Some(first) = bs.stocks.first().filter(|f| f.fill_type != "OAT") {
+                    assert!((level(as_, &first.fill_type).unwrap() - first.amount - 1000.0).abs() < 0.001);
+                }
+            }
+        }
+        let _ = std::fs::remove_dir_all(&save);
+    }
+
     #[test]
     fn test_write_placeable_owner() {
         let save = setup_fixture("owner");
@@ -304,6 +573,7 @@ mod tests {
             farm_id: Some(2),
             price: None,
             complete_construction: false,
+            silo_stocks: None,
             production_storage: None,
         }];
         write_placeable_changes(&save, &changes).unwrap();
@@ -325,6 +595,7 @@ mod tests {
             farm_id: None,
             price: None,
             complete_construction: true,
+            silo_stocks: None,
             production_storage: None,
         }];
         write_placeable_changes(&save, &changes).unwrap();
@@ -355,6 +626,7 @@ mod tests {
             farm_id: None,
             price: None,
             complete_construction: false,
+            silo_stocks: None,
             production_storage: Some(vec![ProductionStockChange {
                 fill_type: fill_type.clone(),
                 amount: 5000.0,
@@ -385,6 +657,7 @@ mod tests {
             farm_id: None,
             price: None,
             complete_construction: false,
+            silo_stocks: None,
             production_storage: Some(vec![ProductionStockChange {
                 fill_type: "WHEAT".to_string(),
                 amount: 42.0,
@@ -425,6 +698,7 @@ mod tests {
             farm_id: None,
             price: None,
             complete_construction: false,
+            silo_stocks: None,
             production_storage: Some(vec![ProductionStockChange {
                 fill_type: "WHEAT".to_string(),
                 amount: 42.0,
@@ -457,6 +731,7 @@ mod tests {
             farm_id: Some(7),
             price: None,
             complete_construction: false,
+            silo_stocks: None,
             production_storage: None,
         }];
         write_placeable_changes(&save, &changes).unwrap();
@@ -482,6 +757,7 @@ mod tests {
             farm_id: Some(3),
             price: None,
             complete_construction: false,
+            silo_stocks: None,
             production_storage: None,
         }];
         write_placeable_changes(&save, &changes).unwrap();
@@ -502,6 +778,7 @@ mod tests {
             farm_id: None,
             price: Some(999999.0),
             complete_construction: false,
+            silo_stocks: None,
             production_storage: None,
         }];
         write_placeable_changes(&save, &changes).unwrap();

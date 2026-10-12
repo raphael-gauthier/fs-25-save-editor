@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 
+use crate::models::placeable::SiloStorageKind;
+
 use super::common::LocalizedMessage;
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -119,6 +121,18 @@ pub struct PlaceableChange {
     pub complete_construction: bool,
     /// Production point stock levels to overwrite, matched by fill type.
     pub production_storage: Option<Vec<ProductionStockChange>>,
+    /// Farm silo fill levels to set: a missing fill type is added, 0 removes one.
+    pub silo_stocks: Option<Vec<SiloStockChange>>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SiloStockChange {
+    pub kind: SiloStorageKind,
+    /// `<storage index>` of a silo, 0 for an extension
+    pub index: u32,
+    pub fill_type: String,
+    pub amount: f64,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
