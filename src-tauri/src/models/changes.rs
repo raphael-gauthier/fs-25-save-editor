@@ -128,6 +128,9 @@ pub struct PlaceableChange {
     pub silo_stocks: Option<Vec<SiloStockChange>>,
     /// Bales and pallets to remove, copy or finish fermenting in the object storage.
     pub object_storage: Option<ObjectStorageChange>,
+    /// Bring back a deleted pre-placed placeable: the map creates it again on load
+    #[serde(default)]
+    pub restore: bool,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]

@@ -124,6 +124,7 @@ pub fn parse_placeables(path: &Path) -> Result<Vec<Placeable>, AppError> {
                     age: attr_f64(e, "age"),
                     position: parse_position(e),
                     is_pre_placed: attr_bool(e, "isPreplaced"),
+                    is_deleted: attr_bool(e, "isDeleted"),
                     is_under_construction: false,
                     construction: None,
                     productions: Vec::new(),
@@ -275,6 +276,14 @@ mod tests {
         let extension = silos.iter().find(|s| s.kind == SiloStorageKind::Extension).unwrap();
         assert_eq!((extension.index, extension.farm_id), (0, 1));
         assert_eq!(extension.stocks, vec![stock("WHEAT", 3274.029053)]);
+    }
+
+    #[test]
+    fn test_parse_deleted_preplaced_placeables() {
+        let placeables = parse_placeables(&reference_save()).unwrap();
+        let deleted: Vec<&Placeable> = placeables.iter().filter(|p| p.is_deleted).collect();
+        assert_eq!(deleted.len(), 9);
+        assert!(deleted.iter().all(|p| p.is_pre_placed && p.filename.is_empty()));
     }
 
     #[test]

@@ -418,6 +418,8 @@ fn patch_placeable_start(e: &BytesStart, change: &PlaceableChange) -> BytesStart
                     format!("{:.6}", change.price.unwrap()).as_str(),
                 ));
             }
+            // Without it the map creates the pre-placed placeable again
+            "isDeleted" if change.restore => {}
             _ => {
                 elem.push_attribute(attr);
             }
@@ -574,6 +576,7 @@ mod tests {
             production_storage: None,
             silo_stocks: Some(stocks),
             object_storage: None,
+            restore: false,
         }
     }
 
@@ -698,6 +701,7 @@ mod tests {
             production_storage: None,
             silo_stocks: None,
             object_storage: Some(change),
+            restore: false,
         }
     }
 
@@ -847,6 +851,32 @@ mod tests {
     }
 
     #[test]
+    fn test_write_placeable_restores_a_deleted_preplaced_placeable() {
+        let save = reference_copy("restore");
+        let before = parse_placeables(&save).unwrap();
+        let deleted = before.iter().find(|p| p.is_deleted).unwrap().index;
+        let change = PlaceableChange {
+            index: deleted,
+            farm_id: None,
+            price: None,
+            complete_construction: false,
+            production_storage: None,
+            silo_stocks: None,
+            object_storage: None,
+            restore: true,
+        };
+
+        write_placeable_changes(&save, &[change]).unwrap();
+
+        let after = parse_placeables(&save).unwrap();
+        assert_eq!(after.len(), before.len());
+        assert!(!after[deleted].is_deleted);
+        assert_eq!(after[deleted].unique_id, before[deleted].unique_id);
+        assert_eq!(after.iter().filter(|p| p.is_deleted).count(), 8);
+        let _ = std::fs::remove_dir_all(&save);
+    }
+
+    #[test]
     fn test_write_placeable_owner() {
         let save = setup_fixture("owner");
         let changes = vec![PlaceableChange {
@@ -856,6 +886,7 @@ mod tests {
             complete_construction: false,
             silo_stocks: None,
             object_storage: None,
+            restore: false,
             production_storage: None,
         }];
         write_placeable_changes(&save, &changes).unwrap();
@@ -879,6 +910,7 @@ mod tests {
             complete_construction: true,
             silo_stocks: None,
             object_storage: None,
+            restore: false,
             production_storage: None,
         }];
         write_placeable_changes(&save, &changes).unwrap();
@@ -911,6 +943,7 @@ mod tests {
             complete_construction: false,
             silo_stocks: None,
             object_storage: None,
+            restore: false,
             production_storage: Some(vec![ProductionStockChange {
                 fill_type: fill_type.clone(),
                 amount: 5000.0,
@@ -943,6 +976,7 @@ mod tests {
             complete_construction: false,
             silo_stocks: None,
             object_storage: None,
+            restore: false,
             production_storage: Some(vec![ProductionStockChange {
                 fill_type: "WHEAT".to_string(),
                 amount: 42.0,
@@ -985,6 +1019,7 @@ mod tests {
             complete_construction: false,
             silo_stocks: None,
             object_storage: None,
+            restore: false,
             production_storage: Some(vec![ProductionStockChange {
                 fill_type: "WHEAT".to_string(),
                 amount: 42.0,
@@ -1019,6 +1054,7 @@ mod tests {
             complete_construction: false,
             silo_stocks: None,
             object_storage: None,
+            restore: false,
             production_storage: None,
         }];
         write_placeable_changes(&save, &changes).unwrap();
@@ -1046,6 +1082,7 @@ mod tests {
             complete_construction: false,
             silo_stocks: None,
             object_storage: None,
+            restore: false,
             production_storage: None,
         }];
         write_placeable_changes(&save, &changes).unwrap();
@@ -1068,6 +1105,7 @@ mod tests {
             complete_construction: false,
             silo_stocks: None,
             object_storage: None,
+            restore: false,
             production_storage: None,
         }];
         write_placeable_changes(&save, &changes).unwrap();
