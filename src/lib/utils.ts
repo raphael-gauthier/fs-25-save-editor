@@ -1,6 +1,7 @@
 import type { ClassValue } from "clsx"
 import { clsx } from "clsx"
 import { twMerge } from "tailwind-merge"
+import type { MapFruitType } from "@/lib/types"
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -104,4 +105,25 @@ export function formatOperatingTime(hours: number): string {
   const m = Math.round((hours - h) * 60)
   if (m === 0) return `${h}h`
   return `${h}h ${m.toString().padStart(2, "0")}min`
+}
+
+/**
+ * i18n key and params naming growth `state` of `fruit` (state n is
+ * `fruit.states[n - 1]`): its harvest-ready, preparable, withered or cut role
+ * when it has one, "sown" for the first state, otherwise its rank.
+ */
+export function growthStageLabel(
+  fruit: MapFruitType | undefined,
+  state: number,
+): { key: string; params: Record<string, number> } {
+  const desc = fruit?.states[state - 1]
+  if (desc?.isHarvestReady) return { key: "growthStage.ready", params: {} }
+  if (desc?.isPreparable) return { key: "growthStage.preparable", params: {} }
+  if (desc?.isWithered) return { key: "growthStage.withered", params: {} }
+  if (desc?.isCut) return { key: "growthStage.harvested", params: {} }
+  if (desc && state === 1) return { key: "growthStage.sown", params: {} }
+  if (desc && fruit?.harvestReadyState && state < fruit.harvestReadyState) {
+    return { key: "growthStage.growing", params: { n: state, ready: fruit.harvestReadyState } }
+  }
+  return { key: "growthStage.other", params: { n: state } }
 }

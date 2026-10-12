@@ -260,6 +260,23 @@ export interface FarmlandChangePayload {
 
 // Density map data (from binary GDM/GRLE files)
 
+/** A growth state of a fruit, from its foliage XML. */
+export interface FruitState {
+  name: string;
+  isHarvestReady: boolean;
+  /** Ready for haulm topping before harvest (potatoes, beets) */
+  isPreparable: boolean;
+  isWithered: boolean;
+  isCut: boolean;
+}
+
+/** A crop the map can grow. State `n` of the density map is `states[n - 1]`. */
+export interface MapFruitType {
+  name: string;
+  states: FruitState[];
+  harvestReadyState: number | null;
+}
+
 export interface FieldDensityData {
   farmlandId: number;
   pixelCount: number;

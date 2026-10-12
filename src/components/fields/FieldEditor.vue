@@ -1,9 +1,11 @@
 <script setup lang="ts">
-import { computed } from "vue";
+import { computed, ref, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import { useFieldStore } from "@/stores/field";
 import { useSettingsStore } from "@/stores/settings";
-import type { Field } from "@/lib/types";
+import type { Field, MapFruitType } from "@/lib/types";
+import { growthStageLabel } from "@/lib/utils";
+import { cropEdit, soilWorkEdit, type SoilWork } from "@/lib/fieldWork";
 import { FRUIT_TYPES, GROUND_TYPES, HARVEST_READY_STATES, MAX_GROWTH_STATE } from "@/lib/constants";
 import {
   Sheet,
@@ -23,7 +25,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Sprout, Sparkles, Bug, Gem, Droplets, FlaskConical, Tractor } from "@lucide/vue";
+import { Sprout, Sparkles, Bug, Gem, Droplets, FlaskConical, Tractor, Shovel, Wheat } from "@lucide/vue";
 
 interface Props {
   field: Field | null;
@@ -163,6 +165,77 @@ const hasPendingDensityEdit = computed(() => {
   return store.densityEdits.has(props.field.id);
 });
 
+function stageLabel(fruit: MapFruitType | undefined, state: number): string {
+  const { key, params } = growthStageLabel(fruit, state);
+  return t(key, params);
+}
+
+// Crop picker: a fruit of the map and one of its growth states
+const cropChoice = ref("NONE");
+const stageChoice = ref(1);
+const chosenFruit = computed(() => store.getMapFruitType(cropChoice.value));
+const sortedFruitTypes = computed(() =>
+  [...store.mapFruitTypes].sort((a, b) => formatFruitName(a.name).localeCompare(formatFruitName(b.name))),
+);
+
+function resetCropChoice() {
+  const dominant = density.value?.dominantFruit;
+  const fruit = (dominant ? store.getMapFruitType(dominant) : undefined) ?? store.mapFruitTypes[0];
+  cropChoice.value = fruit?.name ?? "NONE";
+  stageChoice.value = fruit?.harvestReadyState ?? 1;
+}
+watch(() => [props.field?.id, store.mapFruitTypes.length], resetCropChoice, { immediate: true });
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function handleCropChoice(value: any) {
+  cropChoice.value = String(value);
+  stageChoice.value = chosenFruit.value?.harvestReadyState ?? 1;
+}
+
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function handleStageChoice(value: any) {
+  stageChoice.value = Number(value);
+}
+
+function handleApplyCrop() {
+  if (!props.field) return;
+  store.addDensityEdit(props.field.id, cropEdit(cropChoice.value, stageChoice.value));
+}
+
+function handleSoilWork(work: SoilWork) {
+  if (!props.field) return;
+  store.addDensityEdit(props.field.id, soilWorkEdit(work));
+}
+
+/** Labels of the density edits waiting to be saved for this field. */
+const pendingItems = computed<string[]>(() => {
+  const edit = props.field ? store.densityEdits.get(props.field.id) : undefined;
+  if (!edit) return [];
+  const items: string[] = [];
+  if (edit.setFruitName === "NONE") {
+    items.push(t("field.pendingNoCrop"));
+  } else if (edit.setFruitName) {
+    const fruit = store.getMapFruitType(edit.setFruitName);
+    items.push(t("field.pendingCrop", {
+      fruit: formatFruitName(edit.setFruitName),
+      stage: stageLabel(fruit, edit.setGrowthState ?? 0),
+    }));
+  }
+  if (edit.setHarvestReady) items.push(t("field.maxGrowth"));
+  if (edit.setGroundType !== undefined) {
+    const ground = GROUND_TYPES[edit.setGroundType - 1];
+    items.push(t("field.pendingGround", { ground: t(`groundTypes.${ground}`, ground ?? "NONE") }));
+  }
+  if (edit.setLimeLevel !== undefined) items.push(t("field.maxLime"));
+  if (edit.setSprayLevel !== undefined) items.push(t("field.maxFertilizer"));
+  if (edit.setPlowLevel !== undefined) items.push(t("field.maxPlow"));
+  if (edit.setRollerLevel !== undefined) items.push(t("field.soilRoll"));
+  if (edit.setStubbleShredLevel !== undefined) items.push(t("field.soilMulch"));
+  if (edit.clearWeeds) items.push(t("field.removeWeeds"));
+  if (edit.clearStones) items.push(t("field.removeStones"));
+  return items;
+});
+
 function formatFruitName(name: string): string {
   const unknownMatch = name.match(/^UNKNOWN_(\d+)$/);
   if (unknownMatch) {
@@ -197,6 +270,9 @@ function formatFruitName(name: string): string {
             <!-- Pending edit indicator -->
             <div v-if="hasPendingDensityEdit" class="rounded-md bg-amber-500/10 px-3 py-2 text-xs text-amber-600 dark:text-amber-400">
               {{ t("field.densityEditPending") }}
+              <ul v-if="pendingItems.length > 0" class="mt-1 list-inside list-disc">
+                <li v-for="item in pendingItems" :key="item">{{ item }}</li>
+              </ul>
             </div>
 
             <!-- Crop distribution -->
@@ -212,6 +288,9 @@ function formatFruitName(name: string): string {
                   <div class="h-2 flex-1 rounded-full bg-muted">
                     <div class="h-2 rounded-full bg-green-500" :style="{ width: fc.percentage + '%' }" />
                   </div>
+                  <span class="w-28 truncate text-xs text-muted-foreground">
+                    {{ stageLabel(store.getMapFruitType(fc.fruitType), Math.round(fc.avgGrowth)) }}
+                  </span>
                   <span class="w-12 text-right font-mono text-xs text-muted-foreground">{{ fc.percentage.toFixed(0) }}%</span>
                 </div>
               </div>
@@ -273,6 +352,65 @@ function formatFruitName(name: string): string {
                 <Button v-if="density.stoneCoverage > 0" variant="outline" size="sm" @click="handleDensityClearStones">
                   <Gem class="size-4" />
                   {{ t("field.removeStones") }}
+                </Button>
+              </div>
+            </div>
+
+            <!-- Crop picker: fruit and growth stage from the map's own crops -->
+            <div v-if="store.mapFruitTypes.length > 0" class="space-y-2">
+              <Label>{{ t("field.cropTitle") }}</Label>
+              <div class="grid grid-cols-2 gap-2">
+                <Select :model-value="cropChoice" @update:model-value="handleCropChoice">
+                  <SelectTrigger :aria-label="t('field.cropFruit')">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="NONE">{{ t("field.noCrop") }}</SelectItem>
+                    <SelectItem v-for="fruit in sortedFruitTypes" :key="fruit.name" :value="fruit.name">
+                      {{ formatFruitName(fruit.name) }}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select :model-value="String(stageChoice)" :disabled="!chosenFruit" @update:model-value="handleStageChoice">
+                  <SelectTrigger :aria-label="t('field.cropStage')">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem
+                      v-for="(_, i) in chosenFruit?.states ?? []"
+                      :key="i"
+                      :value="String(i + 1)"
+                    >
+                      {{ i + 1 }} · {{ stageLabel(chosenFruit, i + 1) }}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <Button variant="outline" size="sm" @click="handleApplyCrop">
+                <Wheat class="size-4" />
+                {{ t("field.applyCrop") }}
+              </Button>
+            </div>
+
+            <!-- Soil work presets -->
+            <div class="space-y-2">
+              <Label>{{ t("field.soilTitle") }}</Label>
+              <div class="flex flex-wrap gap-2">
+                <Button variant="outline" size="sm" @click="handleSoilWork('plow')">
+                  <Tractor class="size-4" />
+                  {{ t("field.soilPlow") }}
+                </Button>
+                <Button variant="outline" size="sm" @click="handleSoilWork('cultivate')">
+                  <Shovel class="size-4" />
+                  {{ t("field.soilCultivate") }}
+                </Button>
+                <Button v-if="density.rollerStatus.pctAtZero < 100" variant="outline" size="sm" @click="handleSoilWork('roll')">
+                  <Tractor class="size-4" />
+                  {{ t("field.soilRoll") }}
+                </Button>
+                <Button v-if="density.stubbleShredStatus.pctAtMax < 100" variant="outline" size="sm" @click="handleSoilWork('mulch')">
+                  <Shovel class="size-4" />
+                  {{ t("field.soilMulch") }}
                 </Button>
               </div>
             </div>
