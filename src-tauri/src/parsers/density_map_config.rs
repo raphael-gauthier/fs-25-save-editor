@@ -41,6 +41,8 @@ pub fn parse_fruit_type_filenames(data: &[u8]) -> Vec<String> {
 /// What the density code needs from a map XML (`configFilename` of a map mod).
 #[derive(Debug, Default, PartialEq)]
 pub struct MapConfig {
+    /// `<map width>`: the terrain size in meters.
+    pub width: Option<f32>,
     /// `<filename>`: the map i3d.
     pub i3d_filename: Option<String>,
     /// `<fruitTypes filename>`: an external fruit types file.
@@ -62,6 +64,7 @@ pub fn parse_map_config(data: &[u8]) -> MapConfig {
             Ok(Event::Start(ref e)) => {
                 depth += 1;
                 match e.name().as_ref() {
+                    "map" if depth == 1 => config.width = attr_str(e, "width").parse().ok(),
                     "fruitTypes" => in_fruit_types = true,
                     "filename" if depth == 2 => in_filename = true,
                     _ => {}
@@ -165,7 +168,7 @@ mod tests {
     #[test]
     fn test_map_config_of_a_mod_map() {
         // Shape of FS25_Pallegney.zip maps/maps.xml
-        let xml = br#"<map>
+        let xml = br#"<map width="2048" height="2048" imageFilename="maps/overview_Pallegney.dds">
     <filename>maps/Pallegney.i3d</filename>
     <fruitTypes filename="maps/config/fruitTypes.xml" />
     <fruitTypes>
@@ -173,6 +176,7 @@ mod tests {
     </fruitTypes>
 </map>"#;
         let config = parse_map_config(xml);
+        assert_eq!(config.width, Some(2048.0));
         assert_eq!(config.i3d_filename.as_deref(), Some("maps/Pallegney.i3d"));
         assert_eq!(config.fruit_types_filename.as_deref(), Some("maps/config/fruitTypes.xml"));
         assert_eq!(config.fruit_type_filenames, vec!["maps/foliage/extra/extra.xml"]);

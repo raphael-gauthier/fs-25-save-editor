@@ -11,6 +11,7 @@ pub mod foliage;
 pub mod gdm;
 pub mod grle;
 pub mod husbandry;
+pub mod map_fields;
 pub mod mission;
 pub mod placeable;
 pub mod sale;
