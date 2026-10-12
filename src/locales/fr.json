@@ -36,7 +36,8 @@
     "economy": "Économie",
     "backups": "Backups",
     "settings": "Paramètres",
-    "farmlands": "Parcelles"
+    "farmlands": "Parcelles",
+    "storage": "Stockage"
   },
   "savegame": {
     "selectSubtitle": "Sélectionnez une sauvegarde pour commencer l'édition",
@@ -785,5 +786,32 @@
       "buildings": "Des bâtiments construits dessus empêchent la vente",
       "money": "Pas assez d'argent"
     }
+  },
+  "storage": {
+    "title": "Stockage",
+    "subtitle": "Silos, extensions et stockages de balles et palettes",
+    "silos": "Silos",
+    "noSilos": "Aucun silo dans cette sauvegarde.",
+    "extension": "Extension",
+    "fill": "Remplir",
+    "empty": "Vider",
+    "emptySilo": "Vide",
+    "addFillType": "Ajouter un produit…",
+    "add": "Ajouter",
+    "objectStorages": "Stockages de balles et palettes",
+    "noObjectStorages": "Aucun stockage d'objets dans cette sauvegarde.",
+    "objectCount": "{count} objet(s)",
+    "kind": "Type",
+    "content": "Contenu",
+    "model": "Modèle",
+    "fillLevel": "Contenance",
+    "count": "Nombre",
+    "bale": "Balle",
+    "pallet": "Palette",
+    "wrapped": "Enrubannée",
+    "fermenting": "En fermentation",
+    "remove": "Retirer",
+    "finishFermentation": "Terminer la fermentation",
+    "emptyObjectStorage": "Vide"
   }
 }

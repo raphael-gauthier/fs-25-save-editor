@@ -393,6 +393,50 @@ export interface Placeable {
    * input/output role nor the capacity — both live in the game's placeable XML.
    */
   productionStorage: ProductionStock[];
+  /** Farm silo storages: a silo's `<storage>` elements and a `<siloExtension>` */
+  siloStorages: SiloStorage[];
+  /** Bales and pallets in an object storage, in file order */
+  storedObjects: StoredObject[];
+}
+
+export type SiloStorageKind = "silo" | "extension";
+
+/** Fill levels of a farm silo storage; only fill types holding something are saved. */
+export interface SiloStorage {
+  kind: SiloStorageKind;
+  /** `<storage index>` of a silo, 0 for an extension */
+  index: number;
+  farmId: number;
+  stocks: ProductionStock[];
+}
+
+/** A bale or pallet kept in an object storage. */
+export interface StoredObject {
+  /** "Bale" or "Vehicle" (pallets) */
+  className: string;
+  filename: string;
+  fillType: string;
+  fillLevel: number;
+  /** 1 for a wrapped bale */
+  wrappingState: number;
+  isFermenting: boolean;
+}
+
+/** Capacity and accepted fill types of a farm silo storage, from its placeable XML. */
+export interface SiloCapacity {
+  placeableIndex: number;
+  kind: SiloStorageKind;
+  index: number;
+  /** Total capacity, shared by the fill types when `shared` */
+  capacity: number;
+  fillTypeCapacities: { fillType: string; capacity: number }[];
+  fillTypes: string[];
+  shared: boolean;
+}
+
+export interface StorageCapacities {
+  silos: SiloCapacity[];
+  objectStorages: { placeableIndex: number; capacity: number }[];
 }
 
 export interface ConstructionState {
@@ -422,6 +466,24 @@ export interface PlaceableChangePayload {
   price?: number;
   completeConstruction: boolean;
   productionStorage?: ProductionStockChangePayload[];
+  siloStocks?: SiloStockChangePayload[];
+  objectStorage?: ObjectStorageChangePayload;
+}
+
+export interface SiloStockChangePayload {
+  kind: SiloStorageKind;
+  index: number;
+  fillType: string;
+  /** 0 removes the fill type */
+  amount: number;
+}
+
+export interface ObjectStorageChangePayload {
+  /** Positions of the objects to remove */
+  remove: number[];
+  /** Objects to copy after the last one */
+  copies: { index: number; count: number }[];
+  finishFermentation: boolean;
 }
 
 export interface ProductionStockChangePayload {

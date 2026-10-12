@@ -1,11 +1,23 @@
 import { defineStore } from "pinia";
 import { computed, ref } from "vue";
-import type { Placeable, PlaceableChangePayload, ProductionStockChangePayload } from "@/lib/types";
+import { invoke } from "@tauri-apps/api/core";
+import type {
+  Placeable,
+  PlaceableChangePayload,
+  ProductionStockChangePayload,
+  SiloStorageKind,
+  StorageCapacities,
+} from "@/lib/types";
+import { groupObjects, objectStorageChange, siloStockChanges } from "@/lib/storageChanges";
 
 export const useBuildingStore = defineStore("building", () => {
   const placeables = ref<Placeable[]>([]);
   const originalPlaceables = ref<Placeable[]>([]);
   const selectedIds = ref<Set<number>>(new Set());
+  /** Capacities and accepted fill types of the storages, from the placeables' XML */
+  const storageCapacities = ref<StorageCapacities>({ silos: [], objectStorages: [] });
+  /** Placeables whose fermenting bales are to finish fermenting */
+  const fermentationToFinish = ref<Set<number>>(new Set());
 
   // Filters
   const searchQuery = ref("");
@@ -67,16 +79,24 @@ export const useBuildingStore = defineStore("building", () => {
       if (p.price !== orig.price) count++;
       if (p.isUnderConstruction !== orig.isUnderConstruction) count++;
       if (isProductionModified(p.productionStorage, orig.productionStorage)) count++;
+      count += siloStockChanges(p.siloStorages, orig.siloStorages).length;
+      if (objectChange(p, orig)) count++;
     }
     return count;
   });
+
+  function objectChange(p: Placeable, orig: Placeable) {
+    return objectStorageChange(p.storedObjects, orig.storedObjects, fermentationToFinish.value.has(p.index));
+  }
 
   function isPlaceableModified(p: Placeable, orig: Placeable): boolean {
     return (
       p.farmId !== orig.farmId ||
       p.price !== orig.price ||
       p.isUnderConstruction !== orig.isUnderConstruction ||
-      isProductionModified(p.productionStorage, orig.productionStorage)
+      isProductionModified(p.productionStorage, orig.productionStorage) ||
+      siloStockChanges(p.siloStorages, orig.siloStorages).length > 0 ||
+      objectChange(p, orig) !== null
     );
   }
 
@@ -94,6 +114,50 @@ export const useBuildingStore = defineStore("building", () => {
     placeables.value = JSON.parse(serialized);
     originalPlaceables.value = JSON.parse(serialized);
     selectedIds.value = new Set();
+    fermentationToFinish.value = new Set();
+  }
+
+  async function loadStorageCapacities(savegamePath: string, gamePath: string, mapId: string) {
+    try {
+      storageCapacities.value = await invoke<StorageCapacities>("load_storage_capacities", {
+        savegamePath,
+        gamePath,
+        mapId,
+      });
+    } catch {
+      // Without capacities, levels can still be edited; the game clamps them on load
+      storageCapacities.value = { silos: [], objectStorages: [] };
+    }
+  }
+
+  /** Sets a silo storage's fill level, adding the fill type if missing; 0 empties it. */
+  function setSiloStock(index: number, kind: SiloStorageKind, storageIndex: number, fillType: string, amount: number) {
+    const storage = placeables.value
+      .find((pl) => pl.index === index)
+      ?.siloStorages.find((s) => s.kind === kind && s.index === storageIndex);
+    if (!storage) return;
+    const stock = storage.stocks.find((s) => s.fillType === fillType);
+    if (stock) stock.amount = Math.max(0, amount);
+    else storage.stocks.push({ fillType, amount: Math.max(0, amount) });
+  }
+
+  /** Adds copies of a group of identical stored objects, or removes its last ones. */
+  function changeObjectCount(index: number, groupKey: string, delta: number) {
+    const p = placeables.value.find((pl) => pl.index === index);
+    const group = p && groupObjects(p.storedObjects).find((g) => g.key === groupKey);
+    if (!p || !group) return;
+    if (delta > 0) {
+      for (let i = 0; i < delta; i++) p.storedObjects.push({ ...group.object });
+    } else {
+      const removed = new Set(group.indices.slice(delta));
+      p.storedObjects = p.storedObjects.filter((_, i) => !removed.has(i));
+    }
+  }
+
+  function finishFermentation(index: number) {
+    const p = placeables.value.find((pl) => pl.index === index);
+    if (!p) return;
+    fermentationToFinish.value = new Set(fermentationToFinish.value).add(index);
   }
 
   function updatePlaceable(index: number, changes: Partial<Placeable>) {
@@ -146,6 +210,7 @@ export const useBuildingStore = defineStore("building", () => {
 
   function resetChanges() {
     placeables.value = JSON.parse(JSON.stringify(originalPlaceables.value));
+    fermentationToFinish.value = new Set();
   }
 
   function getChanges(): PlaceableChangePayload[] | null {
@@ -172,6 +237,11 @@ export const useBuildingStore = defineStore("building", () => {
           }));
       }
 
+      const siloStocks = siloStockChanges(p.siloStorages, orig.siloStorages);
+      if (siloStocks.length > 0) change.siloStocks = siloStocks;
+      const objectStorage = objectChange(p, orig);
+      if (objectStorage) change.objectStorage = objectStorage;
+
       changes.push(change);
     }
 
@@ -180,6 +250,7 @@ export const useBuildingStore = defineStore("building", () => {
 
   function commitChanges() {
     originalPlaceables.value = JSON.parse(JSON.stringify(placeables.value));
+    fermentationToFinish.value = new Set();
   }
 
   return {
@@ -197,6 +268,12 @@ export const useBuildingStore = defineStore("building", () => {
     updatePlaceable,
     completeConstruction,
     updateProductionStock,
+    storageCapacities,
+    fermentationToFinish,
+    loadStorageCapacities,
+    setSiloStock,
+    changeObjectCount,
+    finishFermentation,
     getOriginalByIndex,
     toggleSelection,
     selectAll,

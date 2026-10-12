@@ -36,7 +36,8 @@
     "economy": "Economy",
     "backups": "Backups",
     "settings": "Settings",
-    "farmlands": "Farmlands"
+    "farmlands": "Farmlands",
+    "storage": "Storage"
   },
   "savegame": {
     "selectSubtitle": "Select a savegame to start editing",
@@ -785,5 +786,32 @@
       "buildings": "Buildings built on it prevent selling",
       "money": "Not enough money"
     }
+  },
+  "storage": {
+    "title": "Storage",
+    "subtitle": "Silos, extensions, and bale and pallet storages",
+    "silos": "Silos",
+    "noSilos": "No silo in this savegame.",
+    "extension": "Extension",
+    "fill": "Fill",
+    "empty": "Empty",
+    "emptySilo": "Empty",
+    "addFillType": "Add a product…",
+    "add": "Add",
+    "objectStorages": "Bale and pallet storages",
+    "noObjectStorages": "No object storage in this savegame.",
+    "objectCount": "{count} object(s)",
+    "kind": "Kind",
+    "content": "Content",
+    "model": "Model",
+    "fillLevel": "Fill level",
+    "count": "Count",
+    "bale": "Bale",
+    "pallet": "Pallet",
+    "wrapped": "Wrapped",
+    "fermenting": "Fermenting",
+    "remove": "Remove",
+    "finishFermentation": "Finish fermentation",
+    "emptyObjectStorage": "Empty"
   }
 }
