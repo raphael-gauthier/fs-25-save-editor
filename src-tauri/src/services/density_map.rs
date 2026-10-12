@@ -385,6 +385,11 @@ fn for_each_hi_res_pixel(farmland_pixels: &[(u16, u16)], scale: u32, mut f: impl
     }
 }
 
+/// Stone layer values with stones lying on the ground; picking them sets
+/// `PICKED_STONES`, which the game regrows over time (data/maps/maps_stones.xml).
+const VISIBLE_STONES: std::ops::RangeInclusive<u16> = 2..=4;
+const PICKED_STONES: u16 = 5;
+
 /// Aggregate density data for a single farmland
 #[allow(clippy::too_many_arguments)]
 fn aggregate_single_farmland(
@@ -466,11 +471,11 @@ fn aggregate_single_farmland(
 
                 // Stones
                 if let Some(ref gdm) = stones_gdm {
-                    if hx < gdm.width && hy < gdm.height {
-                        let stone_val = gdm.get_pixel(hx, hy) as u8;
-                        if stone_val > 0 {
-                            stone_count += 1;
-                        }
+                    if hx < gdm.width
+                        && hy < gdm.height
+                        && VISIBLE_STONES.contains(&gdm.get_pixel(hx, hy))
+                    {
+                        stone_count += 1;
                     }
                 }
 
@@ -902,9 +907,10 @@ fn apply_density_edits(
                             let hx = (fx as u32) * scale + dx;
                             let hy = (fy as u32) * scale + dy;
                             if hx < stones_gdm.width && hy < stones_gdm.height
+                                && VISIBLE_STONES.contains(&stones_gdm.get_pixel(hx, hy))
                                 && should_modify_pixel(hx, hy, edit)
                             {
-                                stones_gdm.set_pixel(hx, hy, 0);
+                                stones_gdm.set_pixel(hx, hy, PICKED_STONES);
                             }
                         }
                     }
@@ -1205,6 +1211,32 @@ mod tests {
 
         assert!(result.is_err());
         assert!(std::fs::read(save.join("densityMap_fruits.gdm")).unwrap() == fruits_before);
+        let _ = std::fs::remove_dir_all(save.parent().unwrap());
+    }
+
+    #[test]
+    fn test_clear_stones_picks_visible_stones_and_keeps_the_rest() {
+        let save = reference_density_save("stones");
+        let stones = read_gdm(&save, "densityMap_stones.gdm");
+        // A block mixing visible stones with other values
+        let (fx, fy) = find_block(&stones, |b| {
+            b.iter().any(|v| VISIBLE_STONES.contains(v)) && b.iter().any(|v| !VISIBLE_STONES.contains(v))
+        });
+        let before = block(&stones, fx, fy);
+
+        let edit = DensityEditPayload {
+            farmland_id: 1,
+            clear_stones: true,
+            ..Default::default()
+        };
+        apply_density_edits(&save, &farmland_at(fx, fy), &map_us_layout(), &[edit], false).unwrap();
+
+        let after = block(&read_gdm(&save, "densityMap_stones.gdm"), fx, fy);
+        let expected: Vec<u16> = before
+            .iter()
+            .map(|&was| if VISIBLE_STONES.contains(&was) { PICKED_STONES } else { was })
+            .collect();
+        assert_eq!(after, expected);
         let _ = std::fs::remove_dir_all(save.parent().unwrap());
     }
 

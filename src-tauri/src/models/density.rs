@@ -36,7 +36,7 @@ pub struct DensityEditPayload {
     /// Clear all weeds (set to 0)
     #[serde(default)]
     pub clear_weeds: bool,
-    /// Clear all stones (set to 0)
+    /// Pick up all visible stones
     #[serde(default)]
     pub clear_stones: bool,
     /// Only modify pixels that have crops (fruit_idx > 0).
