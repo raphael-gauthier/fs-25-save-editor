@@ -2,7 +2,24 @@ use std::path::PathBuf;
 
 use crate::error::AppError;
 use crate::models::density::{DensityEditPayload, FieldDensityData, MapFruitType};
-use crate::services::density_map;
+use crate::models::field::FarmlandInfo;
+use crate::services::{density_map, farmland};
+
+/// Area, price and buildings of every farmland of the map.
+#[tauri::command]
+pub async fn load_farmlands_info(
+    savegame_path: String,
+    game_path: String,
+    map_id: String,
+) -> Result<Vec<FarmlandInfo>, AppError> {
+    tauri::async_runtime::spawn_blocking(move || {
+        farmland::load_farmlands_info(&PathBuf::from(&savegame_path), &PathBuf::from(&game_path), &map_id)
+    })
+    .await
+    .map_err(|e| AppError::DensityMapError {
+        message: format!("Task failed: {}", e),
+    })?
+}
 
 /// Crops the map can grow, with their growth states.
 #[tauri::command]
