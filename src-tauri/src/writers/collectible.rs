@@ -75,8 +75,8 @@ fn patch_collectible(e: &BytesStart, change: &CollectibleChange) -> BytesStart<'
     for attr in e.attributes().flatten() {
         let key = attr.key.as_ref().to_string();
         match key.as_str() {
-            "isCollected" => {
-                elem.push_attribute(("isCollected", if change.collected { "true" } else { "false" }));
+            "collected" => {
+                elem.push_attribute(("collected", if change.collected { "true" } else { "false" }));
             }
             _ => {
                 elem.push_attribute(attr);
@@ -102,63 +102,57 @@ mod tests {
     use super::*;
     use crate::parsers::collectible::parse_collectibles;
 
-    fn setup_fixture(name: &str) -> std::path::PathBuf {
+    fn reference_copy(name: &str) -> std::path::PathBuf {
         let src = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-            .join("tests")
-            .join("fixtures")
-            .join("savegame_complete");
-        let dst = std::env::temp_dir().join(format!("fs25_test_wc_{}", name));
+            .join("..")
+            .join("docs")
+            .join("savegames")
+            .join("collectibles.xml");
+        let dst = std::env::temp_dir().join(format!("fs25_test_wc_ref_{}", name));
         let _ = std::fs::remove_dir_all(&dst);
         std::fs::create_dir_all(&dst).unwrap();
-        for entry in std::fs::read_dir(&src).unwrap() {
-            let entry = entry.unwrap();
-            if entry.file_type().unwrap().is_file() {
-                std::fs::copy(entry.path(), dst.join(entry.file_name())).unwrap();
-            }
-        }
+        std::fs::copy(src, dst.join("collectibles.xml")).unwrap();
         dst
     }
 
     #[test]
-    fn test_write_collectible_toggle() {
-        let save = setup_fixture("toggle");
-        // Collectible index 3 is not collected (index 0-based: 3 = 4th item)
-        let before = parse_collectibles(&save).unwrap();
-        let c3 = before.iter().find(|c| c.index == 3).unwrap();
-        assert!(!c3.collected);
-
-        let changes = vec![CollectibleChange {
-            index: 3,
-            collected: true,
-        }];
+    fn test_write_collectible_on_reference_save() {
+        let save = reference_copy("toggle");
+        let changes = vec![CollectibleChange { index: 5, collected: true }];
         write_collectible_changes(&save, &changes).unwrap();
+
         let after = parse_collectibles(&save).unwrap();
-        let c3_after = after.iter().find(|c| c.index == 3).unwrap();
-        assert!(c3_after.collected);
+        assert!(after.iter().find(|c| c.index == 5).unwrap().collected);
+        assert!(!after.iter().find(|c| c.index == 20).unwrap().collected);
+
+        let xml = std::fs::read_to_string(save.join("collectibles.xml")).unwrap();
+        assert!(xml.contains(r#"<collectible index="5" collected="true"/>"#));
+        assert!(!xml.contains("isCollected"));
         let _ = std::fs::remove_dir_all(&save);
     }
 
     #[test]
     fn test_write_collectible_roundtrip() {
-        let save = setup_fixture("roundtrip_c");
+        let save = reference_copy("roundtrip");
         let before = parse_collectibles(&save).unwrap();
 
-        // Toggle a few
         let changes = vec![
-            CollectibleChange { index: 0, collected: false },  // was true
-            CollectibleChange { index: 3, collected: true },   // was false
+            CollectibleChange { index: 20, collected: true },
+            CollectibleChange { index: 7, collected: true },
         ];
         write_collectible_changes(&save, &changes).unwrap();
         let after = parse_collectibles(&save).unwrap();
 
         assert_eq!(after.len(), before.len());
-        assert!(!after.iter().find(|c| c.index == 0).unwrap().collected);
-        assert!(after.iter().find(|c| c.index == 3).unwrap().collected);
+        let order: Vec<u32> = after.iter().map(|c| c.index).collect();
+        assert_eq!(order, before.iter().map(|c| c.index).collect::<Vec<_>>());
+        assert_eq!(after.iter().filter(|c| c.collected).count(), 2);
 
-        // Untouched items preserved
-        let c1_before = before.iter().find(|c| c.index == 1).unwrap();
-        let c1_after = after.iter().find(|c| c.index == 1).unwrap();
-        assert_eq!(c1_before.collected, c1_after.collected);
+        let changes = vec![CollectibleChange { index: 20, collected: false }];
+        write_collectible_changes(&save, &changes).unwrap();
+        let after = parse_collectibles(&save).unwrap();
+        assert!(!after.iter().find(|c| c.index == 20).unwrap().collected);
+        assert!(after.iter().find(|c| c.index == 7).unwrap().collected);
 
         let _ = std::fs::remove_dir_all(&save);
     }
