@@ -155,6 +155,59 @@ mod tests {
         assert_eq!(price(pallegney, 123), 25_728.0);
     }
 
+    /// Copies the real savegame named by `FS25_SAVE` (never written to).
+    fn real_save_copy(name: &str) -> std::path::PathBuf {
+        let src = std::path::PathBuf::from(std::env::var("FS25_SAVE").expect("FS25_SAVE"));
+        let root = std::env::temp_dir().join(format!("fs25_real_farmland_{}", name));
+        let _ = std::fs::remove_dir_all(&root);
+        let save = root.join("savegame1");
+        std::fs::create_dir_all(&save).unwrap();
+        for entry in std::fs::read_dir(&src).unwrap().flatten() {
+            if entry.file_type().unwrap().is_file() {
+                std::fs::copy(entry.path(), save.join(entry.file_name())).unwrap();
+            }
+        }
+        save
+    }
+
+    /// What the editor saves when buying a farmland: its owner and the farm's
+    /// money, through the same save_changes command.
+    #[test]
+    #[ignore = "needs FS25_SAVE / FS25_GAME pointing at a real savegame and install"]
+    fn test_real_save_buying_a_farmland_saves_owner_and_money() {
+        use crate::models::changes::{FarmlandChange, FinanceChanges, SavegameChanges};
+        use crate::parsers::{farm::parse_farms, field::parse_farmlands};
+
+        let save = real_save_copy("buy");
+        let game = std::path::PathBuf::from(std::env::var("FS25_GAME").expect("FS25_GAME"));
+        let map_id = std::env::var("FS25_MAP").unwrap_or_else(|_| "MapUS".to_string());
+        let farmlands = parse_farmlands(&save).unwrap();
+        let free = farmlands.iter().find(|f| f.farm_id == 0).expect("a free farmland").id;
+        let price = load_farmlands_info(&save, &game, &map_id)
+            .unwrap()
+            .into_iter()
+            .find(|f| f.id == free)
+            .unwrap()
+            .price;
+        let money = parse_farms(&save).unwrap().into_iter().find(|f| f.farm_id == 1).unwrap().money;
+
+        let changes = SavegameChanges {
+            finance: Some(FinanceChanges { money: Some(money - price), loan: None }),
+            farmlands: Some(vec![FarmlandChange { id: free, farm_id: 1 }]),
+            ..Default::default()
+        };
+        let result = crate::commands::savegame::save_changes(save.display().to_string(), changes).unwrap();
+        assert!(result.errors.is_empty(), "{:?}", result.errors.len());
+
+        let after = parse_farmlands(&save).unwrap();
+        assert_eq!(after.iter().find(|f| f.id == free).unwrap().farm_id, 1);
+        assert_eq!(after.iter().filter(|f| f.farm_id != 0).count(), farmlands.iter().filter(|f| f.farm_id != 0).count() + 1);
+        let money_after = parse_farms(&save).unwrap().into_iter().find(|f| f.farm_id == 1).unwrap().money;
+        assert!((money_after - (money - price)).abs() < 0.01);
+        println!("bought farmland {} for {} ({} -> {})", free, price, money, money_after);
+        let _ = std::fs::remove_dir_all(save.parent().unwrap());
+    }
+
     #[test]
     fn test_counts_farm_built_placeables_on_each_farmland() {
         // World (-1020, -1020) is farmland pixel (2, 2)
