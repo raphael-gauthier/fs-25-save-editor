@@ -5,7 +5,7 @@ use quick_xml::{Reader, Writer};
 
 use crate::error::AppError;
 use crate::writers::replace_xml_file;
-use crate::models::changes::{PlaceableChange, ProductionStockChange, SiloStockChange};
+use crate::models::changes::{ObjectCopy, ObjectStorageChange, PlaceableChange, ProductionStockChange, SiloStockChange};
 use crate::models::placeable::SiloStorageKind;
 
 /// Applies a list of placeable changes to placeables.xml.
@@ -265,9 +265,132 @@ pub fn write_placeable_changes(
         }
     }
 
-    replace_xml_file(&xml_path, &content, &writer.into_inner())?;
+    let mut output = writer.into_inner();
+    if changes.iter().any(|c| c.object_storage.is_some()) {
+        let first_pass = String::from_utf8(output).map_err(|e| AppError::XmlParseError {
+            file: xml_path.display().to_string(),
+            message: e.to_string(),
+        })?;
+        output = apply_object_storage_changes(&xml_path, &first_pass, &change_map)?;
+    }
+    replace_xml_file(&xml_path, &content, &output)?;
 
     Ok(())
+}
+
+/// Fermentation time written to finish a bale's fermentation: far beyond any
+/// bale's fermenting time (days x economic difficulty), so the game's
+/// BaleManager ends it, with the bale's own output fill type, on its next update.
+const FERMENTATION_DONE_TIME: f64 = 1e12;
+
+/// Second pass over placeables.xml for object storage changes: removes
+/// objects, copies them (children included) after the last one, and
+/// finishes fermentations.
+fn apply_object_storage_changes(
+    xml_path: &Path,
+    content: &str,
+    change_map: &std::collections::HashMap<usize, &PlaceableChange>,
+) -> Result<Vec<u8>, AppError> {
+    let mut reader = Reader::from_str(content);
+    let mut writer = Writer::new(Vec::new());
+    let mut placeable_index = 0usize;
+    let mut change: Option<&ObjectStorageChange> = None;
+    let mut in_storage = false;
+    let mut object_index = 0usize;
+    // Depth inside the current <object>, 0 between objects
+    let mut object_depth = 0usize;
+    // Whether the current <object> is removed: still captured, not written
+    let mut removing = false;
+    let mut capture: Option<(usize, Vec<Event<'static>>)> = None;
+    let mut captured: Vec<(usize, Vec<Event<'static>>)> = Vec::new();
+    let mut last_indent = String::from("\n");
+
+    loop {
+        let event = reader.read_event().map_err(|e| AppError::XmlParseError {
+            file: xml_path.display().to_string(),
+            message: e.to_string(),
+        })?;
+        if let Event::Eof = event {
+            break;
+        }
+
+        let mut event = event.into_owned();
+        match &event {
+            Event::Start(e) | Event::Empty(e) if e.name().as_ref() == "placeable" => {
+                change = change_map.get(&placeable_index).and_then(|c| c.object_storage.as_ref());
+                placeable_index += 1;
+            }
+            Event::Start(e) if e.name().as_ref() == "objectStorage" && change.is_some() => {
+                in_storage = true;
+                object_index = 0;
+                captured.clear();
+            }
+            Event::Start(e) | Event::Empty(e)
+                if in_storage && object_depth == 0 && e.name().as_ref() == "object" =>
+            {
+                let index = object_index;
+                object_index += 1;
+                removing = change.is_some_and(|c| c.remove.contains(&index));
+                if change.is_some_and(|c| c.copies.iter().any(|copy| copy.index == index)) {
+                    capture = Some((index, Vec::new()));
+                }
+                if matches!(event, Event::Start(_)) {
+                    object_depth = 1;
+                }
+            }
+            Event::Start(_) if object_depth > 0 => object_depth += 1,
+            Event::End(_) if object_depth > 0 => object_depth -= 1,
+            Event::Empty(e)
+                if object_depth > 0
+                    && e.name().as_ref() == "fermentation"
+                    && change.is_some_and(|c| c.finish_fermentation)
+                    && attr_str(e, "isFermenting") == "true" =>
+            {
+                event = Event::Empty(patch_fermentation_time(e));
+            }
+            Event::Text(t) if t.trim().is_empty() => last_indent = t.to_string(),
+            Event::End(e) if in_storage && e.name().as_ref() == "objectStorage" => {
+                in_storage = false;
+                let indent = last_indent.clone();
+                for copy in change.map(|c| c.copies.as_slice()).unwrap_or_default() {
+                    let Some((_, events)) = captured.iter().find(|(i, _)| *i == copy.index) else { continue };
+                    for _ in 0..copy.count {
+                        write_indent(&mut writer, xml_path, "    ")?;
+                        for copied in events {
+                            write_event(&mut writer, xml_path, copied.clone())?;
+                        }
+                        write_indent(&mut writer, xml_path, &indent)?;
+                    }
+                }
+            }
+            _ => {}
+        }
+
+        if let Some((_, ref mut events)) = capture {
+            events.push(event.clone());
+            if object_depth == 0 {
+                captured.push(capture.take().unwrap());
+            }
+        }
+        if removing {
+            removing = object_depth > 0;
+            continue;
+        }
+        write_event(&mut writer, xml_path, event)?;
+    }
+
+    Ok(writer.into_inner())
+}
+
+fn patch_fermentation_time(e: &BytesStart) -> BytesStart<'static> {
+    let mut elem = BytesStart::new("fermentation");
+    for attr in e.attributes().flatten() {
+        if attr.key.as_ref() != "time" {
+            elem.push_attribute(attr);
+        }
+    }
+    elem.push_attribute(("time", format!("{:.6}", FERMENTATION_DONE_TIME).as_str()));
+    elem
 }
 
 fn attr_str(e: &BytesStart, key: &str) -> String {
@@ -450,6 +573,7 @@ mod tests {
             complete_construction: false,
             production_storage: None,
             silo_stocks: Some(stocks),
+            object_storage: None,
         }
     }
 
@@ -565,6 +689,163 @@ mod tests {
         let _ = std::fs::remove_dir_all(&save);
     }
 
+    fn objects_change(index: usize, change: ObjectStorageChange) -> PlaceableChange {
+        PlaceableChange {
+            index,
+            farm_id: None,
+            price: None,
+            complete_construction: false,
+            production_storage: None,
+            silo_stocks: None,
+            object_storage: Some(change),
+        }
+    }
+
+    fn object_storage_index(save: &std::path::Path) -> usize {
+        parse_placeables(save).unwrap().iter().position(|p| !p.stored_objects.is_empty()).unwrap()
+    }
+
+    fn stored(save: &std::path::Path, index: usize) -> Vec<crate::models::placeable::StoredObject> {
+        parse_placeables(save).unwrap()[index].stored_objects.clone()
+    }
+
+    #[test]
+    fn test_write_object_storage_removes_objects_by_position() {
+        let save = reference_copy("objects_remove");
+        let index = object_storage_index(&save);
+        let before = stored(&save, index);
+        let change = ObjectStorageChange { remove: vec![0, 5, 100], ..Default::default() };
+
+        write_placeable_changes(&save, &[objects_change(index, change)]).unwrap();
+
+        let expected: Vec<_> = before
+            .iter()
+            .enumerate()
+            .filter(|(i, _)| ![0, 5, 100].contains(i))
+            .map(|(_, o)| o.clone())
+            .collect();
+        assert_eq!(stored(&save, index), expected);
+        let _ = std::fs::remove_dir_all(&save);
+    }
+
+    #[test]
+    fn test_write_object_storage_copies_bales_and_pallets() {
+        let save = reference_copy("objects_copy");
+        let index = object_storage_index(&save);
+        let before = stored(&save, index);
+        let bale = before.iter().position(|o| o.class_name == "Bale").unwrap();
+        let pallet = before.iter().position(|o| o.class_name == "Vehicle").unwrap();
+        let change = ObjectStorageChange {
+            copies: vec![ObjectCopy { index: bale, count: 3 }, ObjectCopy { index: pallet, count: 2 }],
+            ..Default::default()
+        };
+        let configurations = |save: &std::path::Path| {
+            std::fs::read_to_string(save.join("placeables.xml")).unwrap().matches("<configuration ").count()
+        };
+        let configurations_before = configurations(&save);
+
+        write_placeable_changes(&save, &[objects_change(index, change)]).unwrap();
+
+        let after = stored(&save, index);
+        assert_eq!(after.len(), before.len() + 5);
+        assert_eq!(after[..before.len()], before[..]);
+        let added: Vec<_> = after[before.len()..].to_vec();
+        assert_eq!(added, vec![before[bale].clone(), before[bale].clone(), before[bale].clone(), before[pallet].clone(), before[pallet].clone()]);
+        // A pallet is copied with its <configuration> children
+        assert_eq!(configurations(&save), configurations_before + 2);
+        let xml = std::fs::read_to_string(save.join("placeables.xml")).unwrap();
+        assert!(!xml.contains("&#13;"));
+        let _ = std::fs::remove_dir_all(&save);
+    }
+
+    #[test]
+    fn test_write_object_storage_copies_an_object_it_removes() {
+        let save = reference_copy("objects_copy_removed");
+        let index = object_storage_index(&save);
+        let before = stored(&save, index);
+        let change = ObjectStorageChange {
+            remove: vec![0],
+            copies: vec![ObjectCopy { index: 0, count: 1 }],
+            ..Default::default()
+        };
+
+        write_placeable_changes(&save, &[objects_change(index, change)]).unwrap();
+
+        let after = stored(&save, index);
+        assert_eq!(after.len(), before.len());
+        assert_eq!(after[..before.len() - 1], before[1..]);
+        assert_eq!(after.last(), before.first());
+        let _ = std::fs::remove_dir_all(&save);
+    }
+
+    #[test]
+    fn test_write_object_storage_finishes_fermentation() {
+        let save = std::env::temp_dir().join("fs25_test_wp_fermentation");
+        let _ = std::fs::remove_dir_all(&save);
+        std::fs::create_dir_all(&save).unwrap();
+        // Bale.lua saves a fermenting bale's state as a <fermentation> child
+        std::fs::write(
+            save.join("placeables.xml"),
+            r#"<placeables><placeable filename="data/placeables/mapUS/objectStorage/objectStorage.xml" farmId="1"><objectStorage>
+            <object className="Bale" filename="data/objects/bales/squarebales/squarebale220/squarebale220.xml" fillLevel="4000.000000" fillType="GRASS_WINDROW" variationIndex="2" farmId="1" isMissionBale="false" wrappingState="1.000000" wrappingColor="1 1 1">
+                <fermentation isFermenting="true" time="1234.000000"/>
+            </object>
+        </objectStorage></placeable></placeables>"#,
+        )
+        .unwrap();
+        let change = ObjectStorageChange { finish_fermentation: true, ..Default::default() };
+
+        write_placeable_changes(&save, &[objects_change(0, change)]).unwrap();
+
+        let xml = std::fs::read_to_string(save.join("placeables.xml")).unwrap();
+        assert!(xml.contains(r#"<fermentation isFermenting="true" time="1000000000000.000000"/>"#), "{}", xml);
+        let _ = std::fs::remove_dir_all(&save);
+    }
+
+    /// Copies a bale and a pallet and removes the first object of every
+    /// object storage of the real savegame `FS25_SAVE`, on a copy.
+    #[test]
+    #[ignore = "needs FS25_SAVE pointing at a real savegame"]
+    fn test_real_save_object_storage_edits_round_trip() {
+        let src = std::path::PathBuf::from(std::env::var("FS25_SAVE").expect("FS25_SAVE"));
+        let save = std::env::temp_dir().join("fs25_real_object_edits");
+        let _ = std::fs::remove_dir_all(&save);
+        std::fs::create_dir_all(&save).unwrap();
+        std::fs::copy(src.join("placeables.xml"), save.join("placeables.xml")).unwrap();
+        let before = parse_placeables(&save).unwrap();
+
+        let changes: Vec<PlaceableChange> = before
+            .iter()
+            .filter(|p| !p.stored_objects.is_empty())
+            .map(|p| {
+                let mut copies = Vec::new();
+                for class in ["Bale", "Vehicle"] {
+                    if let Some(i) = p.stored_objects.iter().position(|o| o.class_name == class) {
+                        copies.push(ObjectCopy { index: i, count: 2 });
+                    }
+                }
+                objects_change(p.index, ObjectStorageChange { remove: vec![0], copies, finish_fermentation: true })
+            })
+            .collect();
+        assert!(!changes.is_empty());
+        write_placeable_changes(&save, &changes).unwrap();
+
+        let after = parse_placeables(&save).unwrap();
+        assert_eq!(after.len(), before.len());
+        for (b, a) in before.iter().zip(&after) {
+            assert_eq!(a.silo_storages.len(), b.silo_storages.len());
+            if b.stored_objects.is_empty() {
+                assert!(a.stored_objects.is_empty());
+                continue;
+            }
+            let copies = changes.iter().find(|c| c.index == b.index).unwrap().object_storage.as_ref().unwrap().copies.len();
+            assert_eq!(a.stored_objects.len(), b.stored_objects.len() - 1 + copies * 2, "{}", b.display_name);
+            assert_eq!(a.stored_objects[..b.stored_objects.len() - 1], b.stored_objects[1..]);
+            println!("{}: {} -> {} objects", b.display_name, b.stored_objects.len(), a.stored_objects.len());
+        }
+        let _ = std::fs::remove_dir_all(&save);
+    }
+
     #[test]
     fn test_write_placeable_owner() {
         let save = setup_fixture("owner");
@@ -574,6 +855,7 @@ mod tests {
             price: None,
             complete_construction: false,
             silo_stocks: None,
+            object_storage: None,
             production_storage: None,
         }];
         write_placeable_changes(&save, &changes).unwrap();
@@ -596,6 +878,7 @@ mod tests {
             price: None,
             complete_construction: true,
             silo_stocks: None,
+            object_storage: None,
             production_storage: None,
         }];
         write_placeable_changes(&save, &changes).unwrap();
@@ -627,6 +910,7 @@ mod tests {
             price: None,
             complete_construction: false,
             silo_stocks: None,
+            object_storage: None,
             production_storage: Some(vec![ProductionStockChange {
                 fill_type: fill_type.clone(),
                 amount: 5000.0,
@@ -658,6 +942,7 @@ mod tests {
             price: None,
             complete_construction: false,
             silo_stocks: None,
+            object_storage: None,
             production_storage: Some(vec![ProductionStockChange {
                 fill_type: "WHEAT".to_string(),
                 amount: 42.0,
@@ -699,6 +984,7 @@ mod tests {
             price: None,
             complete_construction: false,
             silo_stocks: None,
+            object_storage: None,
             production_storage: Some(vec![ProductionStockChange {
                 fill_type: "WHEAT".to_string(),
                 amount: 42.0,
@@ -732,6 +1018,7 @@ mod tests {
             price: None,
             complete_construction: false,
             silo_stocks: None,
+            object_storage: None,
             production_storage: None,
         }];
         write_placeable_changes(&save, &changes).unwrap();
@@ -758,6 +1045,7 @@ mod tests {
             price: None,
             complete_construction: false,
             silo_stocks: None,
+            object_storage: None,
             production_storage: None,
         }];
         write_placeable_changes(&save, &changes).unwrap();
@@ -779,6 +1067,7 @@ mod tests {
             price: Some(999999.0),
             complete_construction: false,
             silo_stocks: None,
+            object_storage: None,
             production_storage: None,
         }];
         write_placeable_changes(&save, &changes).unwrap();

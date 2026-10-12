@@ -1032,6 +1032,7 @@ mod tests {
                 price: None,
                 complete_construction: false,
                 silo_stocks: None,
+                object_storage: None,
                 production_storage: None,
             }]),
             husbandries: Some(vec![crate::models::changes::HusbandryChange {

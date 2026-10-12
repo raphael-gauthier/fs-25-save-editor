@@ -123,6 +123,30 @@ pub struct PlaceableChange {
     pub production_storage: Option<Vec<ProductionStockChange>>,
     /// Farm silo fill levels to set: a missing fill type is added, 0 removes one.
     pub silo_stocks: Option<Vec<SiloStockChange>>,
+    /// Bales and pallets to remove, copy or finish fermenting in the object storage.
+    pub object_storage: Option<ObjectStorageChange>,
+}
+
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ObjectStorageChange {
+    /// Positions of the objects to remove, in the storage's file order
+    #[serde(default)]
+    pub remove: Vec<usize>,
+    /// Objects to copy, the copies appended after the last object
+    #[serde(default)]
+    pub copies: Vec<ObjectCopy>,
+    /// Finish the fermentation of the wrapped bales still fermenting
+    #[serde(default)]
+    pub finish_fermentation: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ObjectCopy {
+    /// Position of the object to copy
+    pub index: usize,
+    pub count: u32,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
