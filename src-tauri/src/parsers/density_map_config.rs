@@ -45,6 +45,8 @@ pub struct MapConfig {
     pub width: Option<f32>,
     /// `<farmlands filename>`: the farmland definitions.
     pub farmlands_filename: Option<String>,
+    /// `<fillTypes filename>`: the map's own fill types and categories.
+    pub fill_types_filename: Option<String>,
     /// `<filename>`: the map i3d.
     pub i3d_filename: Option<String>,
     /// `<fruitTypes filename>`: an external fruit types file.
@@ -77,6 +79,12 @@ pub fn parse_map_config(data: &[u8]) -> MapConfig {
                     let file = attr_str(e, "filename");
                     if !file.is_empty() {
                         config.farmlands_filename = Some(file);
+                    }
+                }
+                "fillTypes" => {
+                    let file = attr_str(e, "filename");
+                    if !file.is_empty() {
+                        config.fill_types_filename = Some(file);
                     }
                 }
                 "fruitTypes" => {
@@ -179,6 +187,7 @@ mod tests {
         let xml = br#"<map width="2048" height="2048" imageFilename="maps/overview_Pallegney.dds">
     <filename>maps/Pallegney.i3d</filename>
     <farmlands filename="maps/config/farmlands.xml" />
+    <fillTypes filename="maps/config/fillTypes.xml" />
     <fruitTypes filename="maps/config/fruitTypes.xml" />
     <fruitTypes>
         <fruitType filename="maps/foliage/extra/extra.xml"/>
@@ -187,6 +196,7 @@ mod tests {
         let config = parse_map_config(xml);
         assert_eq!(config.width, Some(2048.0));
         assert_eq!(config.farmlands_filename.as_deref(), Some("maps/config/farmlands.xml"));
+        assert_eq!(config.fill_types_filename.as_deref(), Some("maps/config/fillTypes.xml"));
         assert_eq!(config.i3d_filename.as_deref(), Some("maps/Pallegney.i3d"));
         assert_eq!(config.fruit_types_filename.as_deref(), Some("maps/config/fruitTypes.xml"));
         assert_eq!(config.fruit_type_filenames, vec!["maps/foliage/extra/extra.xml"]);
