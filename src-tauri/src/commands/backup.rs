@@ -30,6 +30,13 @@ pub fn delete_backup(savegame_path: String, backup_name: String) -> Result<(), A
     manager::delete_backup(&path, &backup_name)
 }
 
+/// Deletes the oldest backups beyond `keep`, the user's max backups setting.
+#[tauri::command]
+pub fn prune_backups(savegame_path: String, keep: usize) -> Result<Vec<String>, AppError> {
+    let path = validate_savegame_path(&savegame_path)?;
+    manager::prune_backups(&path, keep)
+}
+
 #[tauri::command]
 pub fn open_backups_folder(app: AppHandle, savegame_path: String) -> Result<(), AppError> {
     let validated = validate_savegame_path(&savegame_path)?;

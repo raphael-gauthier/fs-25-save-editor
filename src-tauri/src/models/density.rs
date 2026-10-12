@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 /// Edit payload for modifying density map data on a single farmland/field
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DensityEditPayload {
     pub farmland_id: u32,
@@ -29,10 +29,15 @@ pub struct DensityEditPayload {
     /// Set ground type (0-15, see GROUND_TYPES constant)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub set_ground_type: Option<u8>,
+    /// Move every growing crop pixel (fruits shown on the map, so not meadow)
+    /// to its own fruit type's harvest-ready growth state, and the ground to
+    /// the type that state shows.
+    #[serde(default)]
+    pub set_harvest_ready: bool,
     /// Clear all weeds (set to 0)
     #[serde(default)]
     pub clear_weeds: bool,
-    /// Clear all stones (set to 0)
+    /// Pick up all visible stones
     #[serde(default)]
     pub clear_stones: bool,
     /// Only modify pixels that have crops (fruit_idx > 0).
@@ -78,6 +83,8 @@ pub struct FruitCoverage {
     /// Percentage of field covered by this fruit (0.0-100.0)
     pub percentage: f32,
     pub avg_growth: f32,
+    /// Growth state this fruit type is ready to harvest in, from its foliage XML
+    pub harvest_ready_state: Option<u8>,
 }
 
 /// Coverage information for a ground type within a field

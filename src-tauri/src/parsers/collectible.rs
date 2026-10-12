@@ -34,7 +34,7 @@ pub fn parse_collectibles(path: &Path) -> Result<Vec<Collectible>, AppError> {
                 if tag == "collectible" {
                     collectibles.push(Collectible {
                         index: attr_u32(e, "index"),
-                        collected: attr_str(e, "isCollected") == "true",
+                        collected: attr_str(e, "collected") == "true",
                     });
                 }
             }
@@ -56,23 +56,38 @@ pub fn parse_collectibles(path: &Path) -> Result<Vec<Collectible>, AppError> {
 mod tests {
     use super::*;
 
-    fn fixtures_path() -> std::path::PathBuf {
+    fn reference_save() -> std::path::PathBuf {
         std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
-            .join("tests")
-            .join("fixtures")
+            .join("..")
+            .join("docs")
+            .join("savegames")
     }
 
     #[test]
-    fn test_parse_collectibles_nominal() {
-        let path = fixtures_path().join("savegame_complete");
-        let collectibles = parse_collectibles(&path).unwrap();
+    fn test_parse_collectibles_reference_save() {
+        let collectibles = parse_collectibles(&reference_save()).unwrap();
         assert_eq!(collectibles.len(), 25);
+        assert_eq!(collectibles[0].index, 20);
+        assert!(collectibles.iter().all(|c| !c.collected));
+    }
 
-        let collected_count = collectibles.iter().filter(|c| c.collected).count();
-        assert_eq!(collected_count, 12);
-
+    #[test]
+    fn test_parse_collectibles_reads_collected_attribute() {
+        let dir = std::env::temp_dir().join("fs25_test_collected_attr");
+        let _ = std::fs::create_dir_all(&dir);
+        std::fs::write(
+            dir.join("collectibles.xml"),
+            "<collectibles isComplete=\"false\">
+    <collectible index=\"20\" collected=\"true\"/>
+    <collectible index=\"5\" collected=\"false\"/>
+</collectibles>
+",
+        )
+        .unwrap();
+        let collectibles = parse_collectibles(&dir).unwrap();
         assert!(collectibles[0].collected);
-        assert!(!collectibles[3].collected);
+        assert!(!collectibles[1].collected);
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]

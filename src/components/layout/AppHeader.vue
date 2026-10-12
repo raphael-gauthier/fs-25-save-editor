@@ -28,6 +28,7 @@ import { useMissionStore } from "@/stores/mission";
 import { useWorldStore } from "@/stores/world";
 import { useEconomyStore } from "@/stores/economy";
 import { useSettingsStore } from "@/stores/settings";
+import { useBackupStore } from "@/stores/backup";
 import { useTauri, translateError } from "@/composables/useTauri";
 import { useUnsavedChanges } from "@/composables/useUnsavedChanges";
 import type { SaveResult } from "@/lib/types";
@@ -45,6 +46,7 @@ const missionStore = useMissionStore();
 const worldStore = useWorldStore();
 const economyStore = useEconomyStore();
 const settings = useSettingsStore();
+const backupStore = useBackupStore();
 const { invokeCommand } = useTauri();
 const { isDirty, changeCount, collectAllChanges, confirmDiscardIfDirty, resetAll } =
   useUnsavedChanges();
@@ -108,9 +110,10 @@ async function handleSave() {
   isSaving.value = true;
   try {
     let totalFilesModified = 0;
+    const hasXmlChanges = Object.values(changes).some(Boolean);
 
-    // Save XML changes
-    if (Object.values(changes).some(Boolean)) {
+    // Save XML changes (save_changes backs the savegame up first)
+    if (hasXmlChanges) {
       const result = await invokeCommand<SaveResult>("save_changes", {
         path: savegameStore.currentPath,
         changes,
@@ -131,6 +134,7 @@ async function handleSave() {
         savegameStore.currentPath,
         settings.gamePath,
         savegameStore.currentSavegame.career.mapId,
+        !hasXmlChanges,
       );
       totalFilesModified += densityFiles.length;
     }
@@ -145,6 +149,9 @@ async function handleSave() {
     missionStore.commitChanges();
     worldStore.commitChanges();
     economyStore.commitChanges();
+
+    // Every save made a backup: keep only as many as the settings allow
+    await backupStore.prune();
 
     // Reload density data to reflect edits
     if (hasDensityEdits && settings.gamePath && savegameStore.currentSavegame?.career.mapId) {

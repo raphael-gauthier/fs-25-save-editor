@@ -28,12 +28,13 @@ pub async fn save_density_edits(
     game_path: String,
     map_id: String,
     edits: Vec<DensityEditPayload>,
+    create_backup: bool,
 ) -> Result<Vec<String>, AppError> {
     tauri::async_runtime::spawn_blocking(move || {
         let save_path = PathBuf::from(&savegame_path);
         let game_path = PathBuf::from(&game_path);
 
-        density_map::save_density_edits(&save_path, &game_path, &map_id, &edits)
+        density_map::save_density_edits(&save_path, &game_path, &map_id, &edits, create_backup)
     })
     .await
     .map_err(|e| AppError::DensityMapError {

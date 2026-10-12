@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import { computed, ref } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { load } from "@tauri-apps/plugin-store";
+import { HARVEST_READY_STATES } from "@/lib/constants";
 import type {
   Field,
   Farmland,
@@ -11,7 +12,8 @@ import type {
   DensityEditPayload,
 } from "@/lib/types";
 
-const DENSITY_CACHE_FILE = "density-cache.json";
+// v2: entries before it decoded crops with the wrong fruit type order
+const DENSITY_CACHE_FILE = "density-cache-v2.json";
 
 interface DensityCacheEntry {
   data: FieldDensityData[];
@@ -20,9 +22,8 @@ interface DensityCacheEntry {
 }
 
 function cacheKey(savegamePath: string): string {
-  // Use the savegame folder name as key (e.g., "savegame1")
-  const parts = savegamePath.replace(/\\/g, "/").split("/");
-  return parts[parts.length - 1] || parts[parts.length - 2] || savegamePath;
+  // Full path: folder names like "savegame1" repeat across game installs
+  return savegamePath.replace(/\\/g, "/").replace(/\/+$/, "");
 }
 
 export const useFieldStore = defineStore("field", () => {
@@ -242,9 +243,12 @@ export const useFieldStore = defineStore("field", () => {
   }
 
   // Batch actions
+  /** Sets each field to its fruit's harvest-ready state; fruits without a known one are skipped. */
   function batchMaxGrowth(fieldIds: number[]) {
     for (const id of fieldIds) {
-      updateField(id, { growthState: 10 });
+      const field = getFieldById(id);
+      const ready = field ? HARVEST_READY_STATES[field.fruitType] : undefined;
+      if (ready !== undefined) updateField(id, { growthState: ready });
     }
   }
 
@@ -307,7 +311,13 @@ export const useFieldStore = defineStore("field", () => {
     return Array.from(densityEdits.value.values());
   }
 
-  async function saveDensityEdits(savegamePath: string, gamePath: string, mapId: string): Promise<string[]> {
+  /** `createBackup` should be false only when the XML save of the same action already made one. */
+  async function saveDensityEdits(
+    savegamePath: string,
+    gamePath: string,
+    mapId: string,
+    createBackup: boolean,
+  ): Promise<string[]> {
     const edits = getDensityEdits();
     if (edits.length === 0) return [];
     const result = await invoke<string[]>("save_density_edits", {
@@ -315,6 +325,7 @@ export const useFieldStore = defineStore("field", () => {
       gamePath,
       mapId,
       edits,
+      createBackup,
     });
     densityEdits.value = new Map();
     return result;

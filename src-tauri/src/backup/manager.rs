@@ -197,6 +197,19 @@ pub fn delete_backup(savegame_path: &Path, backup_name: &str) -> Result<(), AppE
     Ok(())
 }
 
+/// Deletes the oldest backups so that at most `keep` remain (at least one is
+/// always kept). Returns the names of the deleted backups.
+pub fn prune_backups(savegame_path: &Path, keep: usize) -> Result<Vec<String>, AppError> {
+    // list_backups sorts newest first
+    let backups = list_backups(savegame_path)?;
+    let mut removed = Vec::new();
+    for backup in backups.into_iter().skip(keep.max(1)) {
+        delete_backup(savegame_path, &backup.name)?;
+        removed.push(backup.name);
+    }
+    Ok(removed)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -301,6 +314,43 @@ mod tests {
         cleanup(&save);
     }
 
+    fn dated_backups(save: &Path, names: &[&str]) {
+        for name in names {
+            fs::create_dir_all(backups_dir(save).join(name)).unwrap();
+        }
+    }
+
+    #[test]
+    fn test_prune_backups_keeps_the_newest() {
+        let save = setup_temp_savegame("prune");
+        dated_backups(&save, &[
+            "backup_2026-01-02_10h00m00s",
+            "backup_2026-01-04_10h00m00s",
+            "backup_2026-01-01_10h00m00s",
+            "backup_2026-01-03_10h00m00s",
+        ]);
+
+        let mut removed = prune_backups(&save, 2).unwrap();
+        removed.sort();
+
+        assert_eq!(removed, vec!["backup_2026-01-01_10h00m00s", "backup_2026-01-02_10h00m00s"]);
+        let kept: Vec<String> = list_backups(&save).unwrap().into_iter().map(|b| b.name).collect();
+        assert_eq!(kept, vec!["backup_2026-01-04_10h00m00s", "backup_2026-01-03_10h00m00s"]);
+        cleanup(&save);
+    }
+
+    #[test]
+    fn test_prune_backups_always_keeps_one() {
+        let save = setup_temp_savegame("prune_zero");
+        dated_backups(&save, &["backup_2026-01-01_10h00m00s", "backup_2026-01-02_10h00m00s"]);
+
+        prune_backups(&save, 0).unwrap();
+
+        let kept: Vec<String> = list_backups(&save).unwrap().into_iter().map(|b| b.name).collect();
+        assert_eq!(kept, vec!["backup_2026-01-02_10h00m00s"]);
+        cleanup(&save);
+    }
+
     #[test]
     fn test_delete_backup_removes_directory() {
         let save = setup_temp_savegame("delete");
@@ -311,5 +361,4 @@ mod tests {
         assert!(!PathBuf::from(&info.path).exists());
         cleanup(&save);
     }
-
 }

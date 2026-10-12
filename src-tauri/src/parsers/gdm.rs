@@ -11,6 +11,9 @@ pub struct GdmImage {
     pub width: u32,
     pub height: u32,
     pub total_channels: u8,
+    /// Channels in each compression range, lowest bits first. The fruits
+    /// layer's first range holds the foliage type index.
+    pub range_channels: Vec<u8>,
     /// Raw combined pixel values. For fruits GDM (10 channels, split at 5):
     /// bits 0-4 = fruit type index, bits 5-9 = growth state
     pub pixels: Vec<u16>,
@@ -230,6 +233,7 @@ pub fn parse_gdm(data: &[u8]) -> Result<GdmImage, AppError> {
         width: dimension as u32,
         height: dimension as u32,
         total_channels: num_channels as u8,
+        range_channels: bits_per_range.iter().map(|&b| b as u8).collect(),
         pixels: image,
     })
 }
@@ -474,6 +478,18 @@ pub fn write_gdm(image: &GdmImage, original_data: &[u8]) -> Result<Vec<u8>, AppE
 #[cfg(test)]
 mod tests {
     use super::*;
+
+    #[test]
+    fn test_parse_gdm_reports_compression_range_channels() {
+        let path = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("..")
+            .join("docs")
+            .join("savegames");
+        let fruits = parse_gdm(&std::fs::read(path.join("densityMap_fruits.gdm")).unwrap()).unwrap();
+        assert_eq!(fruits.range_channels, vec![5, 5]);
+        let ground = parse_gdm(&std::fs::read(path.join("densityMap_ground.gdm")).unwrap()).unwrap();
+        assert_eq!(ground.range_channels, vec![11]);
+    }
 
     #[test]
     fn test_extract_bits() {

@@ -7,6 +7,7 @@ pub mod economy;
 pub mod environment;
 pub mod farm;
 pub mod field;
+pub mod foliage;
 pub mod gdm;
 pub mod grle;
 pub mod husbandry;
