@@ -164,21 +164,6 @@ function handleFillLevelUpdate(unitIndex: number, level: number) {
   }
 }
 
-function handlePositionInput(axis: "x" | "y" | "z", event: Event) {
-  const value = parseFloat((event.target as HTMLInputElement).value);
-  if (!isNaN(value) && vehicle.value && vehicle.value.position) {
-    const newPosition = { ...vehicle.value.position, [axis]: value };
-    store.updateVehicle(vehicle.value.uniqueId, { position: newPosition });
-  }
-}
-
-function handleRotationInput(axis: "x" | "y" | "z", event: Event) {
-  const value = parseFloat((event.target as HTMLInputElement).value);
-  if (!isNaN(value) && vehicle.value && vehicle.value.rotation) {
-    const newRotation = { ...vehicle.value.rotation, [axis]: value };
-    store.updateVehicle(vehicle.value.uniqueId, { rotation: newRotation });
-  }
-}
 </script>
 
 <template>
@@ -368,81 +353,24 @@ function handleRotationInput(axis: "x" | "y" | "z", event: Event) {
           </CardHeader>
           <CollapsibleContent>
             <CardContent class="space-y-4">
-              <Alert>
-                <AlertTriangle class="size-4" />
-                <AlertDescription>
-                  {{ t("vehicle.positionWarning") }}
-                </AlertDescription>
-              </Alert>
+              <p class="text-xs text-muted-foreground">{{ t("vehicle.positionReadOnly") }}</p>
 
               <div class="space-y-3">
                 <Label class="text-sm font-medium">{{ t("vehicle.position") }}</Label>
-                <div class="grid grid-cols-3 gap-3">
-                  <div class="space-y-1">
-                    <Label class="text-xs text-muted-foreground">X</Label>
-                    <Input
-                      type="number"
-                      :model-value="vehicle.position.x"
-                      @input="handlePositionInput('x', $event)"
-                      class="font-mono"
-                      step="0.1"
-                    />
-                  </div>
-                  <div class="space-y-1">
-                    <Label class="text-xs text-muted-foreground">Y</Label>
-                    <Input
-                      type="number"
-                      :model-value="vehicle.position.y"
-                      @input="handlePositionInput('y', $event)"
-                      class="font-mono"
-                      step="0.1"
-                    />
-                  </div>
-                  <div class="space-y-1">
-                    <Label class="text-xs text-muted-foreground">Z</Label>
-                    <Input
-                      type="number"
-                      :model-value="vehicle.position.z"
-                      @input="handlePositionInput('z', $event)"
-                      class="font-mono"
-                      step="0.1"
-                    />
+                <div class="grid grid-cols-3 gap-3 text-sm">
+                  <div v-for="axis in (['x', 'y', 'z'] as const)" :key="axis" class="space-y-1">
+                    <Label class="text-xs uppercase text-muted-foreground">{{ axis }}</Label>
+                    <p class="font-mono">{{ vehicle.position[axis].toFixed(1) }}</p>
                   </div>
                 </div>
               </div>
 
               <div v-if="vehicle.rotation" class="space-y-3">
                 <Label class="text-sm font-medium">{{ t("vehicle.rotation") }}</Label>
-                <div class="grid grid-cols-3 gap-3">
-                  <div class="space-y-1">
-                    <Label class="text-xs text-muted-foreground">X</Label>
-                    <Input
-                      type="number"
-                      :model-value="vehicle.rotation.x"
-                      @input="handleRotationInput('x', $event)"
-                      class="font-mono"
-                      step="0.01"
-                    />
-                  </div>
-                  <div class="space-y-1">
-                    <Label class="text-xs text-muted-foreground">Y</Label>
-                    <Input
-                      type="number"
-                      :model-value="vehicle.rotation.y"
-                      @input="handleRotationInput('y', $event)"
-                      class="font-mono"
-                      step="0.01"
-                    />
-                  </div>
-                  <div class="space-y-1">
-                    <Label class="text-xs text-muted-foreground">Z</Label>
-                    <Input
-                      type="number"
-                      :model-value="vehicle.rotation.z"
-                      @input="handleRotationInput('z', $event)"
-                      class="font-mono"
-                      step="0.01"
-                    />
+                <div class="grid grid-cols-3 gap-3 text-sm">
+                  <div v-for="axis in (['x', 'y', 'z'] as const)" :key="axis" class="space-y-1">
+                    <Label class="text-xs uppercase text-muted-foreground">{{ axis }}</Label>
+                    <p class="font-mono">{{ vehicle.rotation[axis].toFixed(2) }}</p>
                   </div>
                 </div>
               </div>

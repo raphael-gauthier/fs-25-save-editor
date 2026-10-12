@@ -189,7 +189,7 @@
     "position": "Position",
     "rotation": "Rotation",
     "positionAndRotation": "Position & rotation",
-    "positionWarning": "Editing the position may make the vehicle inaccessible in game.",
+    "positionReadOnly": "Position is read-only: moving it means moving every part of the vehicle and its attached implements.",
     "configuration": "Configuration",
     "attachments": "Attachments",
     "joint": "Joint {index}",

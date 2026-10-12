@@ -189,7 +189,7 @@
     "position": "Position",
     "rotation": "Rotation",
     "positionAndRotation": "Position et rotation",
-    "positionWarning": "Modifier la position peut rendre le véhicule inaccessible en jeu.",
+    "positionReadOnly": "La position est en lecture seule : la déplacer demande de bouger toutes les pièces du véhicule et ses outils attelés.",
     "configuration": "Configuration",
     "attachments": "Attelages",
     "joint": "Joint {index}",
