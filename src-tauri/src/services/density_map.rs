@@ -8,6 +8,7 @@ use crate::models::density::{
     MapFruitType,
 };
 use crate::parsers::density_map_config::{self, GROUND_TYPES};
+use crate::parsers::farmlands_config::{self, FarmlandsConfig};
 use crate::parsers::foliage::{self, FruitGrowth};
 use crate::parsers::map_fields::{self, MapField};
 use crate::parsers::gdm::{self, GdmImage};
@@ -162,8 +163,8 @@ impl FruitLayout {
 /// the farmland under its center), and the terrain size that places density
 /// map pixels in the world.
 #[derive(Debug, Default)]
-struct FieldShapes {
-    map_size: f32,
+pub(crate) struct FieldShapes {
+    pub(crate) map_size: f32,
     by_farmland: HashMap<u8, MapField>,
 }
 
@@ -188,7 +189,7 @@ impl FieldShapes {
 
     /// Whether pixel (x, y) of a `width`-pixel layer lies in `farmland`'s
     /// field. Farmlands without a known field polygon keep all their pixels.
-    fn contains(&self, farmland: u8, x: u32, y: u32, width: u32) -> bool {
+    pub(crate) fn contains(&self, farmland: u8, x: u32, y: u32, width: u32) -> bool {
         let Some(field) = self.by_farmland.get(&farmland) else { return true };
         let meters_per_pixel = self.map_size / width as f32;
         let world = |p: u32| (p as f32 + 0.5) * meters_per_pixel - self.map_size / 2.0;
@@ -199,9 +200,11 @@ impl FieldShapes {
 /// Everything about a map the density code needs.
 #[derive(Debug)]
 pub(crate) struct MapData {
-    farmlands: GrleImage,
+    pub(crate) farmlands: GrleImage,
     layout: FruitLayout,
-    fields: FieldShapes,
+    pub(crate) fields: FieldShapes,
+    /// The map's farmland definitions (prices), defaults when it has none
+    pub(crate) farmland_defs: FarmlandsConfig,
 }
 
 /// Crops the map can grow, in fruit layer order: fruit types shown on the
@@ -225,8 +228,21 @@ pub fn load_map_fruit_types(game_path: &Path, map_id: &str) -> Result<Vec<MapFru
     Ok(map_fruit_types(&load_map_data(game_path, map_id)?.layout))
 }
 
+impl MapData {
+    /// A map known only by its farmland map, size and farmland definitions.
+    #[cfg(test)]
+    pub(crate) fn for_farmlands(farmlands: GrleImage, map_size: f32, farmland_defs: FarmlandsConfig) -> Self {
+        MapData {
+            farmlands,
+            layout: FruitLayout::default(),
+            fields: FieldShapes { map_size, by_farmland: HashMap::new() },
+            farmland_defs,
+        }
+    }
+}
+
 /// Load map-specific data: farmlands GRLE, fruit layer layout, field polygons
-fn load_map_data(game_path: &Path, map_id: &str) -> Result<MapData, AppError> {
+pub(crate) fn load_map_data(game_path: &Path, map_id: &str) -> Result<MapData, AppError> {
     if map_id.contains('.') {
         // Modded map: e.g. "FS25_Pallegney.FS25_Pallegney"
         load_mod_map_data(game_path, map_id)
@@ -284,7 +300,7 @@ fn load_builtin_map_data(game_path: &Path, map_id: &str) -> Result<MapData, AppE
     let mut fruit_files = std::fs::read(maps_dir.join("maps_fruitTypes.xml"))
         .map(|data| density_map_config::parse_fruit_type_filenames(&data))
         .unwrap_or_default();
-    fruit_files.extend(map_config.fruit_type_filenames);
+    fruit_files.extend(map_config.fruit_type_filenames.iter().cloned());
     layout.add_fruits(read_game_files(game_path, &fruit_files), false);
     layout.add_fruits(
         read_game_files(game_path, &additional_fruit_type_files(game_path)),
@@ -292,7 +308,14 @@ fn load_builtin_map_data(game_path: &Path, map_id: &str) -> Result<MapData, AppE
     );
 
     let fields = field_shapes(&i3d, map_config.width, &farmlands_grle);
-    Ok(MapData { farmlands: farmlands_grle, layout, fields })
+    let farmland_defs = map_config
+        .farmlands_filename
+        .as_deref()
+        .and_then(|f| game_data_file(game_path, f))
+        .and_then(|path| std::fs::read(path).ok())
+        .map(|xml| farmlands_config::parse_farmlands_config(&String::from_utf8_lossy(&xml)))
+        .unwrap_or_default();
+    Ok(MapData { farmlands: farmlands_grle, layout, fields, farmland_defs })
 }
 
 /// Field polygons of the map i3d, when the map XML gives the terrain size.
@@ -352,9 +375,9 @@ fn load_mod_map_data(game_path: &Path, map_id: &str) -> Result<MapData, AppError
     };
     let fields = field_shapes(&i3d, map_config.width, &farmlands_grle);
 
-    let mut fruit_files = map_config.fruit_type_filenames;
-    if let Some(file) = map_config.fruit_types_filename {
-        if let Ok(data) = read_file_from_zip(&zip_path, &file) {
+    let mut fruit_files = map_config.fruit_type_filenames.clone();
+    if let Some(file) = map_config.fruit_types_filename.as_deref() {
+        if let Ok(data) = read_file_from_zip(&zip_path, file) {
             fruit_files.extend(density_map_config::parse_fruit_type_filenames(&data));
         }
     }
@@ -371,8 +394,17 @@ fn load_mod_map_data(game_path: &Path, map_id: &str) -> Result<MapData, AppError
         read_game_files(game_path, &additional_fruit_type_files(game_path)),
         true,
     );
+    let farmland_defs = map_config
+        .farmlands_filename
+        .as_deref()
+        .and_then(|file| match game_data_file(game_path, file) {
+            Some(path) => std::fs::read(path).ok(),
+            None => read_file_from_zip(&zip_path, file).ok(),
+        })
+        .map(|xml| farmlands_config::parse_farmlands_config(&String::from_utf8_lossy(&xml)))
+        .unwrap_or_default();
 
-    Ok(MapData { farmlands: farmlands_grle, layout, fields })
+    Ok(MapData { farmlands: farmlands_grle, layout, fields, farmland_defs })
 }
 
 /// Foliage files of the fruit types the game appends after a map's own fruit
@@ -405,7 +437,7 @@ fn get_mods_dir() -> Result<PathBuf, AppError> {
 }
 
 /// Build map of farmland_id → Vec<(x, y)> coordinates at farmland resolution
-fn build_farmland_pixel_map(farmlands: &GrleImage) -> HashMap<u8, Vec<(u16, u16)>> {
+pub(crate) fn build_farmland_pixel_map(farmlands: &GrleImage) -> HashMap<u8, Vec<(u16, u16)>> {
     let mut map: HashMap<u8, Vec<(u16, u16)>> = HashMap::new();
 
     for y in 0..farmlands.height {
@@ -1236,7 +1268,12 @@ mod tests {
 
     /// The reference save's map layout over `farmlands`, without field polygons.
     fn map_data(farmlands: GrleImage) -> MapData {
-        MapData { farmlands, layout: map_us_layout(), fields: FieldShapes::default() }
+        MapData {
+            farmlands,
+            layout: map_us_layout(),
+            fields: FieldShapes::default(),
+            farmland_defs: FarmlandsConfig::default(),
+        }
     }
 
     fn read_gdm(save: &Path, file: &str) -> GdmImage {
@@ -1358,6 +1395,7 @@ mod tests {
             fields: FieldShapes::new(vec![field], 2048.0, &farmlands),
             farmlands,
             layout: map_us_layout(),
+            farmland_defs: FarmlandsConfig::default(),
         };
         let edit = DensityEditPayload {
             farmland_id: 1,

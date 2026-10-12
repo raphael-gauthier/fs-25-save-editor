@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use super::common::Position;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct Placeable {
     pub index: usize,

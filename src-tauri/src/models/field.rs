@@ -26,3 +26,20 @@ pub struct Farmland {
     pub id: u32,
     pub farm_id: u8,
 }
+
+/// What buying or selling a farmland involves, from the map's definitions.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FarmlandInfo {
+    pub id: u32,
+    pub area_ha: f64,
+    /// Price the game charges to buy it and pays back when selling it
+    pub price: f64,
+    pub npc_name: Option<String>,
+    /// Owned by the farm on a new savegame with starting farmlands
+    pub default_farm_property: bool,
+    /// Listed on the in-game farmland screen
+    pub show_on_farmlands_screen: bool,
+    /// Placeables a farm built on it (map buildings follow its owner on their own)
+    pub built_placeables: u32,
+}

@@ -2,7 +2,7 @@ use serde::{Deserialize, Serialize};
 
 use super::common::LocalizedMessage;
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct SavegameChanges {
     pub finance: Option<FinanceChanges>,

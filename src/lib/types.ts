@@ -260,6 +260,19 @@ export interface FarmlandChangePayload {
 
 // Density map data (from binary GDM/GRLE files)
 
+/** What buying or selling a farmland involves, from the map's definitions. */
+export interface FarmlandInfo {
+  id: number;
+  areaHa: number;
+  /** Price the game charges to buy it and pays back when selling it */
+  price: number;
+  npcName: string | null;
+  defaultFarmProperty: boolean;
+  showOnFarmlandsScreen: boolean;
+  /** Placeables a farm built on it */
+  builtPlaceables: number;
+}
+
 /** A growth state of a fruit, from its foliage XML. */
 export interface FruitState {
   name: string;

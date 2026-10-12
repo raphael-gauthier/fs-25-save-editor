@@ -6,6 +6,7 @@ pub mod density_map_config;
 pub mod economy;
 pub mod environment;
 pub mod farm;
+pub mod farmlands_config;
 pub mod field;
 pub mod foliage;
 pub mod gdm;
