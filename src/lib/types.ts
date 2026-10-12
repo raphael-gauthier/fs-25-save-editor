@@ -662,6 +662,7 @@ export interface SavegameData {
   contractSettings: ContractSettings | null;
   environment: Environment | null;
   economy: Economy | null;
+  gameSettings: GameSetting[];
   warnings: LocalizedMessage[];
 }
 
@@ -748,6 +749,13 @@ export interface SavegameChanges {
   contractSettings?: ContractSettingsChangePayload;
   environment?: EnvironmentChanges;
   economy?: EconomyChanges;
+  gameSettings?: GameSetting[];
+}
+
+/** A careerSavegame.xml game setting the editor may change, as saved text. */
+export interface GameSetting {
+  key: string;
+  value: string;
 }
 
 export interface SaveResult {

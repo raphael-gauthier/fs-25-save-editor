@@ -37,7 +37,8 @@
     "backups": "Backups",
     "settings": "Paramètres",
     "farmlands": "Parcelles",
-    "storage": "Stockage"
+    "storage": "Stockage",
+    "game": "Partie"
   },
   "savegame": {
     "selectSubtitle": "Sélectionnez une sauvegarde pour commencer l'édition",
@@ -813,5 +814,56 @@
     "remove": "Retirer",
     "finishFermentation": "Terminer la fermentation",
     "emptyObjectStorage": "Vide"
+  },
+  "gameSettings": {
+    "title": "Partie",
+    "subtitle": "Règles et options enregistrées dans la sauvegarde",
+    "note": "La plupart de ces options se changent aussi en jeu. Le mode de croissance, la durée des saisons et les catastrophes restent en lecture seule : leurs valeurs n'ont pas pu être vérifiées.",
+    "sections": {
+      "savegame": "Sauvegarde",
+      "driving": "Véhicules",
+      "farming": "Agriculture",
+      "helpers": "Ouvriers",
+      "time": "Temps"
+    },
+    "keys": {
+      "savegameName": "Nom de la partie",
+      "economicDifficulty": "Difficulté économique",
+      "fuelUsage": "Consommation de carburant",
+      "trafficEnabled": "Circulation",
+      "stopAndGoBraking": "Freinage automatique à l'arrêt",
+      "automaticMotorStartEnabled": "Démarrage automatique du moteur",
+      "trailerFillLimit": "Limite de remplissage des remorques",
+      "plowingRequiredEnabled": "Labour nécessaire",
+      "limeRequired": "Chaulage nécessaire",
+      "weedsEnabled": "Mauvaises herbes",
+      "stonesEnabled": "Pierres",
+      "fruitDestruction": "Dégâts aux cultures",
+      "isSnowEnabled": "Neige",
+      "dirtInterval": "Salissure des véhicules",
+      "helperBuyFuel": "Les ouvriers achètent le carburant",
+      "helperBuySeeds": "Les ouvriers achètent les semences",
+      "helperBuyFertilizer": "Les ouvriers achètent l'engrais",
+      "helperSlurrySource": "Lisier des ouvriers",
+      "helperManureSource": "Fumier des ouvriers",
+      "timeScale": "Vitesse du temps",
+      "autoSaveInterval": "Sauvegarde auto (minutes)"
+    },
+    "fuelUsageLevel": {
+      "1": "Faible",
+      "2": "Normale",
+      "3": "Élevée"
+    },
+    "dirtLevel": {
+      "1": "Désactivée",
+      "2": "Lente",
+      "3": "Modérée",
+      "4": "Normale"
+    },
+    "helperSource": {
+      "none": "Aucun",
+      "buy": "Acheter",
+      "station": "Station de la carte ({value})"
+    }
   }
 }
