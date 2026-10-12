@@ -29,6 +29,10 @@ pub struct DensityEditPayload {
     /// Set ground type (0-15, see GROUND_TYPES constant)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub set_ground_type: Option<u8>,
+    /// Move every growing fruit pixel to its own fruit type's harvest-ready
+    /// growth state, and the ground to the type that state shows.
+    #[serde(default)]
+    pub set_harvest_ready: bool,
     /// Clear all weeds (set to 0)
     #[serde(default)]
     pub clear_weeds: bool,
@@ -78,6 +82,8 @@ pub struct FruitCoverage {
     /// Percentage of field covered by this fruit (0.0-100.0)
     pub percentage: f32,
     pub avg_growth: f32,
+    /// Growth state this fruit type is ready to harvest in, from its foliage XML
+    pub harvest_ready_state: Option<u8>,
 }
 
 /// Coverage information for a ground type within a field

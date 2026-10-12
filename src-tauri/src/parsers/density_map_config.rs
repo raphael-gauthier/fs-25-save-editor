@@ -1,10 +1,10 @@
-// Parser for fruitTypes.xml to build fruit type index mapping
-// This maps density map pixel indices to fruit type names
+// Map configuration parsers for the density map code: fruit type lists, map
+// configs of map mods and the extra fruit types recorded in the game log.
 
-use crate::error::AppError;
 use quick_xml::events::Event;
 use quick_xml::Reader;
-use std::path::Path;
+
+use crate::parsers::attrs::attr_str;
 
 /// Ground type names indexed by their value in the ground density map (bits 0-3)
 pub const GROUND_TYPES: &[&str] = &[
@@ -32,163 +32,111 @@ pub const GROUND_TYPES: &[&str] = &[
 /// Fruit names are derived from the foliage filename:
 ///   `$data/foliage/wheat/wheat.xml` → `WHEAT`
 ///   `maps/foliage/silageMaize/silageMaize.xml` → `SILAGEMAIZE`
-pub fn parse_fruit_types_xml(data: &[u8]) -> Result<Vec<String>, AppError> {
-    let text = String::from_utf8_lossy(data);
-    // Remove BOM if present
-    let text = text.strip_prefix('\u{feff}').unwrap_or(&text);
-
-    let mut reader = Reader::from_str(text);
-    reader.config_mut().trim_text(true);
-
-    let mut fruit_types = Vec::new();
-    let mut buf = Vec::new();
-
-    loop {
-        match reader.read_event_into(&mut buf) {
-            Ok(Event::Empty(ref e)) if e.name().as_ref() == "fruitType" => {
-                if let Some(filename) = e
-                    .attributes()
-                    .filter_map(|a| a.ok())
-                    .find(|a| a.key.as_ref() == "filename")
-                {
-                    let filename_str = &filename.value;
-                    let name = extract_fruit_name(&filename_str);
-                    fruit_types.push(name);
-                }
-            }
-            Ok(Event::Eof) => break,
-            Err(e) => {
-                return Err(AppError::DensityMapError {
-                    message: format!("Failed to parse fruitTypes.xml: {}", e),
-                });
-            }
-            _ => {}
-        }
-        buf.clear();
-    }
-
-    Ok(fruit_types)
+/// Filenames of the `<fruitType filename>` entries inside `<fruitTypes>`
+/// (maps_fruitTypes.xml, a map XML or a mod's fruitTypes.xml).
+pub fn parse_fruit_type_filenames(data: &[u8]) -> Vec<String> {
+    parse_map_config(data).fruit_type_filenames
 }
 
-/// Extract fruit type name from a foliage filename path.
-/// Uses the file stem (without extension), uppercased.
-///
-/// Examples:
-///   "$data/foliage/wheat/wheat.xml" → "WHEAT"
-///   "maps/foliage/silageMaize/silageMaize.xml" → "SILAGEMAIZE"
-///   "maps/foliage/meadow/fieldGrass.xml" → "FIELDGRASS"
-fn extract_fruit_name(filename: &str) -> String {
-    Path::new(filename)
-        .file_stem()
-        .and_then(|s| s.to_str())
-        .unwrap_or("UNKNOWN")
-        .to_uppercase()
+/// What the density code needs from a map XML (`configFilename` of a map mod).
+#[derive(Debug, Default, PartialEq)]
+pub struct MapConfig {
+    /// `<filename>`: the map i3d.
+    pub i3d_filename: Option<String>,
+    /// `<fruitTypes filename>`: an external fruit types file.
+    pub fruit_types_filename: Option<String>,
+    /// Inline `<fruitTypes><fruitType filename>` entries.
+    pub fruit_type_filenames: Vec<String>,
 }
 
-/// Parse a map's own XML file (e.g. mapUS.xml) for additional fruitType entries.
-/// These are appended after the shared maps_fruitTypes.xml types.
-pub fn parse_map_xml_fruit_types(data: &[u8]) -> Result<Vec<String>, AppError> {
+pub fn parse_map_config(data: &[u8]) -> MapConfig {
     let text = String::from_utf8_lossy(data);
-    let text = text.strip_prefix('\u{feff}').unwrap_or(&text);
-
-    let mut reader = Reader::from_str(text);
-    reader.config_mut().trim_text(true);
-
-    let mut fruit_types = Vec::new();
+    let mut reader = Reader::from_str(text.strip_prefix('\u{feff}').unwrap_or(&text));
+    let mut config = MapConfig::default();
+    let mut depth = 0usize;
     let mut in_fruit_types = false;
-    let mut buf = Vec::new();
+    let mut in_filename = false;
 
     loop {
-        match reader.read_event_into(&mut buf) {
-            Ok(Event::Start(ref e)) if e.name().as_ref() == "fruitTypes" => {
-                in_fruit_types = true;
-            }
-            Ok(Event::End(ref e)) if e.name().as_ref() == "fruitTypes" => {
-                in_fruit_types = false;
-            }
-            Ok(Event::Empty(ref e))
-                if in_fruit_types && e.name().as_ref() == "fruitType" =>
-            {
-                if let Some(filename) = e
-                    .attributes()
-                    .filter_map(|a| a.ok())
-                    .find(|a| a.key.as_ref() == "filename")
-                {
-                    let filename_str = &filename.value;
-                    let name = extract_fruit_name(&filename_str);
-                    fruit_types.push(name);
+        match reader.read_event() {
+            Ok(Event::Start(ref e)) => {
+                depth += 1;
+                match e.name().as_ref() {
+                    "fruitTypes" => in_fruit_types = true,
+                    "filename" if depth == 2 => in_filename = true,
+                    _ => {}
                 }
             }
-            Ok(Event::Eof) => break,
-            Err(_) => break, // Don't fail on map XML parse errors
+            Ok(Event::Empty(ref e)) => match e.name().as_ref() {
+                "fruitTypes" => {
+                    let file = attr_str(e, "filename");
+                    if !file.is_empty() {
+                        config.fruit_types_filename = Some(file);
+                    }
+                }
+                "fruitType" if in_fruit_types => {
+                    let file = attr_str(e, "filename");
+                    if !file.is_empty() {
+                        config.fruit_type_filenames.push(file);
+                    }
+                }
+                _ => {}
+            },
+            Ok(Event::Text(ref t)) if in_filename => {
+                let text = t.trim().to_string();
+                if !text.is_empty() {
+                    config.i3d_filename = Some(text);
+                }
+            }
+            Ok(Event::End(ref e)) => {
+                if e.name().as_ref() == "fruitTypes" {
+                    in_fruit_types = false;
+                }
+                in_filename = false;
+                depth = depth.saturating_sub(1);
+            }
+            Ok(Event::Eof) | Err(_) => break,
             _ => {}
         }
-        buf.clear();
     }
 
-    Ok(fruit_types)
+    config
 }
 
-/// Parse the FS25 game log to extract fruit type registration order.
-/// Returns the complete ordered list of fruit types as registered by the game engine.
-/// This captures DLC-added fruit types that aren't in any XML config file.
-pub fn parse_game_log_fruit_types(log_path: &Path) -> Result<Vec<String>, AppError> {
-    let data = std::fs::read_to_string(log_path).map_err(|e| AppError::DensityMapError {
-        message: format!("Failed to read game log: {}", e),
-    })?;
-
-    let mut fruit_types = Vec::new();
-    let marker = "Loaded fruit type '";
-    for line in data.lines() {
-        if let Some(start) = line.find(marker) {
-            let rest = &line[start + marker.len()..];
-            if let Some(end) = rest.find('\'') {
-                let name = rest[..end].to_uppercase();
-                if !fruit_types.contains(&name) {
-                    fruit_types.push(name);
-                }
+/// `configFilename` of the first `<map>` in a mod's modDesc.xml.
+pub fn parse_mod_desc_map_config(data: &[u8]) -> Option<String> {
+    let text = String::from_utf8_lossy(data);
+    let mut reader = Reader::from_str(text.strip_prefix('\u{feff}').unwrap_or(&text));
+    loop {
+        match reader.read_event() {
+            Ok(Event::Start(ref e)) | Ok(Event::Empty(ref e)) if e.name().as_ref() == "map" => {
+                let file = attr_str(e, "configFilename");
+                return (!file.is_empty()).then_some(file);
             }
+            Ok(Event::Eof) | Err(_) => return None,
+            _ => {}
         }
     }
-
-    Ok(fruit_types)
 }
 
-/// Known FS25 fruit types that may be registered beyond XML + game log sources.
-/// These are base game vegetables that the engine may register through a code path
-/// not captured in the log or config XML files.
-pub const KNOWN_EXTRA_FRUIT_TYPES: &[&str] = &["GREENBEAN", "PEA", "SPINACH"];
-
-/// Read fruitTypes.xml from a filesystem path
-pub fn parse_fruit_types_from_file(path: &Path) -> Result<Vec<String>, AppError> {
-    let data = std::fs::read(path).map_err(|e| AppError::DensityMapError {
-        message: format!("Failed to read fruitTypes.xml: {}", e),
-    })?;
-    parse_fruit_types_xml(&data)
-}
-
-/// Read fruitTypes.xml from inside a zip archive
-pub fn parse_fruit_types_from_zip(
-    zip_path: &Path,
-    inner_path: &str,
-) -> Result<Vec<String>, AppError> {
-    let file = std::fs::File::open(zip_path).map_err(|e| AppError::DensityMapError {
-        message: format!("Failed to open mod zip {}: {}", zip_path.display(), e),
-    })?;
-    let mut archive = zip::ZipArchive::new(file).map_err(|e| AppError::DensityMapError {
-        message: format!("Failed to read mod zip: {}", e),
-    })?;
-
-    let mut entry = archive.by_name(inner_path).map_err(|e| AppError::DensityMapError {
-        message: format!("fruitTypes.xml not found in mod zip: {}", e),
-    })?;
-
-    let mut data = Vec::new();
-    std::io::Read::read_to_end(&mut entry, &mut data).map_err(|e| AppError::DensityMapError {
-        message: format!("Failed to read fruitTypes.xml from zip: {}", e),
-    })?;
-
-    parse_fruit_types_xml(&data)
+/// Foliage XML paths of the fruit types the game adds after a map's own
+/// fruit layer ("Loading additional fruit type 'x' from 'path'" in log.txt).
+pub fn parse_additional_fruit_types(log: &str) -> Vec<String> {
+    const MARKER: &str = "Loading additional fruit type '";
+    const FROM: &str = "' from '";
+    let mut files: Vec<String> = Vec::new();
+    for line in log.lines() {
+        let Some(start) = line.find(MARKER) else { continue };
+        let rest = &line[start + MARKER.len()..];
+        let Some(from) = rest.find(FROM) else { continue };
+        let path = &rest[from + FROM.len()..];
+        let Some(end) = path.find('\'') else { continue };
+        let path = path[..end].to_string();
+        if !files.contains(&path) {
+            files.push(path);
+        }
+    }
+    files
 }
 
 #[cfg(test)]
@@ -196,33 +144,56 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_extract_fruit_name() {
-        assert_eq!(extract_fruit_name("$data/foliage/wheat/wheat.xml"), "WHEAT");
-        assert_eq!(
-            extract_fruit_name("maps/foliage/silageMaize/silageMaize.xml"),
-            "SILAGEMAIZE"
-        );
-        assert_eq!(
-            extract_fruit_name("$data/foliage/oilseedRadish/oilseedRadish.xml"),
-            "OILSEEDRADISH"
-        );
-        assert_eq!(
-            extract_fruit_name("maps/foliage/meadow/fieldGrass.xml"),
-            "FIELDGRASS"
-        );
-    }
-
-    #[test]
-    fn test_parse_fruit_types_xml() {
+    fn test_fruit_type_filenames_from_maps_fruit_types() {
+        // Shape of data/maps/maps_fruitTypes.xml
         let xml = br#"<?xml version="1.0" encoding="utf-8" standalone="no" ?>
 <map>
     <fruitTypes>
         <fruitType filename="$data/foliage/wheat/wheat.xml"/>
         <fruitType filename="$data/foliage/barley/barley.xml"/>
-        <fruitType filename="$data/foliage/canola/canola.xml"/>
+    </fruitTypes>
+    <fruitTypeCategories>
+        <fruitTypeCategory name="GRAINHEADER">WHEAT BARLEY</fruitTypeCategory>
+    </fruitTypeCategories>
+</map>"#;
+        assert_eq!(
+            parse_fruit_type_filenames(xml),
+            vec!["$data/foliage/wheat/wheat.xml", "$data/foliage/barley/barley.xml"]
+        );
+    }
+
+    #[test]
+    fn test_map_config_of_a_mod_map() {
+        // Shape of FS25_Pallegney.zip maps/maps.xml
+        let xml = br#"<map>
+    <filename>maps/Pallegney.i3d</filename>
+    <fruitTypes filename="maps/config/fruitTypes.xml" />
+    <fruitTypes>
+        <fruitType filename="maps/foliage/extra/extra.xml"/>
     </fruitTypes>
 </map>"#;
-        let result = parse_fruit_types_xml(xml).unwrap();
-        assert_eq!(result, vec!["WHEAT", "BARLEY", "CANOLA"]);
+        let config = parse_map_config(xml);
+        assert_eq!(config.i3d_filename.as_deref(), Some("maps/Pallegney.i3d"));
+        assert_eq!(config.fruit_types_filename.as_deref(), Some("maps/config/fruitTypes.xml"));
+        assert_eq!(config.fruit_type_filenames, vec!["maps/foliage/extra/extra.xml"]);
+    }
+
+    #[test]
+    fn test_mod_desc_map_config_filename() {
+        let xml = b"<modDesc><maps>
+<map id=\"FS25_Pallegney\" 
+        className=\"Mission00\" 
+        configFilename=\"maps/maps.xml\" 
+        defaultVehiclesXMLFilename=\"maps/config/vehicles.xml\"></map></maps></modDesc>";
+        assert_eq!(parse_mod_desc_map_config(xml).as_deref(), Some("maps/maps.xml"));
+    }
+
+    #[test]
+    fn test_additional_fruit_types_from_game_log() {
+        let log = "2026-10-10 18:25:31.007   Info: Loaded fruit type 'ONION' from 'data/foliage/onion/onion.xml'
+2026-10-10 18:25:43.680 Loading additional fruit type 'onion' from 'data/foliage/onion/onion.xml'
+2026-10-10 18:27:43.680 Loading additional fruit type 'onion' from 'data/foliage/onion/onion.xml'
+";
+        assert_eq!(parse_additional_fruit_types(log), vec!["data/foliage/onion/onion.xml"]);
     }
 }
