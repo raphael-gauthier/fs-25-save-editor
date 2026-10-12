@@ -1002,6 +1002,50 @@ mod tests {
         cleanup_writable_fixture(&path);
     }
 
+    /// The storage edits as the frontend's building store sends them (camelCase
+    /// JSON), saved through save_changes on a copy of the reference savegame.
+    #[test]
+    fn test_save_changes_applies_storage_edits_from_frontend_json() {
+        let reference = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("..").join("docs").join("savegames");
+        let save = std::env::temp_dir().join("fs25_test_storage_json").join("savegame1");
+        let _ = std::fs::remove_dir_all(save.parent().unwrap());
+        std::fs::create_dir_all(&save).unwrap();
+        for file in ["careerSavegame.xml", "placeables.xml"] {
+            std::fs::copy(reference.join(file), save.join(file)).unwrap();
+        }
+        let before = crate::parsers::placeable::parse_placeables(&save).unwrap();
+        let silo = before.iter().position(|p| p.silo_storages.iter().any(|s| s.stocks.len() == 2)).unwrap();
+        let objects = before.iter().position(|p| !p.stored_objects.is_empty()).unwrap();
+
+        let changes: SavegameChanges = serde_json::from_value(serde_json::json!({
+            "placeables": [
+                {
+                    "index": silo,
+                    "completeConstruction": false,
+                    "siloStocks": [
+                        { "kind": "silo", "index": 1, "fillType": "WHEAT", "amount": 1.0 },
+                        { "kind": "silo", "index": 1, "fillType": "OAT", "amount": 2500.0 }
+                    ]
+                },
+                {
+                    "index": objects,
+                    "completeConstruction": false,
+                    "objectStorage": { "remove": [0], "copies": [{ "index": 1, "count": 2 }], "finishFermentation": false }
+                }
+            ]
+        }))
+        .unwrap();
+        let result = save_changes(save.display().to_string(), changes).unwrap();
+        assert!(result.errors.is_empty());
+
+        let after = crate::parsers::placeable::parse_placeables(&save).unwrap();
+        let levels: Vec<(String, f64)> = after[silo].silo_storages[0].stocks.iter().map(|s| (s.fill_type.clone(), s.amount)).collect();
+        assert_eq!(levels, vec![("WHEAT".into(), 1.0), ("SUNFLOWER".into(), 4855.552734), ("OAT".into(), 2500.0)]);
+        assert_eq!(after[objects].stored_objects.len(), before[objects].stored_objects.len() + 1);
+        assert_eq!(after[objects].stored_objects.last(), before[objects].stored_objects.get(1));
+        let _ = std::fs::remove_dir_all(save.parent().unwrap());
+    }
+
     #[test]
     fn test_save_changes_applies_placeable_and_husbandry_edits_together() {
         // Both write_placeable_changes and write_husbandry_changes rewrite
