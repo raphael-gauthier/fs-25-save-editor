@@ -5,6 +5,7 @@ import { useFieldStore } from "@/stores/field";
 import { useSettingsStore } from "@/stores/settings";
 import type { Field } from "@/lib/types";
 import { HARVEST_READY_STATES, MAX_GROWTH_STATE } from "@/lib/constants";
+import { soilWorkEdit, type SoilWork } from "@/lib/fieldWork";
 import FieldEditor from "@/components/fields/FieldEditor.vue";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -35,6 +36,8 @@ import {
   FlaskConical,
   Loader2,
   Info,
+  Tractor,
+  Shovel,
 } from "@lucide/vue";
 
 const { t } = useI18n();
@@ -159,6 +162,15 @@ function handleBatchMaxLime() {
   }
 }
 
+function handleBatchMaxPlow() {
+  const ids = Array.from(store.selectedFieldIds);
+  store.batchDensityEdit(ids, { setPlowLevel: 1 });
+}
+
+function handleBatchSoilWork(work: SoilWork) {
+  store.batchDensityEdit(Array.from(store.selectedFieldIds), soilWorkEdit(work));
+}
+
 function handleBatchMaxFertilizer() {
   const ids = Array.from(store.selectedFieldIds);
   store.batchMaxFertilizer(ids);
@@ -277,6 +289,28 @@ function toggleSelectAll() {
         <FlaskConical class="size-4" />
         {{ t("field.maxFertilizer") }}
       </Button>
+      <template v-if="store.hasDensityData">
+        <Button variant="outline" size="sm" @click="handleBatchMaxPlow">
+          <Tractor class="size-4" />
+          {{ t("field.maxPlow") }}
+        </Button>
+        <Button variant="outline" size="sm" @click="handleBatchSoilWork('plow')">
+          <Tractor class="size-4" />
+          {{ t("field.soilPlow") }}
+        </Button>
+        <Button variant="outline" size="sm" @click="handleBatchSoilWork('cultivate')">
+          <Shovel class="size-4" />
+          {{ t("field.soilCultivate") }}
+        </Button>
+        <Button variant="outline" size="sm" @click="handleBatchSoilWork('roll')">
+          <Tractor class="size-4" />
+          {{ t("field.soilRoll") }}
+        </Button>
+        <Button variant="outline" size="sm" @click="handleBatchSoilWork('mulch')">
+          <Shovel class="size-4" />
+          {{ t("field.soilMulch") }}
+        </Button>
+      </template>
       <Button variant="ghost" size="sm" @click="store.deselectAll()">
         {{ t("common.deselectAll") }}
       </Button>
