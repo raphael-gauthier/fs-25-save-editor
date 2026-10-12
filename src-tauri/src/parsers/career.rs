@@ -343,4 +343,36 @@ mod tests {
 
         let _ = fs::remove_dir_all(&dir);
     }
+
+    /// The reference save with only its name changed to one the game writes
+    /// escaped: `&` is stored as `&amp;`.
+    fn reference_save_named(dir_name: &str, escaped_name: &str) -> std::path::PathBuf {
+        let reference = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("..")
+            .join("docs")
+            .join("savegames")
+            .join("careerSavegame.xml");
+        let content = fs::read_to_string(reference).unwrap().replace(
+            "<savegameName>Ma partie</savegameName>",
+            &format!("<savegameName>{}</savegameName>", escaped_name),
+        );
+        assert!(content.contains(escaped_name));
+        let dir = std::env::temp_dir().join(dir_name);
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
+        fs::write(dir.join("careerSavegame.xml"), content).unwrap();
+        dir
+    }
+
+    #[test]
+    fn test_parse_career_decodes_entities_in_savegame_name() {
+        let dir = reference_save_named("fs25_test_career_entities", "Ferme &amp; Fils &#233;t&#xE9;");
+
+        let summary = parse_career_summary(&dir).unwrap();
+        let career = parse_career(&dir).unwrap();
+        let _ = fs::remove_dir_all(&dir);
+
+        assert_eq!(summary.name, "Ferme & Fils été");
+        assert_eq!(career.savegame_name, "Ferme & Fils été");
+    }
 }

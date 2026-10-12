@@ -399,4 +399,12 @@ mod tests {
             "My Vehicle"
         );
     }
+
+    #[test]
+    fn test_parse_store_data_decodes_entities() {
+        let xml = r#"<vehicle><storeData><name>Lizard R&amp;D</name><brand>LIZARD</brand><category>tractorsS</category><price>42000</price></storeData></vehicle>"#;
+
+        let result = parse_store_data(xml).unwrap();
+        assert_eq!(result.name, "Lizard R&D");
+    }
 }

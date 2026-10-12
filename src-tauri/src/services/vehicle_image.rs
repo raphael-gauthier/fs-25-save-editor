@@ -376,3 +376,26 @@ impl VehicleImageService {
             .unwrap_or(0)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_extract_image_from_store_data() {
+        let xml = r#"<vehicle><storeData><image>$data/vehicles/fendt/store_vario.png</image></storeData></vehicle>"#;
+        assert_eq!(
+            VehicleImageService::extract_image_from_xml(xml).as_deref(),
+            Some("$data/vehicles/fendt/store_vario.png")
+        );
+    }
+
+    #[test]
+    fn test_extract_image_decodes_entities() {
+        let xml = r#"<vehicle><storeData><image>store_R&amp;D.png</image></storeData></vehicle>"#;
+        assert_eq!(
+            VehicleImageService::extract_image_from_xml(xml).as_deref(),
+            Some("store_R&D.png")
+        );
+    }
+}

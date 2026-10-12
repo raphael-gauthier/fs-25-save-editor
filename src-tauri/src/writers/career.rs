@@ -154,4 +154,23 @@ mod tests {
         assert_eq!(after.growth_mode, before.growth_mode);
         let _ = std::fs::remove_dir_all(&save);
     }
+
+    #[test]
+    fn test_write_career_money_keeps_escaped_savegame_name() {
+        let save = setup_fixture("escaped_name");
+        let path = save.join("careerSavegame.xml");
+        let original = std::fs::read_to_string(&path).unwrap();
+        let start = original.find("<savegameName>").unwrap();
+        let end = original.find("</savegameName>").unwrap();
+        let escaped = format!("{}<savegameName>Ferme &amp; Fils{}", &original[..start], &original[end..]);
+        std::fs::write(&path, escaped).unwrap();
+
+        write_career_money(&save, 1234.0).unwrap();
+        let written = std::fs::read_to_string(&path).unwrap();
+        let career = parse_career(&save).unwrap();
+        let _ = std::fs::remove_dir_all(&save);
+
+        assert!(written.contains("<savegameName>Ferme &amp; Fils</savegameName>"));
+        assert_eq!(career.savegame_name, "Ferme & Fils");
+    }
 }
