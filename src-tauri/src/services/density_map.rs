@@ -728,7 +728,12 @@ fn apply_density_edits(
 
     // Determine which files need to be modified
     let needs_fruits = edits.iter().any(|e| e.set_fruit_name.is_some() || e.set_harvest_ready);
-    let needs_ground = edits.iter().any(|e| e.set_ground_type.is_some() || e.set_harvest_ready);
+    let sets_crop = |e: &DensityEditPayload| {
+        e.set_fruit_name.as_deref().is_some_and(|f| !f.is_empty() && f != "NONE")
+    };
+    let needs_ground = edits
+        .iter()
+        .any(|e| e.set_ground_type.is_some() || e.set_harvest_ready || sets_crop(e));
     let needs_lime = edits.iter().any(|e| e.set_lime_level.is_some());
     let needs_spray = edits.iter().any(|e| e.set_spray_level.is_some());
     let needs_plow = edits.iter().any(|e| e.set_plow_level.is_some());
@@ -814,8 +819,10 @@ fn apply_density_edits(
         true
     };
 
-    // Ground types fruits show once harvest ready, set alongside them
-    let mut harvest_ready_ground: Vec<(u32, u32, u16)> = Vec::new();
+    // Ground types of the growth states fruits are set to, set alongside them
+    let mut fruit_ground: Vec<(u32, u32, u16)> = Vec::new();
+    let ground_index =
+        |g: &str| GROUND_TYPES.iter().position(|&t| t == g).map(|i| i as u16);
 
     // Modify fruits GDM
     if needs_fruits {
@@ -841,6 +848,14 @@ fn apply_density_edits(
                     })?;
                     (index, edit.set_growth_state.unwrap_or(0))
                 };
+                // An explicit ground type wins over the one the growth state shows
+                let ground = match edit.set_ground_type {
+                    Some(_) => None,
+                    None => layout
+                        .fruit_at(type_index)
+                        .and_then(|f| f.ground_for_state(growth))
+                        .and_then(ground_index),
+                };
 
                 for_each_hi_res_pixel(pixels, scale, |hx, hy| {
                     if hx < fruits_gdm.width && hy < fruits_gdm.height
@@ -848,6 +863,9 @@ fn apply_density_edits(
                     {
                         let current = fruits_gdm.get_pixel(hx, hy);
                         fruits_gdm.set_pixel(hx, hy, bits.encode(current, type_index, growth));
+                        if let Some(ground) = ground {
+                            fruit_ground.push((hx, hy, ground));
+                        }
                     }
                 });
             }
@@ -869,11 +887,8 @@ fn apply_density_edits(
                     };
                     let Some(ready) = fruit.harvest_ready_state() else { return };
                     fruits_gdm.set_pixel(hx, hy, bits.encode(current, type_index, ready));
-                    if let Some(ground) = fruit
-                        .ground_for_state(ready)
-                        .and_then(|g| GROUND_TYPES.iter().position(|&t| t == g))
-                    {
-                        harvest_ready_ground.push((hx, hy, ground as u16));
+                    if let Some(ground) = fruit.ground_for_state(ready).and_then(ground_index) {
+                        fruit_ground.push((hx, hy, ground));
                     }
                 });
             }
@@ -914,7 +929,7 @@ fn apply_density_edits(
                     }
                 }
             }
-            for &(hx, hy, ground_type) in &harvest_ready_ground {
+            for &(hx, hy, ground_type) in &fruit_ground {
                 let current = ground_gdm.get_pixel(hx, hy);
                 ground_gdm.set_pixel(hx, hy, (current & !0xF) | ground_type);
             }
@@ -1181,7 +1196,10 @@ mod tests {
 
     /// Harvest-ready states from data/foliage/<fruit>/<fruit>.xml
     fn map_us_layout() -> FruitLayout {
+        let mut potato = growth("POTATO", true, 9, None);
+        potato.sowing_ground = "RIDGE_SOWN".to_string();
         let fruits = [
+            potato,
             growth("MEADOW", false, 4, None),
             growth("WHEAT", true, 8, Some("HARVEST_READY")),
             growth("BARLEY", true, 8, Some("HARVEST_READY")),
@@ -1334,6 +1352,54 @@ mod tests {
             }
         }
         let _ = std::fs::remove_dir_all(save.parent().unwrap());
+    }
+
+    /// Sets `fruit` at `state` on farmland_map()'s block and returns the
+    /// (fruit name, state, ground type name) of one of its pixels.
+    fn set_fruit_on_block(name: &str, fruit: &str, state: u8, ground: Option<u8>) -> (String, u8, String) {
+        let save = reference_density_save(name);
+        let edit = DensityEditPayload {
+            farmland_id: 1,
+            set_fruit_name: Some(fruit.to_string()),
+            set_growth_state: Some(state),
+            set_ground_type: ground,
+            ..Default::default()
+        };
+        apply_density_edits(&save, &map_data(farmland_map()), &[edit], false).unwrap();
+
+        let fruits = read_gdm(&save, "densityMap_fruits.gdm");
+        let bits = FruitBits::of(&fruits);
+        let pixel = fruits.get_pixel(2010, 2010);
+        let layout = map_us_layout();
+        let ground = read_gdm(&save, "densityMap_ground.gdm").get_pixel(2010, 2010) & 0xF;
+        let _ = std::fs::remove_dir_all(save.parent().unwrap());
+        (
+            layout.type_name(bits.type_index(pixel)).cloned().unwrap_or_default(),
+            bits.state(pixel),
+            GROUND_TYPES[ground as usize].to_string(),
+        )
+    }
+
+    #[test]
+    fn test_set_fruit_sets_the_ground_of_its_growth_state() {
+        assert_eq!(set_fruit_on_block("sown_wheat", "WHEAT", 2, None), ("WHEAT".into(), 2, "SOWN".into()));
+        assert_eq!(
+            set_fruit_on_block("ready_wheat", "WHEAT", 8, None),
+            ("WHEAT".into(), 8, "HARVEST_READY".into())
+        );
+        assert_eq!(
+            set_fruit_on_block("potato", "POTATO", 3, None),
+            ("POTATO".into(), 3, "RIDGE_SOWN".into())
+        );
+    }
+
+    #[test]
+    fn test_set_fruit_keeps_an_explicit_ground_type() {
+        let plowed = GROUND_TYPES.iter().position(|&g| g == "PLOWED").unwrap() as u8;
+        assert_eq!(
+            set_fruit_on_block("explicit_ground", "WHEAT", 2, Some(plowed)),
+            ("WHEAT".into(), 2, "PLOWED".into())
+        );
     }
 
     #[test]
