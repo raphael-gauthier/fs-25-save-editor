@@ -118,8 +118,7 @@ pub fn write_environment_changes(
                 match tag.as_str() {
                     "snow" if in_weather && !in_forecast => {
                         if let Some(val) = changes.snow_height {
-                            let mut elem = BytesStart::new("snow");
-                            elem.push_attribute(("height", format!("{:.6}", val).as_str()));
+                            let elem = with_attribute(e, "height", &format!("{:.6}", val));
                             write_ev(&mut writer, &xml_path, Event::Empty(elem))?;
                         } else {
                             write_ev(
@@ -131,8 +130,7 @@ pub fn write_environment_changes(
                     }
                     "ground" if in_weather && !in_forecast => {
                         if let Some(val) = changes.ground_wetness {
-                            let mut elem = BytesStart::new("ground");
-                            elem.push_attribute(("wetness", format!("{:.6}", val).as_str()));
+                            let elem = with_attribute(e, "wetness", &format!("{:.6}", val));
                             write_ev(&mut writer, &xml_path, Event::Empty(elem))?;
                         } else {
                             write_ev(
@@ -268,6 +266,24 @@ fn write_forecast_section(
     )?;
 
     Ok(())
+}
+
+/// `e` with `key` set to `value`, every other attribute kept as written.
+fn with_attribute(e: &BytesStart, key: &str, value: &str) -> BytesStart<'static> {
+    let mut elem = BytesStart::new(e.name().as_ref().to_string());
+    let mut found = false;
+    for attr in e.attributes().flatten() {
+        if attr.key.as_ref() == key {
+            elem.push_attribute((key, value));
+            found = true;
+        } else {
+            elem.push_attribute(attr);
+        }
+    }
+    if !found {
+        elem.push_attribute((key, value));
+    }
+    elem
 }
 
 fn read_text_content(reader: &mut Reader<&[u8]>) -> String {

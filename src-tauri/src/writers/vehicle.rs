@@ -227,10 +227,7 @@ fn patch_vehicle_start(e: &BytesStart, change: &VehicleChange) -> BytesStart<'st
                 ));
             }
             _ => {
-                elem.push_attribute((
-                    key.as_str(),
-                    attr.value.as_ref(),
-                ));
+                elem.push_attribute(attr);
             }
         }
     }
@@ -249,10 +246,7 @@ fn patch_wearable(e: &BytesStart, change: &VehicleChange) -> BytesStart<'static>
                 elem.push_attribute(("wear", format!("{:.6}", change.wear.unwrap()).as_str()));
             }
             _ => {
-                elem.push_attribute((
-                    key.as_str(),
-                    attr.value.as_ref(),
-                ));
+                elem.push_attribute(attr);
             }
         }
     }
@@ -268,10 +262,7 @@ fn patch_wearable_start(e: &BytesStart, change: &VehicleChange) -> BytesStart<'s
                 elem.push_attribute(("damage", format!("{:.6}", change.damage.unwrap()).as_str()));
             }
             _ => {
-                elem.push_attribute((
-                    key.as_str(),
-                    attr.value.as_ref(),
-                ));
+                elem.push_attribute(attr);
             }
         }
     }
@@ -287,10 +278,7 @@ fn patch_wear_node(e: &BytesStart, change: &VehicleChange) -> BytesStart<'static
                 elem.push_attribute(("amount", format!("{:.6}", change.wear.unwrap()).as_str()));
             }
             _ => {
-                elem.push_attribute((
-                    key.as_str(),
-                    attr.value.as_ref(),
-                ));
+                elem.push_attribute(attr);
             }
         }
     }
@@ -309,10 +297,7 @@ fn patch_fill_unit(e: &BytesStart, change: &FillUnitChange) -> BytesStart<'stati
                 ));
             }
             _ => {
-                elem.push_attribute((
-                    key.as_str(),
-                    attr.value.as_ref(),
-                ));
+                elem.push_attribute(attr);
             }
         }
     }

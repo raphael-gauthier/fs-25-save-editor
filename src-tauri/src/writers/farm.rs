@@ -53,10 +53,7 @@ pub fn write_farm_finances(
                                     ));
                                 }
                                 _ => {
-                                    elem.push_attribute((
-                                        key.as_str(),
-                                        attr.value.as_ref(),
-                                    ));
+                                    elem.push_attribute(attr);
                                 }
                             }
                         }

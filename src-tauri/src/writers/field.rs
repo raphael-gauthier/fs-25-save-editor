@@ -208,10 +208,7 @@ fn patch_field(e: &BytesStart, change: &FieldChange) -> BytesStart<'static> {
                 ));
             }
             _ => {
-                elem.push_attribute((
-                    key.as_str(),
-                    attr.value.as_ref(),
-                ));
+                elem.push_attribute(attr);
             }
         }
     }
@@ -227,10 +224,7 @@ fn patch_farmland(e: &BytesStart, change: &FarmlandChange) -> BytesStart<'static
                 elem.push_attribute(("farmId", change.farm_id.to_string().as_str()));
             }
             _ => {
-                elem.push_attribute((
-                    key.as_str(),
-                    attr.value.as_ref(),
-                ));
+                elem.push_attribute(attr);
             }
         }
     }

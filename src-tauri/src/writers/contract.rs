@@ -97,10 +97,7 @@ fn patch_settings(e: &BytesStart, tag_name: &str, changes: &ContractSettingsChan
                 elem.push_attribute(("allowClearAdd", format!("{:.6}", changes.allow_clear_add.unwrap()).as_str()));
             }
             _ => {
-                elem.push_attribute((
-                    key.as_str(),
-                    attr.value.as_ref(),
-                ));
+                elem.push_attribute(attr);
             }
         }
     }
@@ -175,5 +172,23 @@ mod tests {
         assert!(raw.contains("<allowClearAdd>1.000000</allowClearAdd>"));
         assert!(raw.contains("<r_contracts>"));
         let _ = std::fs::remove_dir_all(&save);
+    }
+
+    #[test]
+    fn test_patch_settings_keeps_other_attributes_as_written() {
+        let xml = r#"<settings leaseVehicle="2.000000" note="A&amp;B"/>"#;
+        let mut reader = Reader::from_str(xml);
+        let Ok(Event::Empty(e)) = reader.read_event() else { panic!("expected <settings/>") };
+        let changes = ContractSettingsChange {
+            lease_vehicle: Some(5.0),
+            mission_per_farm: None,
+            allow_clear_add: None,
+        };
+
+        let mut writer = Writer::new(Vec::new());
+        writer.write_event(Event::Empty(patch_settings(&e, "settings", &changes))).unwrap();
+        let written = String::from_utf8(writer.into_inner()).unwrap();
+
+        assert_eq!(written, r#"<settings leaseVehicle="5.000000" note="A&amp;B"/>"#);
     }
 }

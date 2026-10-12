@@ -79,10 +79,7 @@ fn patch_collectible(e: &BytesStart, change: &CollectibleChange) -> BytesStart<'
                 elem.push_attribute(("isCollected", if change.collected { "true" } else { "false" }));
             }
             _ => {
-                elem.push_attribute((
-                    key.as_str(),
-                    attr.value.as_ref(),
-                ));
+                elem.push_attribute(attr);
             }
         }
     }

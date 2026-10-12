@@ -151,16 +151,17 @@ fn patch_animal(e: &BytesStart, change: &AnimalClusterChange) -> BytesStart<'sta
     let mut elem = BytesStart::new("animal");
     for attr in e.attributes().flatten() {
         let key = attr.key.as_ref().to_string();
-        let original = attr.value.to_string();
         let value = match key.as_str() {
             "numAnimals" => change.num_animals.map(|v| v.to_string()),
             "age" => change.age.map(|v| v.to_string()),
             "health" => change.health.map(|v| format!("{}", v.round() as i64)),
             "reproduction" => change.reproduction.map(|v| format!("{}", v.round() as i64)),
             _ => None,
+        };
+        match value {
+            Some(value) => elem.push_attribute((key.as_str(), value.as_str())),
+            None => elem.push_attribute(attr),
         }
-        .unwrap_or(original);
-        elem.push_attribute((key.as_str(), value.as_str()));
     }
     elem
 }
@@ -194,10 +195,7 @@ fn patch_amount(
         if key == amount_key {
             elem.push_attribute((amount_key, format!("{:.6}", change.amount).as_str()));
         } else {
-            elem.push_attribute((
-                key.as_str(),
-                attr.value.as_ref(),
-            ));
+            elem.push_attribute(attr);
         }
     }
     elem

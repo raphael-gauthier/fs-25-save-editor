@@ -118,10 +118,7 @@ fn patch_mission_tag(e: &BytesStart, tag_name: &str, change: &MissionChange) -> 
                 elem.push_attribute(("status", status.to_xml_str()));
             }
             _ => {
-                elem.push_attribute((
-                    key.as_str(),
-                    attr.value.as_ref(),
-                ));
+                elem.push_attribute(attr);
             }
         }
     }
@@ -137,10 +134,7 @@ fn patch_harvest(e: &BytesStart, change: &MissionChange) -> BytesStart<'static> 
                 elem.push_attribute(("depositedLiters", format!("{:.6}", change.deposited_liters.unwrap()).as_str()));
             }
             _ => {
-                elem.push_attribute((
-                    key.as_str(),
-                    attr.value.as_ref(),
-                ));
+                elem.push_attribute(attr);
             }
         }
     }
@@ -162,10 +156,7 @@ fn patch_info(e: &BytesStart, change: &MissionChange) -> BytesStart<'static> {
                 elem.push_attribute(("reimbursement", format!("{:.6}", change.reimbursement.unwrap()).as_str()));
             }
             _ => {
-                elem.push_attribute((
-                    key.as_str(),
-                    attr.value.as_ref(),
-                ));
+                elem.push_attribute(attr);
             }
         }
     }

@@ -218,10 +218,7 @@ fn patch_placeable_start(e: &BytesStart, change: &PlaceableChange) -> BytesStart
                 ));
             }
             _ => {
-                elem.push_attribute((
-                    key.as_str(),
-                    attr.value.as_ref(),
-                ));
+                elem.push_attribute(attr);
             }
         }
     }
@@ -238,10 +235,7 @@ fn patch_construction_input_complete(e: &BytesStart) -> BytesStart<'static> {
                 elem.push_attribute(("remainingAmount", "0.000000"));
             }
             _ => {
-                elem.push_attribute((
-                    key.as_str(),
-                    attr.value.as_ref(),
-                ));
+                elem.push_attribute(attr);
             }
         }
     }
@@ -260,10 +254,7 @@ fn patch_storage_node(e: &BytesStart, change: &ProductionStockChange) -> BytesSt
                 ));
             }
             _ => {
-                elem.push_attribute((
-                    key.as_str(),
-                    attr.value.as_ref(),
-                ));
+                elem.push_attribute(attr);
             }
         }
     }

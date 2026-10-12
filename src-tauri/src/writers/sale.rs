@@ -153,10 +153,7 @@ fn patch_item_start(e: &BytesStart, change: &SaleChange) -> BytesStart<'static> 
                 elem.push_attribute(("timeLeft", change.time_left.unwrap().to_string().as_str()));
             }
             _ => {
-                elem.push_attribute((
-                    key.as_str(),
-                    attr.value.as_ref(),
-                ));
+                elem.push_attribute(attr);
             }
         }
     }

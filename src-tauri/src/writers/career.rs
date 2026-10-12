@@ -40,7 +40,7 @@ pub fn write_career_money(path: &Path, money: f64) -> Result<(), AppError> {
                         if key == "money" {
                             elem.push_attribute(("money", format!("{:.6}", money).as_str()));
                         } else {
-                            elem.push_attribute((key.as_str(), attr.value.as_ref()));
+                            elem.push_attribute(attr);
                         }
                     }
                     writer.write_event(Event::Start(elem)).map_err(write_err)?;
@@ -81,7 +81,7 @@ pub fn write_career_money(path: &Path, money: f64) -> Result<(), AppError> {
                         if key == "money" {
                             elem.push_attribute(("money", format!("{:.6}", money).as_str()));
                         } else {
-                            elem.push_attribute((key.as_str(), attr.value.as_ref()));
+                            elem.push_attribute(attr);
                         }
                     }
                     writer.write_event(Event::Empty(elem)).map_err(write_err)?;

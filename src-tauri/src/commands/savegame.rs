@@ -1203,6 +1203,24 @@ mod tests {
     }
 
     #[test]
+    fn test_save_changes_keeps_escaped_attribute_values() {
+        let (originals, save, modified) = save_reference_with_probes("fs25_test_save_probes");
+        for (name, original) in &originals {
+            if !modified.contains(name) {
+                continue;
+            }
+            let written = std::fs::read_to_string(save.join(name)).unwrap();
+            assert!(!written.contains("&amp;amp;"), "{name}: attribute value escaped twice");
+            assert_eq!(
+                written.matches(PROBE).count(),
+                original.matches(PROBE).count(),
+                "{name}: probe attribute not preserved"
+            );
+        }
+        let _ = std::fs::remove_dir_all(save.parent().unwrap());
+    }
+
+    #[test]
     fn test_save_changes_keeps_utf8_bom() {
         let (originals, save, modified) = save_reference_with_probes("fs25_test_save_bom");
         let mut checked = 0;
