@@ -37,6 +37,46 @@ pub enum SiloStorageKind {
     Extension,
 }
 
+/// Capacity and accepted fill types of one farm silo storage, from its
+/// placeable XML.
+#[derive(Debug, Clone, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SiloCapacity {
+    pub placeable_index: usize,
+    pub kind: SiloStorageKind,
+    pub index: u32,
+    /// Total capacity, shared by the fill types when `shared`
+    pub capacity: f64,
+    /// Fill types with a capacity of their own
+    pub fill_type_capacities: Vec<FillTypeCapacity>,
+    /// Fill types the storage accepts
+    pub fill_types: Vec<String>,
+    /// Whether several fill types fit at once (`supportsMultipleFillTypes`)
+    pub shared: bool,
+}
+
+#[derive(Debug, Clone, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FillTypeCapacity {
+    pub fill_type: String,
+    pub capacity: f64,
+}
+
+/// How many objects (bales, pallets) a placeable's object storage holds.
+#[derive(Debug, Clone, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct ObjectStorageCapacity {
+    pub placeable_index: usize,
+    pub capacity: u32,
+}
+
+#[derive(Debug, Clone, Default, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct StorageCapacities {
+    pub silos: Vec<SiloCapacity>,
+    pub object_storages: Vec<ObjectStorageCapacity>,
+}
+
 /// Fill levels of one farm silo storage. Only fill types holding something
 /// are saved, so a fill type the storage accepts may be missing.
 #[derive(Debug, Clone, Serialize, Deserialize)]
