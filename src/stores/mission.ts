@@ -71,6 +71,7 @@ export const useMissionStore = defineStore("mission", () => {
       if (m.status !== orig.status) count++;
       if (m.reimbursement !== orig.reimbursement) count++;
       if (m.depositedLiters !== orig.depositedLiters) count++;
+      if (m.endDay !== orig.endDay) count++;
     }
     for (let i = 0; i < collectibles.value.length; i++) {
       if (collectibles.value[i].collected !== originalCollectibles.value[i]?.collected) {
@@ -91,7 +92,8 @@ export const useMissionStore = defineStore("mission", () => {
         m.completion !== orig.completion ||
         m.status !== orig.status ||
         m.reimbursement !== orig.reimbursement ||
-        m.depositedLiters !== orig.depositedLiters
+        m.depositedLiters !== orig.depositedLiters ||
+        m.endDay !== orig.endDay
       );
     });
   }
@@ -295,7 +297,8 @@ export const useMissionStore = defineStore("mission", () => {
         m.completion !== orig.completion ||
         m.status !== orig.status ||
         m.reimbursement !== orig.reimbursement ||
-        m.depositedLiters !== orig.depositedLiters;
+        m.depositedLiters !== orig.depositedLiters ||
+        m.endDay !== orig.endDay;
       if (!changed) continue;
 
       const change: MissionChangePayload = { uniqueId: m.uniqueId };
@@ -304,6 +307,7 @@ export const useMissionStore = defineStore("mission", () => {
       if (m.status !== orig.status) change.status = missionStatusToString(m.status);
       if (m.reimbursement !== orig.reimbursement) change.reimbursement = m.reimbursement;
       if (m.depositedLiters !== orig.depositedLiters) change.depositedLiters = m.depositedLiters ?? undefined;
+      if (m.endDay !== orig.endDay && m.endDay !== null) change.endDay = m.endDay;
       missionChanges.push(change);
     }
     if (missionChanges.length > 0) {

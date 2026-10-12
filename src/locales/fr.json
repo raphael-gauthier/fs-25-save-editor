@@ -640,7 +640,12 @@
       "subsoiler": "Sous-solage",
       "bale": "Pressage de balles",
       "hoe": "Binage"
-    }
+    },
+    "deadline": "Échéance",
+    "deadlineDay": "Jour {day} à {time}",
+    "daysLeft": "dans {count} jour(s)",
+    "deadlinePassed": "dépassée",
+    "deadlineShift": "{days} jour"
   },
   "collectible": {
     "title": "Collectibles",

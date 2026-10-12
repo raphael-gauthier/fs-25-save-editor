@@ -560,6 +560,10 @@ export interface Mission {
   fruitType: string | null;
   expectedLiters: number | null;
   depositedLiters: number | null;
+  /** Deadline: the monotonic day it ends */
+  endDay: number | null;
+  /** Deadline time of day, in ms */
+  endDayTime: number | null;
 }
 
 export interface Collectible {
@@ -580,6 +584,7 @@ export interface MissionChangePayload {
   status?: string;
   reimbursement?: number;
   depositedLiters?: number;
+  endDay?: number;
 }
 
 export interface CollectibleChangePayload {

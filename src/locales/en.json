@@ -640,7 +640,12 @@
       "subsoiler": "Subsoiling",
       "bale": "Baling",
       "hoe": "Hoeing"
-    }
+    },
+    "deadline": "Deadline",
+    "deadlineDay": "Day {day} at {time}",
+    "daysLeft": "in {count} day(s)",
+    "deadlinePassed": "passed",
+    "deadlineShift": "{days} day"
   },
   "collectible": {
     "title": "Collectibles",
