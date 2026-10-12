@@ -5,6 +5,7 @@ use quick_xml::events::{BytesStart, Event};
 use quick_xml::{Reader, Writer};
 
 use crate::error::AppError;
+use crate::writers::replace_xml_file;
 use crate::models::changes::{EconomyChanges, GreatDemandAddition, GreatDemandChange};
 
 pub fn write_economy_changes(
@@ -122,10 +123,7 @@ pub fn write_economy_changes(
         }
     }
 
-    let output = writer.into_inner();
-    let tmp_path = xml_path.with_extension("xml.tmp");
-    std::fs::write(&tmp_path, &output)?;
-    std::fs::rename(&tmp_path, &xml_path)?;
+    replace_xml_file(&xml_path, &content, &writer.into_inner())?;
 
     Ok(())
 }

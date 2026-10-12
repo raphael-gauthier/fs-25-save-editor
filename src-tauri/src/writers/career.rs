@@ -4,6 +4,7 @@ use quick_xml::events::{BytesStart, BytesText, Event};
 use quick_xml::{Reader, Writer};
 
 use crate::error::AppError;
+use crate::writers::replace_xml_file;
 
 /// Modifies the money in careerSavegame.xml.
 /// Supports both formats:
@@ -101,10 +102,7 @@ pub fn write_career_money(path: &Path, money: f64) -> Result<(), AppError> {
         }
     }
 
-    let output = writer.into_inner();
-    let tmp_path = xml_path.with_extension("xml.tmp");
-    std::fs::write(&tmp_path, &output)?;
-    std::fs::rename(&tmp_path, &xml_path)?;
+    replace_xml_file(&xml_path, &content, &writer.into_inner())?;
 
     Ok(())
 }

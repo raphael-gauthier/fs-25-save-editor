@@ -1136,4 +1136,85 @@ mod tests {
 
         cleanup_writable_fixture(&path);
     }
+
+    const PROBE: &str = r#"editorProbe="A&amp;B""#;
+
+    /// The reference savegame's XML files, with an attribute holding an escaped
+    /// `&` added to every element, saved through every domain's writer.
+    /// Returns (original files, written save dir, files reported modified).
+    fn save_reference_with_probes(dir_name: &str) -> (Vec<(String, String)>, PathBuf, Vec<String>) {
+        let reference = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("..").join("docs").join("savegames");
+        let save = std::env::temp_dir().join(dir_name).join("savegame1");
+        let _ = std::fs::remove_dir_all(save.parent().unwrap());
+        std::fs::create_dir_all(&save).unwrap();
+
+        let start_tag = regex_lite::Regex::new(r"<([A-Za-z_][\w.\-]*)").unwrap();
+        let mut originals = Vec::new();
+        for entry in std::fs::read_dir(&reference).unwrap() {
+            let path = entry.unwrap().path();
+            if path.extension().and_then(|e| e.to_str()) != Some("xml") {
+                continue;
+            }
+            let name = path.file_name().unwrap().to_string_lossy().to_string();
+            let content = std::fs::read_to_string(&path).unwrap();
+            let probed = start_tag.replace_all(&content, format!("<${{1}} {}", PROBE).as_str()).to_string();
+            std::fs::write(save.join(&name), &probed).unwrap();
+            originals.push((name, probed));
+        }
+
+        let path = save.display().to_string();
+        let data = serde_json::to_value(load_savegame(path.clone()).unwrap()).unwrap();
+        let first = |k: &str| data[k][0].clone();
+        // Edit every animal cluster and every food, water and meadow stock.
+        let bump = |stocks: &serde_json::Value| -> Vec<serde_json::Value> {
+            stocks.as_array().unwrap().iter()
+                .map(|s| serde_json::json!({ "fillType": s["fillType"], "amount": s["amount"].as_f64().unwrap() + 1.0 }))
+                .collect()
+        };
+        let husbandries: Vec<serde_json::Value> = data["husbandries"].as_array().unwrap().iter()
+            .map(|h| serde_json::json!({
+                "placeableIndex": h["placeableIndex"],
+                "clusters": h["clusters"].as_array().unwrap().iter()
+                    .map(|c| serde_json::json!({ "index": c["index"], "numAnimals": 3, "age": 4, "health": 90.0, "reproduction": 10.0 }))
+                    .collect::<Vec<_>>(),
+                "food": bump(&h["food"]),
+                "water": bump(&h["water"]),
+                "meadow": bump(&h["meadow"]),
+            }))
+            .collect();
+        let changes = serde_json::json!({
+            "finance": { "money": 4242.5, "loan": 1000.0 },
+            "environment": { "dayTime": 123456.0, "currentDay": 7, "snowHeight": 0.1, "groundWetness": 0.2 },
+            "contractSettings": { "leaseVehicle": 0.3, "missionPerFarm": 4.0, "allowClearAdd": 1.0 },
+            "vehicles": [{ "uniqueId": first("vehicles")["uniqueId"], "delete": false, "age": 9.0, "price": 1.0, "operatingTime": 1.0, "damage": 0.5, "wear": 0.25 }],
+            "sales": [{ "index": 0, "delete": false, "price": 777, "damage": 0.1, "wear": 0.1, "age": 2, "operatingTime": 1.0, "timeLeft": 3 }],
+            "fields": [{ "id": first("fields")["id"], "growthState": 3, "weedState": 1, "limeLevel": 1, "plowLevel": 1 }],
+            "farmlands": [{ "id": first("farmlands")["id"], "farmId": 1 }],
+            "placeables": [{ "index": 0, "farmId": 1, "price": 5.0, "completeConstruction": false }],
+            "husbandries": husbandries,
+            "missions": [{ "uniqueId": first("missions")["uniqueId"], "reward": 1234.0 }],
+            "collectibles": [{ "index": first("collectibles")["index"], "collected": true }],
+            "economy": { "greatDemandChanges": [{ "index": 0, "demandMultiplier": 1.5 }] },
+        });
+        let result = save_changes(path, serde_json::from_value(changes).unwrap()).unwrap();
+        assert!(result.errors.is_empty(), "{:?}", result.errors);
+        assert_eq!(result.files_modified.len(), 12, "{:?}", result.files_modified);
+        (originals, save, result.files_modified)
+    }
+
+    #[test]
+    fn test_save_changes_keeps_utf8_bom() {
+        let (originals, save, modified) = save_reference_with_probes("fs25_test_save_bom");
+        let mut checked = 0;
+        for (name, original) in &originals {
+            if !modified.contains(name) || !original.starts_with('\u{feff}') {
+                continue;
+            }
+            let written = std::fs::read(save.join(name)).unwrap();
+            assert!(written.starts_with(&[0xEF, 0xBB, 0xBF]), "{name}: UTF-8 BOM dropped");
+            checked += 1;
+        }
+        assert!(checked >= 10, "only {checked} modified files had a BOM to check");
+        let _ = std::fs::remove_dir_all(save.parent().unwrap());
+    }
 }

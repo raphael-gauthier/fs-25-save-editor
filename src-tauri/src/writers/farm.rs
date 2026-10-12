@@ -4,6 +4,7 @@ use quick_xml::events::{BytesStart, Event};
 use quick_xml::{Reader, Writer};
 
 use crate::error::AppError;
+use crate::writers::replace_xml_file;
 
 /// Modifies money and/or loan in farms.xml for the specified farm.
 /// Uses patch strategy: reads, modifies only the target attributes, rewrites atomically.
@@ -100,10 +101,7 @@ pub fn write_farm_finances(
         }
     }
 
-    let output = writer.into_inner();
-    let tmp_path = xml_path.with_extension("xml.tmp");
-    std::fs::write(&tmp_path, &output)?;
-    std::fs::rename(&tmp_path, &xml_path)?;
+    replace_xml_file(&xml_path, &content, &writer.into_inner())?;
 
     Ok(())
 }
