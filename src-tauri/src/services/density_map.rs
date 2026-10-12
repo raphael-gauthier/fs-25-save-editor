@@ -515,7 +515,7 @@ fn aggregate_single_farmland(
         .iter()
         .map(|(&idx, &(count, growth_sum))| {
             let name = layout.type_name(idx).cloned().unwrap_or_default();
-            let harvest_ready_state = layout.fruit_at(idx).and_then(|f| f.harvest_ready_state);
+            let harvest_ready_state = layout.fruit_at(idx).and_then(|f| f.harvest_ready_state());
             FruitCoverage {
                 fruit_type: name,
                 percentage: (count as f32 / total) * 100.0,
@@ -800,11 +800,10 @@ fn apply_density_edits(
                     let Some(fruit) = layout.fruit_at(type_index).filter(|f| f.shown_on_map) else {
                         return;
                     };
-                    let Some(ready) = fruit.harvest_ready_state else { return };
+                    let Some(ready) = fruit.harvest_ready_state() else { return };
                     fruits_gdm.set_pixel(hx, hy, bits.encode(current, type_index, ready));
                     if let Some(ground) = fruit
-                        .harvest_ready_ground
-                        .as_deref()
+                        .ground_for_state(ready)
                         .and_then(|g| GROUND_TYPES.iter().position(|&t| t == g))
                     {
                         harvest_ready_ground.push((hx, hy, ground as u16));
@@ -1095,12 +1094,21 @@ mod tests {
     ];
     const BARLEY: usize = 9;
 
+    /// A fruit whose state `ready` is harvest ready and changes the ground
+    /// to `ground`, followed by a withered and a cut state.
     fn growth(name: &str, shown_on_map: bool, ready: u8, ground: Option<&str>) -> FruitGrowth {
+        let state = |i: u8| crate::parsers::foliage::FruitState {
+            name: format!("state{}", i),
+            is_harvest_ready: i == ready,
+            is_withered: i == ready + 1,
+            is_cut: i == ready + 2,
+        };
         FruitGrowth {
             name: name.to_string(),
             shown_on_map,
-            harvest_ready_state: Some(ready),
-            harvest_ready_ground: ground.map(str::to_string),
+            states: (1..=ready + 2).map(state).collect(),
+            sowing_ground: "SOWN".to_string(),
+            ground_change: ground.map(|g| (ready, g.to_string())),
         }
     }
 
@@ -1435,8 +1443,8 @@ mod tests {
         let mut checked = 0;
         for d in aggregate_field_data(&save, &game, &map).unwrap() {
             for crop in &d.fruit_distribution {
-                assert_eq!(crop.harvest_ready_state, layout.fruits[&crop.fruit_type].harvest_ready_state);
-                let Some(ready) = crop.harvest_ready_state else { continue };
+                let ready = crop.harvest_ready_state.expect("every crop has a harvest-ready state");
+                assert_eq!(Some(ready), layout.fruits[&crop.fruit_type].harvest_ready_state());
                 assert_eq!(crop.avg_growth, ready as f32, "{} on farmland {}", crop.fruit_type, d.farmland_id);
                 checked += 1;
             }

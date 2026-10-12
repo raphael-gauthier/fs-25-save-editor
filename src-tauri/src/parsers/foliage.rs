@@ -4,8 +4,20 @@
 
 use quick_xml::events::Event;
 use quick_xml::Reader;
+use serde::Serialize;
 
 use crate::parsers::attrs::attr_str;
+
+/// One growth state of a fruit type, from a `<foliageState>`.
+#[derive(Debug, Clone, PartialEq, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct FruitState {
+    /// Foliage state name, e.g. "greenSmall" or "harvestReady".
+    pub name: String,
+    pub is_harvest_ready: bool,
+    pub is_withered: bool,
+    pub is_cut: bool,
+}
 
 /// Growth information of one fruit type, from its foliage XML.
 #[derive(Debug, Clone, PartialEq)]
@@ -14,12 +26,36 @@ pub struct FruitGrowth {
     pub name: String,
     /// `shownOnMap`: false for background fruits such as meadow.
     pub shown_on_map: bool,
-    /// First growth state flagged `isHarvestReady` (states are numbered from 1
-    /// in file order, as FruitTypeDesc.lua does).
-    pub harvest_ready_state: Option<u8>,
-    /// Ground type the field shows once the fruit is harvest ready: the
-    /// `groundType` of the last state up to `harvest_ready_state` declaring one.
-    pub harvest_ready_ground: Option<String>,
+    /// Growth states of the first foliage layer. State `n` (as stored in the
+    /// density map) is `states[n - 1]`, as FruitTypeDesc.lua numbers them.
+    pub states: Vec<FruitState>,
+    /// Ground type sowing leaves (`seeding#defaultSowingGroundType`, SOWN by default).
+    pub sowing_ground: String,
+    /// The one state whose `groundType` the field switches to, and that ground type.
+    pub ground_change: Option<(u8, String)>,
+}
+
+impl FruitGrowth {
+    /// First growth state flagged `isHarvestReady`.
+    pub fn harvest_ready_state(&self) -> Option<u8> {
+        self.states
+            .iter()
+            .position(|s| s.is_harvest_ready)
+            .map(|i| (i + 1) as u8)
+    }
+
+    /// Ground type a field shows with this fruit in `state`: the sowing ground
+    /// until the ground change state, the changed ground from then on. None
+    /// for state 0 (no plant).
+    pub fn ground_for_state(&self, state: u8) -> Option<&str> {
+        if state == 0 {
+            return None;
+        }
+        match &self.ground_change {
+            Some((from, ground)) if state >= *from => Some(ground),
+            _ => Some(&self.sowing_ground),
+        }
+    }
 }
 
 /// Returns the uppercased names of the foliage types in the map's fruit
@@ -56,22 +92,25 @@ pub fn parse_fruit_layer_types(i3d: &str) -> Vec<String> {
     names
 }
 
-/// Parses a fruit type's foliage XML. Returns None when it declares no fruit type.
+/// Parses a fruit type's foliage XML. Returns None when it declares no fruit
+/// type. The `<fruitType>` and `<foliageLayer>` elements come in either order.
 pub fn parse_fruit_growth(xml: &str) -> Option<FruitGrowth> {
     let mut reader = Reader::from_str(xml);
-    let mut growth: Option<FruitGrowth> = None;
-    let mut layer_depth = 0u32;
+    let mut name: Option<String> = None;
+    let mut shown_on_map = true;
+    let mut sowing_ground: Option<String> = None;
+    let mut states: Vec<FruitState> = Vec::new();
+    let mut ground_change: Option<(u8, String)> = None;
+    let mut in_layer = false;
     let mut layers_seen = 0u32;
-    let mut state = 0u8;
-    let mut last_ground: Option<String> = None;
 
     loop {
         let (e, is_empty) = match reader.read_event() {
             Ok(Event::Start(e)) => (e, false),
             Ok(Event::Empty(e)) => (e, true),
             Ok(Event::End(ref e)) => {
-                if e.name().as_ref() == "foliageLayer" && layer_depth > 0 {
-                    layer_depth -= 1;
+                if e.name().as_ref() == "foliageLayer" {
+                    in_layer = false;
                 }
                 continue;
             }
@@ -80,68 +119,74 @@ pub fn parse_fruit_growth(xml: &str) -> Option<FruitGrowth> {
         };
 
         match e.name().as_ref() {
-            "fruitType" if growth.is_none() => {
-                growth = Some(FruitGrowth {
-                    name: attr_str(&e, "name").to_uppercase(),
-                    shown_on_map: attr_str(&e, "shownOnMap") != "false",
-                    harvest_ready_state: None,
-                    harvest_ready_ground: None,
-                });
+            "fruitType" if name.is_none() => {
+                name = Some(attr_str(&e, "name").to_uppercase());
+                shown_on_map = attr_str(&e, "shownOnMap") != "false";
+            }
+            "seeding" if sowing_ground.is_none() => {
+                let ground = attr_str(&e, "defaultSowingGroundType");
+                if !ground.is_empty() {
+                    sowing_ground = Some(ground);
+                }
             }
             "foliageLayer" => {
                 layers_seen += 1;
-                if !is_empty {
-                    layer_depth += 1;
-                }
+                in_layer = !is_empty && layers_seen == 1;
             }
             // Growth states are those of the first foliage layer only
-            "foliageState" if layer_depth > 0 && layers_seen == 1 => {
-                state = state.saturating_add(1);
+            "foliageState" if in_layer => {
+                states.push(FruitState {
+                    name: attr_str(&e, "name"),
+                    is_harvest_ready: attr_str(&e, "isHarvestReady") == "true",
+                    is_withered: attr_str(&e, "isWithered") == "true",
+                    is_cut: attr_str(&e, "isCut") == "true",
+                });
+                // The game keeps the last declared change (FruitTypeDesc.lua)
                 let ground = attr_str(&e, "groundType");
-                if let Some(ref mut g) = growth {
-                    if g.harvest_ready_state.is_none() {
-                        if !ground.is_empty() {
-                            last_ground = Some(ground);
-                        }
-                        if attr_str(&e, "isHarvestReady") == "true" {
-                            g.harvest_ready_state = Some(state);
-                            g.harvest_ready_ground = last_ground.clone();
-                        }
-                    }
+                if !ground.is_empty() {
+                    ground_change = Some((states.len() as u8, ground));
                 }
             }
             _ => {}
         }
     }
 
-    growth.filter(|g| !g.name.is_empty())
+    let name = name.filter(|n| !n.is_empty())?;
+    Some(FruitGrowth {
+        name,
+        shown_on_map,
+        states,
+        sowing_ground: sowing_ground.unwrap_or_else(|| "SOWN".to_string()),
+        ground_change,
+    })
 }
 
 #[cfg(test)]
 mod tests {
     use super::*;
 
-    // Shape of data/maps/mapUS/mapUS.i3d: the weed and stone layers carry no
-    // type index channels, the fruit layer does.
+    // Shape of data/maps/mapUS/mapUS.i3d: decoBush, weed and stone have
+    // layers of their own without type index channels.
     const I3D: &str = r#"<?xml version="1.0" encoding="iso-8859-1"?>
 <i3D name="mapUS">
   <Scene>
     <TerrainTransformGroup name="terrain">
       <Layers>
-        <FoliageMultiLayer densityMapId="639" numChannels="4" numTypeIndexChannels="0">
-          <FoliageType name="weed" foliageXmlId="1"/>
-        </FoliageMultiLayer>
-        <FoliageMultiLayer densityMapId="640" numChannels="11" numTypeIndexChannels="6" compressionChannels="6">
-          <FoliageType name="decoBush" foliageXmlId="2"/>
-          <FoliageType name="meadow" foliageXmlId="3">
-            <FoliageSubType name="x"/>
-          </FoliageType>
-          <FoliageType name="wheat" foliageXmlId="4"/>
-          <FoliageType name="sugarBeet" foliageXmlId="5"/>
-        </FoliageMultiLayer>
-        <FoliageMultiLayer densityMapId="642" numChannels="3" numTypeIndexChannels="0">
-          <FoliageType name="stone" foliageXmlId="6"/>
-        </FoliageMultiLayer>
+          <FoliageMultiLayer densityMapId="639" numChannels="4" numTypeIndexChannels="0">
+            <FoliageType name="decoBush" foliageXmlId="581"/>
+          </FoliageMultiLayer>
+          <FoliageMultiLayer densityMapId="640" numChannels="11" numTypeIndexChannels="6" compressionChannels="6">
+            <FoliageType name="decoFoliage" foliageXmlId="582"/>
+            <FoliageType name="meadow" foliageXmlId="584"/>
+            <FoliageType name="wheat" foliageXmlId="588"/>
+            <FoliageType name="sugarBeet" foliageXmlId="593"/>
+          </FoliageMultiLayer>
+          <FoliageMultiLayer densityMapId="641" numChannels="4" numTypeIndexChannels="0">
+            <FoliageType name="weed" foliageXmlId="612"/>
+          </FoliageMultiLayer>
+          <FoliageMultiLayer densityMapId="642" numChannels="3" numTypeIndexChannels="0">
+            <FoliageType name="stone" foliageXmlId="613"/>
+          </FoliageMultiLayer>
       </Layers>
     </TerrainTransformGroup>
   </Scene>
@@ -151,46 +196,60 @@ mod tests {
     fn test_fruit_layer_types_in_i3d_order() {
         assert_eq!(
             parse_fruit_layer_types(I3D),
-            vec!["DECOBUSH", "MEADOW", "WHEAT", "SUGARBEET"]
+            vec!["DECOFOLIAGE", "MEADOW", "WHEAT", "SUGARBEET"]
         );
     }
 
-    // Shape of data/foliage/wheat/wheat.xml
+    // Shape of data/foliage/wheat/wheat.xml (states trimmed)
     const WHEAT: &str = r#"<?xml version="1.0" encoding="utf-8"?>
 <foliageType>
     <fruitType name="wheat" shownOnMap="true" useForFieldMissions="true">
-        <harvest litersPerSqm="0.89"/>
+        <harvest litersPerSqm="0.89" cutHeight="0.15" chopperType="CHOPPER_STRAW"/>
+        <seeding directionSnapAngle="0" needsRolling="true" litersPerSqm="0.0308" isAvailable="true"/>
     </fruitType>
-    <foliageLayer densityMapChannelOffset="0" numDensityMapChannels="4">
-        <foliageState name="invisible" isGrowing="true"/>
-        <foliageState name="greenSmall" isGrowing="true">
+    <foliageLayer densityMapChannelOffset="0" numDensityMapChannels="4" numBlocksPerUnit="1.8">
+        <foliageState name="invisible" isGrowing="true" allowsWeeding="true" allowsHoeing="true"/>
+        <foliageState name="greenSmall" numBlocksPerUnit="3.2" isGrowing="true" allowsWeeding="true" allowsHoeing="true">
             <foliageShape><foliageLod/></foliageShape>
         </foliageState>
-        <foliageState name="greenMiddle" isGrowing="true"/>
-        <foliageState name="harvestReady" isHarvestReady="true" groundType="HARVEST_READY"/>
+        <foliageState name="harvestReady" isGrowing="true" isHarvestReady="true" groundType="HARVEST_READY"/>
         <foliageState name="dead" isWithered="true"/>
         <foliageState name="harvested" isCut="true"/>
     </foliageLayer>
 </foliageType>"#;
 
     #[test]
-    fn test_fruit_growth_harvest_ready_state_is_one_based() {
+    fn test_wheat_states_are_one_based_with_flags() {
         let growth = parse_fruit_growth(WHEAT).unwrap();
         assert_eq!(growth.name, "WHEAT");
         assert!(growth.shown_on_map);
-        assert_eq!(growth.harvest_ready_state, Some(4));
-        assert_eq!(growth.harvest_ready_ground.as_deref(), Some("HARVEST_READY"));
+        let names: Vec<&str> = growth.states.iter().map(|s| s.name.as_str()).collect();
+        assert_eq!(names, vec!["invisible", "greenSmall", "harvestReady", "dead", "harvested"]);
+        assert_eq!(growth.harvest_ready_state(), Some(3));
+        assert!(growth.states[3].is_withered && growth.states[4].is_cut);
     }
 
-    // Shape of data/foliage/potato/potato.xml: harvest ready only once the
-    // haulm is cut, and the haulm layer has states of its own.
+    #[test]
+    fn test_wheat_ground_is_sown_then_harvest_ready() {
+        let growth = parse_fruit_growth(WHEAT).unwrap();
+        assert_eq!(growth.ground_for_state(0), None);
+        assert_eq!(growth.ground_for_state(2), Some("SOWN"));
+        assert_eq!(growth.ground_for_state(3), Some("HARVEST_READY"));
+        // The ground stays changed once harvested
+        assert_eq!(growth.ground_for_state(5), Some("HARVEST_READY"));
+    }
+
+    // Shape of data/foliage/potato/potato.xml (states trimmed): harvest ready
+    // only once the haulm is cut, a haulm layer with states of its own, and
+    // no ground change.
     const POTATO: &str = r#"<foliageType>
-    <fruitType name="potato">
+    <fruitType name="potato" shownOnMap="true" useForFieldMissions="true">
+        <seeding directionSnapAngle="90" needsRolling="false" litersPerSqm="0.3733" isAvailable="true" defaultSowingGroundType="RIDGE_SOWN"/>
     </fruitType>
     <foliageLayer densityMapChannelOffset="0" numDensityMapChannels="4">
         <foliageState name="invisible" isGrowing="true" allowsHoeing="true"/>
-        <foliageState name="greenSmall" groundType="RIDGE_SOWN" isGrowing="true"/>
-        <foliageState name="harvestReady" isPreparable="true"/>
+        <foliageState name="greenSmall" isGrowing="true" allowsHoeing="true"/>
+        <foliageState name="harvestReady" isGrowing="true" isPreparable="true"/>
         <foliageState name="dead" isWithered="true"/>
         <foliageState name="harvested" isCut="true"/>
         <foliageState name="cutHaulm" isHarvestReady="true" isPrepared="true"/>
@@ -201,12 +260,37 @@ mod tests {
 </foliageType>"#;
 
     #[test]
-    fn test_fruit_growth_ignores_later_layers_and_uses_last_ground_type() {
+    fn test_potato_ignores_the_haulm_layer_and_sows_ridges() {
         let growth = parse_fruit_growth(POTATO).unwrap();
-        assert_eq!(growth.name, "POTATO");
-        assert!(growth.shown_on_map);
-        assert_eq!(growth.harvest_ready_state, Some(6));
-        assert_eq!(growth.harvest_ready_ground.as_deref(), Some("RIDGE_SOWN"));
+        assert_eq!(growth.states.len(), 6);
+        assert_eq!(growth.harvest_ready_state(), Some(6));
+        assert_eq!(growth.ground_change, None);
+        assert_eq!(growth.ground_for_state(6), Some("RIDGE_SOWN"));
+    }
+
+    // Shape of data/foliage/grass/grass.xml: the layer comes before the
+    // fruit type, and the ground change is on an early state.
+    const GRASS: &str = r#"<foliageType>
+    <foliageLayer densityMapChannelOffset="0" numDensityMapChannels="4">
+        <foliageState name="invisible" isGrowing="true" />
+        <foliageState name="greenSmall" isGrowing="true" regrowthStart="true" groundType="GRASS" groundTypeMask="GRASS GRASS_CUT SOWN DIRECT_SOWN ROLLER_LINES"/>
+        <foliageState name="greenMiddle" isGrowing="true" isHarvestReady="true" yieldScale="0.5"/>
+        <foliageState name="harvestReady" isGrowing="true" isHarvestReady="true"/>
+        <foliageState name="cut" isCut="true" isDestructedByDisaster="true" isMulched="true"/>
+        <foliageState name="cutRolled" isRolledCut="true"/>
+    </foliageLayer>
+    <fruitType name="grass" shownOnMap="true" useForFieldMissions="false">
+        <seeding directionSnapAngle="0" litersPerSqm="0.012" isAvailable="true" plantsWeed="false"/>
+    </fruitType>
+</foliageType>"#;
+
+    #[test]
+    fn test_grass_layer_before_fruit_type() {
+        let growth = parse_fruit_growth(GRASS).unwrap();
+        assert_eq!(growth.name, "GRASS");
+        assert_eq!(growth.harvest_ready_state(), Some(3));
+        assert_eq!(growth.ground_for_state(1), Some("SOWN"));
+        assert_eq!(growth.ground_for_state(4), Some("GRASS"));
     }
 
     #[test]
@@ -215,8 +299,7 @@ mod tests {
             <foliageLayer><foliageState name="a"/><foliageState name="b" isHarvestReady="true"/></foliageLayer></foliageType>"#;
         let growth = parse_fruit_growth(xml).unwrap();
         assert!(!growth.shown_on_map);
-        assert_eq!(growth.harvest_ready_state, Some(2));
-        assert_eq!(growth.harvest_ready_ground, None);
+        assert_eq!(growth.harvest_ready_state(), Some(2));
     }
 
     #[test]
