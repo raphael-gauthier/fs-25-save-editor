@@ -353,6 +353,42 @@ mod tests {
     }
 
     #[test]
+    fn test_scan_mod_zip_lists_vehicle_xml_entries() {
+        use std::io::Write;
+        use zip::write::SimpleFileOptions;
+
+        let dir = std::env::temp_dir().join("fs25_test_catalog_mod_zip");
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
+        let zip_path = dir.join("FS25_testMod.zip");
+
+        let mut writer = zip::ZipWriter::new(fs::File::create(&zip_path).unwrap());
+        let options = SimpleFileOptions::default();
+        writer.start_file("vehicles/tractor.xml", options).unwrap();
+        writer
+            .write_all(
+                br#"<vehicle><storeData><name>Mod Tractor</name><brand>LIZARD</brand><category>tractorsS</category><price>42000</price></storeData></vehicle>"#,
+            )
+            .unwrap();
+        writer.start_file("__MACOSX/vehicles/tractor.xml", options).unwrap();
+        writer.write_all(b"ignored").unwrap();
+        writer.start_file("modDesc.txt", options).unwrap();
+        writer.write_all(b"not xml").unwrap();
+        writer.finish().unwrap();
+
+        let mut catalog = Vec::new();
+        scan_mod_zip(&zip_path, &mut catalog);
+        let _ = fs::remove_dir_all(&dir);
+
+        assert_eq!(catalog.len(), 1);
+        assert_eq!(catalog[0].name, "Mod Tractor");
+        assert_eq!(
+            catalog[0].xml_filename,
+            "$moddir$FS25_testMod/vehicles/tractor.xml"
+        );
+    }
+
+    #[test]
     fn test_clean_localized_name() {
         assert_eq!(clean_localized_name("900 Vario"), "900 Vario");
         assert_eq!(
