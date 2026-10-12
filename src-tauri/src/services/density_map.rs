@@ -10,6 +10,7 @@ use crate::models::density::{
 use crate::parsers::density_map_config::{self, GROUND_TYPES};
 use crate::parsers::farmlands_config::{self, FarmlandsConfig};
 use crate::parsers::foliage::{self, FruitGrowth};
+use crate::parsers::storage_defs;
 use crate::parsers::map_fields::{self, MapField};
 use crate::parsers::gdm::{self, GdmImage};
 use crate::parsers::grle::{self, GrleImage};
@@ -205,6 +206,10 @@ pub(crate) struct MapData {
     pub(crate) fields: FieldShapes,
     /// The map's farmland definitions (prices), defaults when it has none
     pub(crate) farmland_defs: FarmlandsConfig,
+    /// `uniqueId` → XML file of the map's pre-placed placeables
+    pub(crate) preplaced_files: HashMap<String, String>,
+    /// Fill type categories of the base game and the map, uppercased
+    pub(crate) fill_type_categories: HashMap<String, Vec<String>>,
 }
 
 /// Crops the map can grow, in fruit layer order: fruit types shown on the
@@ -237,6 +242,8 @@ impl MapData {
             layout: FruitLayout::default(),
             fields: FieldShapes { map_size, by_farmland: HashMap::new() },
             farmland_defs,
+            preplaced_files: HashMap::new(),
+            fill_type_categories: HashMap::new(),
         }
     }
 }
@@ -254,7 +261,7 @@ pub(crate) fn load_map_data(game_path: &Path, map_id: &str) -> Result<MapData, A
 
 /// Resolves a foliage path from a fruit types list when it points into the
 /// game install ("$data/..." or "data/...").
-fn game_data_file(game_path: &Path, filename: &str) -> Option<PathBuf> {
+pub(crate) fn game_data_file(game_path: &Path, filename: &str) -> Option<PathBuf> {
     let relative = filename.strip_prefix('$').unwrap_or(filename);
     relative.starts_with("data/").then(|| game_path.join(relative))
 }
@@ -315,7 +322,39 @@ fn load_builtin_map_data(game_path: &Path, map_id: &str) -> Result<MapData, AppE
         .and_then(|path| std::fs::read(path).ok())
         .map(|xml| farmlands_config::parse_farmlands_config(&String::from_utf8_lossy(&xml)))
         .unwrap_or_default();
-    Ok(MapData { farmlands: farmlands_grle, layout, fields, farmland_defs })
+    let preplaced_files = storage_defs::parse_preplaced_files(&i3d);
+    let mut fill_type_categories = base_fill_type_categories(game_path);
+    if let Some(xml) = map_config
+        .fill_types_filename
+        .as_deref()
+        .and_then(|f| game_data_file(game_path, f))
+        .and_then(|path| std::fs::read(path).ok())
+    {
+        merge_categories(&mut fill_type_categories, &xml);
+    }
+    Ok(MapData { farmlands: farmlands_grle, layout, fields, farmland_defs, preplaced_files, fill_type_categories })
+}
+
+/// Fill type categories of data/maps/maps_fillTypes.xml.
+fn base_fill_type_categories(game_path: &Path) -> HashMap<String, Vec<String>> {
+    let mut categories = HashMap::new();
+    if let Ok(xml) = std::fs::read(game_path.join("data").join("maps").join("maps_fillTypes.xml")) {
+        merge_categories(&mut categories, &xml);
+    }
+    categories
+}
+
+/// Adds a fill types XML's categories, appending to those already known as
+/// the game merges every fill types file it loads.
+fn merge_categories(categories: &mut HashMap<String, Vec<String>>, xml: &[u8]) {
+    for (name, fill_types) in storage_defs::parse_fill_type_categories(&String::from_utf8_lossy(xml)) {
+        let entry = categories.entry(name).or_default();
+        for fill_type in fill_types {
+            if !entry.contains(&fill_type) {
+                entry.push(fill_type);
+            }
+        }
+    }
 }
 
 /// Field polygons of the map i3d, when the map XML gives the terrain size.
@@ -403,8 +442,16 @@ fn load_mod_map_data(game_path: &Path, map_id: &str) -> Result<MapData, AppError
         })
         .map(|xml| farmlands_config::parse_farmlands_config(&String::from_utf8_lossy(&xml)))
         .unwrap_or_default();
+    let preplaced_files = storage_defs::parse_preplaced_files(&i3d);
+    let mut fill_type_categories = base_fill_type_categories(game_path);
+    if let Some(xml) = map_config.fill_types_filename.as_deref().and_then(|file| match game_data_file(game_path, file) {
+        Some(path) => std::fs::read(path).ok(),
+        None => read_file_from_zip(&zip_path, file).ok(),
+    }) {
+        merge_categories(&mut fill_type_categories, &xml);
+    }
 
-    Ok(MapData { farmlands: farmlands_grle, layout, fields, farmland_defs })
+    Ok(MapData { farmlands: farmlands_grle, layout, fields, farmland_defs, preplaced_files, fill_type_categories })
 }
 
 /// Foliage files of the fruit types the game appends after a map's own fruit
@@ -429,7 +476,7 @@ fn additional_fruit_type_files(game_path: &Path) -> Vec<String> {
 }
 
 /// Get the FarmingSimulator2025 mods directory
-fn get_mods_dir() -> Result<PathBuf, AppError> {
+pub(crate) fn get_mods_dir() -> Result<PathBuf, AppError> {
     let docs = dirs::document_dir().ok_or_else(|| AppError::DensityMapError {
         message: "Could not find user documents directory".to_string(),
     })?;
@@ -466,7 +513,7 @@ fn read_gdm_file(path: &Path) -> Result<GdmImage, AppError> {
     gdm::parse_gdm(&data)
 }
 
-fn read_file_from_zip(zip_path: &Path, inner_path: &str) -> Result<Vec<u8>, AppError> {
+pub(crate) fn read_file_from_zip(zip_path: &Path, inner_path: &str) -> Result<Vec<u8>, AppError> {
     let file = std::fs::File::open(zip_path).map_err(|e| AppError::DensityMapError {
         message: format!("Failed to open zip {}: {}", zip_path.display(), e),
     })?;
@@ -1273,6 +1320,8 @@ mod tests {
             layout: map_us_layout(),
             fields: FieldShapes::default(),
             farmland_defs: FarmlandsConfig::default(),
+            preplaced_files: HashMap::new(),
+            fill_type_categories: HashMap::new(),
         }
     }
 
@@ -1396,6 +1445,8 @@ mod tests {
             farmlands,
             layout: map_us_layout(),
             farmland_defs: FarmlandsConfig::default(),
+            preplaced_files: HashMap::new(),
+            fill_type_categories: HashMap::new(),
         };
         let edit = DensityEditPayload {
             farmland_id: 1,

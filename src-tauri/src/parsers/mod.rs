@@ -16,5 +16,6 @@ pub mod map_fields;
 pub mod mission;
 pub mod placeable;
 pub mod sale;
+pub mod storage_defs;
 pub mod text;
 pub mod vehicle;

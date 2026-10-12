@@ -49,6 +49,11 @@ const router = createRouter({
           component: () => import("@/views/FarmlandListView.vue"),
         },
         {
+          path: "storage",
+          name: "storage",
+          component: () => import("@/views/StorageView.vue"),
+        },
+        {
           path: "world",
           name: "world",
           component: () => import("@/views/WorldView.vue"),

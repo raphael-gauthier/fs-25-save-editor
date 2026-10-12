@@ -51,6 +51,7 @@ pub fn run() {
             commands::density::save_density_edits,
             commands::density::load_map_fruit_types,
             commands::density::load_farmlands_info,
+            commands::density::load_storage_capacities,
             commands::update::check_for_updates,
         ])
         .run(tauri::generate_context!())

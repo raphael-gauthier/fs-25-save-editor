@@ -67,6 +67,11 @@ onMounted(async () => {
         settings.gamePath,
         store.currentSavegame.career.mapId,
       );
+      buildingStore.loadStorageCapacities(
+        store.currentPath,
+        settings.gamePath,
+        store.currentSavegame.career.mapId,
+      );
     }
   }
 });

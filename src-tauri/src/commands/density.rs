@@ -3,7 +3,24 @@ use std::path::PathBuf;
 use crate::error::AppError;
 use crate::models::density::{DensityEditPayload, FieldDensityData, MapFruitType};
 use crate::models::field::FarmlandInfo;
-use crate::services::{density_map, farmland};
+use crate::models::placeable::StorageCapacities;
+use crate::services::{density_map, farmland, storage};
+
+/// Capacities and accepted fill types of the savegame's storages.
+#[tauri::command]
+pub async fn load_storage_capacities(
+    savegame_path: String,
+    game_path: String,
+    map_id: String,
+) -> Result<StorageCapacities, AppError> {
+    tauri::async_runtime::spawn_blocking(move || {
+        storage::load_storage_capacities(&PathBuf::from(&savegame_path), &PathBuf::from(&game_path), &map_id)
+    })
+    .await
+    .map_err(|e| AppError::DensityMapError {
+        message: format!("Task failed: {}", e),
+    })?
+}
 
 /// Area, price and buildings of every farmland of the map.
 #[tauri::command]
