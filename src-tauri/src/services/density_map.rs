@@ -1662,4 +1662,38 @@ mod tests {
         println!("{} crops on {} farmlands checked", checked, farmlands.len());
         let _ = std::fs::remove_dir_all(save.parent().unwrap());
     }
+    #[test]
+    #[ignore = "needs FS25_SAVE / FS25_GAME pointing at a real savegame and install"]
+    fn test_real_save_plow_then_sow_wheat() {
+        let (save, game, map) = real_save_copy("plow_sow");
+        let field = aggregate_field_data(&save, &game, &map)
+            .unwrap()
+            .into_iter()
+            .find(|d| !d.fruit_distribution.is_empty())
+            .expect("a field with a crop")
+            .farmland_id;
+        // What the editor sends after "Plow" then "Apply" wheat at stage 2
+        let edit = DensityEditPayload {
+            farmland_id: field,
+            set_fruit_name: Some("WHEAT".to_string()),
+            set_growth_state: Some(2),
+            set_plow_level: Some(1),
+            clear_weeds: true,
+            ..Default::default()
+        };
+
+        save_density_edits(&save, &game, &map, &[edit], false).unwrap();
+
+        let after = aggregate_field_data(&save, &game, &map).unwrap();
+        let d = after.iter().find(|d| d.farmland_id == field).unwrap();
+        assert_eq!(d.fruit_distribution.len(), 1);
+        assert_eq!(d.fruit_distribution[0].fruit_type, "WHEAT");
+        assert_eq!(d.fruit_distribution[0].avg_growth, 2.0);
+        assert!(d.fruit_distribution[0].percentage > 99.0, "wheat covers the field");
+        assert_eq!(d.ground_type_distribution[0].ground_type, "SOWN");
+        assert!(d.ground_type_distribution[0].percentage > 99.0);
+        assert_eq!(d.plow_status.pct_at_max, 100.0);
+        assert_eq!(d.weed_coverage, 0.0);
+        let _ = std::fs::remove_dir_all(save.parent().unwrap());
+    }
 }
