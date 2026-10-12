@@ -118,7 +118,7 @@ pnpm test:rust        # Rust tests (cargo test in src-tauri)
 
 ### Routing
 
-`/` → SavegameSelector → `/editor/` with nested routes: finance, vehicles, vehicles/:id, sales, fields, farmlands, world, buildings, storage, missions, collectibles, settings, backups
+`/` → SavegameSelector → `/editor/` with nested routes: finance, vehicles, vehicles/:id, sales, fields, farmlands, world, game, buildings, storage, missions, collectibles, settings, backups
 
 ### Tauri Commands
 
@@ -150,7 +150,9 @@ Fruit pixels (`FruitBits` / `FruitLayout` in `services/density_map.rs`): the typ
 
 Farmland prices (`services/farmland.rs`): fixed `price`, else area × `pricePerHa` × `priceScale` from the map's `config/farmlands.xml`, area = farmland-map pixels at the terrain size. Verified to the unit against real `fieldPurchase`/`fieldSelling` stats; selling refunds the same price and no economic difficulty factor applies. `useFarmlandTrade` moves ownership and money together.
 
-Storage (`services/storage.rs`, `writers/placeable.rs`): silo `<storage index>` / `<siloExtension>` fill levels and `<objectStorage>` objects are edited in placeables.xml; capacities and accepted fill types come from each placeable's XML (save `filename`, `$moddir$` zip, or the map i3d's `uniqueId` → `xmlFilename` for pre-placed ones). The game clamps levels to capacity and only saves levels > 0. Object storage edits (remove/copy/finish fermentation) run as a second pass; `src/lib/storageChanges.ts` turns store edits into those changes. Bunker silos are not edited: their silage lives in the terrain height map. Check density changes against real saves with the `#[ignore]` tests: `FS25_SAVE=<savegame dir> FS25_GAME=<install> [FS25_MAP=<mod map id>] cargo test -- --ignored` (they work on a temp copy).
+Storage (`services/storage.rs`, `writers/placeable.rs`): silo `<storage index>` / `<siloExtension>` fill levels and `<objectStorage>` objects are edited in placeables.xml; capacities and accepted fill types come from each placeable's XML (save `filename`, `$moddir$` zip, or the map i3d's `uniqueId` → `xmlFilename` for pre-placed ones). The game clamps levels to capacity and only saves levels > 0. Object storage edits (remove/copy/finish fermentation) run as a second pass; `src/lib/storageChanges.ts` turns store edits into those changes. Bunker silos are not edited: their silage lives in the terrain height map.
+
+Game settings: only the careerSavegame.xml `<settings>` listed in `validators/game_settings.rs` are read and written, each value checked by `normalize_setting` (values verified in the game's scripts or real saves; growth mode, period length and disasters are deliberately absent). Mission deadlines are `<endDate endDay>` against environment's `currentMonotonicDay`. Removed pre-placed buildings carry `isDeleted="true"`; dropping it (PlaceableChange.restore) makes the map create them again. Check density changes against real saves with the `#[ignore]` tests: `FS25_SAVE=<savegame dir> FS25_GAME=<install> [FS25_MAP=<mod map id>] cargo test -- --ignored` (they work on a temp copy).
 
 ## Git & Versioning
 
