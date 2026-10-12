@@ -1070,6 +1070,47 @@ mod tests {
         let _ = std::fs::remove_dir_all(save.parent().unwrap());
     }
 
+    /// Game settings as the frontend's store sends them, saved through
+    /// save_changes and read back by load_savegame.
+    #[test]
+    fn test_save_changes_applies_game_settings_from_frontend_json() {
+        let reference = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("..").join("docs").join("savegames");
+        let save = std::env::temp_dir().join("fs25_test_game_settings_json").join("savegame1");
+        let _ = std::fs::remove_dir_all(save.parent().unwrap());
+        std::fs::create_dir_all(&save).unwrap();
+        for entry in std::fs::read_dir(&reference).unwrap().flatten() {
+            if entry.path().extension().and_then(|e| e.to_str()) == Some("xml") {
+                std::fs::copy(entry.path(), save.join(entry.file_name())).unwrap();
+            }
+        }
+        let changes: SavegameChanges = serde_json::from_value(serde_json::json!({
+            "gameSettings": [
+                { "key": "stonesEnabled", "value": "true" },
+                { "key": "timeScale", "value": "4.000000" },
+                { "key": "savegameName", "value": "Ferme & Fils" }
+            ]
+        }))
+        .unwrap();
+
+        let result = save_changes(save.display().to_string(), changes).unwrap();
+        assert!(result.errors.is_empty());
+
+        let data = load_savegame(save.display().to_string()).unwrap();
+        let value = |key: &str| data.game_settings.iter().find(|s| s.key == key).unwrap().value.clone();
+        assert_eq!(value("stonesEnabled"), "true");
+        assert_eq!(value("timeScale"), "4.000000");
+        assert_eq!(value("savegameName"), "Ferme & Fils");
+        assert_eq!(data.career.savegame_name, "Ferme & Fils");
+
+        // An invalid value is reported and nothing is written
+        let refused: SavegameChanges =
+            serde_json::from_value(serde_json::json!({ "gameSettings": [{ "key": "fuelUsage", "value": "7" }] })).unwrap();
+        let result = save_changes(save.display().to_string(), refused).unwrap();
+        assert!(!result.errors.is_empty());
+        assert_eq!(load_savegame(save.display().to_string()).unwrap().game_settings.iter().find(|s| s.key == "fuelUsage").unwrap().value, "2");
+        let _ = std::fs::remove_dir_all(save.parent().unwrap());
+    }
+
     #[test]
     fn test_save_changes_applies_placeable_and_husbandry_edits_together() {
         // Both write_placeable_changes and write_husbandry_changes rewrite
