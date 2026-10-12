@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import { computed, ref } from "vue";
 import { invoke } from "@tauri-apps/api/core";
 import { load } from "@tauri-apps/plugin-store";
+import { HARVEST_READY_STATES } from "@/lib/constants";
 import type {
   Field,
   Farmland,
@@ -242,9 +243,12 @@ export const useFieldStore = defineStore("field", () => {
   }
 
   // Batch actions
+  /** Sets each field to its fruit's harvest-ready state; fruits without a known one are skipped. */
   function batchMaxGrowth(fieldIds: number[]) {
     for (const id of fieldIds) {
-      updateField(id, { growthState: 10 });
+      const field = getFieldById(id);
+      const ready = field ? HARVEST_READY_STATES[field.fruitType] : undefined;
+      if (ready !== undefined) updateField(id, { growthState: ready });
     }
   }
 

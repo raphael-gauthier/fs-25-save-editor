@@ -283,6 +283,8 @@ export interface FruitCoverage {
   fruitType: string;
   percentage: number;
   avgGrowth: number;
+  /** Growth state this fruit is ready to harvest in, from the game's foliage files */
+  harvestReadyState?: number | null;
 }
 
 export interface GroundCoverage {
@@ -307,6 +309,8 @@ export interface DensityEditPayload {
   setRollerLevel?: number;
   setStubbleShredLevel?: number;
   setGroundType?: number;
+  /** Move every crop pixel to its own fruit's harvest-ready growth state */
+  setHarvestReady?: boolean;
   clearWeeds?: boolean;
   clearStones?: boolean;
   cropAreaOnly?: boolean;

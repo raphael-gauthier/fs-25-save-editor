@@ -4,7 +4,7 @@ import { useI18n } from "vue-i18n";
 import { useFieldStore } from "@/stores/field";
 import { useSettingsStore } from "@/stores/settings";
 import type { Field } from "@/lib/types";
-import { MAX_GROWTH_STATE } from "@/lib/constants";
+import { HARVEST_READY_STATES, MAX_GROWTH_STATE } from "@/lib/constants";
 import FieldEditor from "@/components/fields/FieldEditor.vue";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -66,8 +66,9 @@ function formatFruitName(name: string): string {
   return t(`fillTypes.${name}`, name);
 }
 
-function growthPercent(state: number): number {
-  return Math.round((state / MAX_GROWTH_STATE) * 100);
+/** Growth as a share of the fruit's harvest-ready state (100% = ready). */
+function growthPercent(state: number, readyState: number | null | undefined): number {
+  return Math.round((state / (readyState ?? MAX_GROWTH_STATE)) * 100);
 }
 
 function densityFruit(fieldId: number): string {
@@ -78,8 +79,12 @@ function densityFruit(fieldId: number): string {
 
 function densityGrowthPercent(fieldId: number): number {
   const d = store.getFieldDensity(fieldId);
-  if (!d) return 0;
-  return Math.round((d.avgGrowthState / MAX_GROWTH_STATE) * 100);
+  const dominant = d?.fruitDistribution[0];
+  if (!d || !dominant) return 0;
+  return growthPercent(
+    d.avgGrowthState,
+    dominant.harvestReadyState ?? HARVEST_READY_STATES[dominant.fruitType],
+  );
 }
 
 function densityGroundLabel(fieldId: number): string {
@@ -124,7 +129,7 @@ function handleBatchMaxGrowth() {
     for (const id of ids) {
       const d = store.getFieldDensity(id);
       if (d?.dominantFruit) {
-        store.addDensityEdit(id, { setFruitName: d.dominantFruit, setGrowthState: 10 });
+        store.addDensityEdit(id, { setHarvestReady: true });
       }
     }
   }
@@ -363,12 +368,12 @@ function toggleSelectAll() {
                   <div class="h-2 w-20 rounded-full bg-muted">
                     <div
                       class="h-2 rounded-full"
-                      :class="field.growthState >= MAX_GROWTH_STATE ? 'bg-green-500' : 'bg-amber-500'"
-                      :style="{ width: growthPercent(field.growthState) + '%' }"
+                      :class="growthPercent(field.growthState, HARVEST_READY_STATES[field.fruitType]) >= 100 ? 'bg-green-500' : 'bg-amber-500'"
+                      :style="{ width: Math.min(growthPercent(field.growthState, HARVEST_READY_STATES[field.fruitType]), 100) + '%' }"
                     />
                   </div>
                   <span class="font-mono text-xs text-muted-foreground">
-                    {{ field.growthState }}/{{ MAX_GROWTH_STATE }}
+                    {{ field.growthState }}/{{ HARVEST_READY_STATES[field.fruitType] ?? MAX_GROWTH_STATE }}
                   </span>
                 </div>
                 <span v-else class="text-muted-foreground">-</span>

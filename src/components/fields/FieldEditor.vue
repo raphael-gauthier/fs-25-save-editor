@@ -4,7 +4,7 @@ import { useI18n } from "vue-i18n";
 import { useFieldStore } from "@/stores/field";
 import { useSettingsStore } from "@/stores/settings";
 import type { Field } from "@/lib/types";
-import { FRUIT_TYPES, GROUND_TYPES, MAX_GROWTH_STATE } from "@/lib/constants";
+import { FRUIT_TYPES, GROUND_TYPES, HARVEST_READY_STATES, MAX_GROWTH_STATE } from "@/lib/constants";
 import {
   Sheet,
   SheetContent,
@@ -51,6 +51,20 @@ const density = computed(() =>
   props.field ? store.getFieldDensity(props.field.id) : undefined,
 );
 
+/** Harvest-ready growth state of the field's fruit, when the game defines one. */
+const readyState = computed(() =>
+  props.field ? HARVEST_READY_STATES[props.field.fruitType] : undefined,
+);
+
+/** Known fruit types plus the field's own values, which may come from a map mod. */
+const fruitOptions = computed(() => {
+  const options: string[] = [...FRUIT_TYPES];
+  for (const value of [props.field?.fruitType, props.field?.plannedFruit]) {
+    if (value && !options.includes(value)) options.push(value);
+  }
+  return options;
+});
+
 function fieldModifiedClass(key: keyof Field): string {
   if (!props.field || !original.value) return "";
   return props.field[key] !== original.value[key]
@@ -86,8 +100,8 @@ function handleGroundTypeChange(value: any) {
 }
 
 function handleMaxGrowth() {
-  if (props.field) {
-    store.updateField(props.field.id, { growthState: MAX_GROWTH_STATE });
+  if (props.field && readyState.value !== undefined) {
+    store.updateField(props.field.id, { growthState: readyState.value });
   }
 }
 
@@ -107,11 +121,11 @@ function handleOwnerChange(value: any) {
 // Density edit actions
 function handleDensityMaxGrowth() {
   if (!props.field || !density.value?.dominantFruit) return;
-  store.addDensityEdit(props.field.id, {
-    setFruitName: density.value.dominantFruit,
-    setGrowthState: 10,
-  });
-  store.updateField(props.field.id, { growthState: MAX_GROWTH_STATE });
+  // Each crop pixel keeps its fruit and moves to that fruit's own ready state
+  store.addDensityEdit(props.field.id, { setHarvestReady: true });
+  if (readyState.value !== undefined) {
+    store.updateField(props.field.id, { growthState: readyState.value });
+  }
 }
 
 function handleDensityMaxLime() {
@@ -281,7 +295,7 @@ function formatFruitName(name: string): string {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem v-for="fruit in FRUIT_TYPES" :key="fruit" :value="fruit">
+                <SelectItem v-for="fruit in fruitOptions" :key="fruit" :value="fruit">
                   {{ t(`fillTypes.${fruit}`, fruit) }}
                 </SelectItem>
               </SelectContent>
@@ -296,7 +310,7 @@ function formatFruitName(name: string): string {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem v-for="fruit in FRUIT_TYPES" :key="fruit" :value="fruit">
+                <SelectItem v-for="fruit in fruitOptions" :key="fruit" :value="fruit">
                   {{ t(`fillTypes.${fruit}`, fruit) }}
                 </SelectItem>
               </SelectContent>
@@ -308,7 +322,7 @@ function formatFruitName(name: string): string {
             <div class="flex items-center justify-between text-sm">
               <Label>{{ t("field.growthState") }}</Label>
               <span class="font-mono text-muted-foreground">
-                {{ field.growthState }} / {{ MAX_GROWTH_STATE }}
+                {{ field.growthState }} / {{ readyState ?? MAX_GROWTH_STATE }}
               </span>
             </div>
             <Slider
@@ -318,7 +332,7 @@ function formatFruitName(name: string): string {
               :step="1"
               @update:model-value="handleGrowthChange"
             />
-            <Button variant="outline" size="sm" @click="handleMaxGrowth">
+            <Button variant="outline" size="sm" :disabled="readyState === undefined" @click="handleMaxGrowth">
               <Sparkles class="size-4" />
               {{ t("field.maxGrowth") }}
             </Button>
@@ -374,7 +388,7 @@ function formatFruitName(name: string): string {
                 </div>
                 <Slider
                   :model-value="[field.weedState]"
-                  :max="10"
+                  :max="9"
                   :min="0"
                   :step="1"
                   @update:model-value="handleSliderChange('weedState', $event)"
@@ -404,7 +418,7 @@ function formatFruitName(name: string): string {
                 </div>
                 <Slider
                   :model-value="[field.sprayLevel]"
-                  :max="3"
+                  :max="2"
                   :min="0"
                   :step="1"
                   @update:model-value="handleSliderChange('sprayLevel', $event)"
@@ -434,7 +448,7 @@ function formatFruitName(name: string): string {
                 </div>
                 <Slider
                   :model-value="[field.plowLevel]"
-                  :max="3"
+                  :max="1"
                   :min="0"
                   :step="1"
                   @update:model-value="handleSliderChange('plowLevel', $event)"
@@ -449,7 +463,7 @@ function formatFruitName(name: string): string {
                 </div>
                 <Slider
                   :model-value="[field.rollerLevel]"
-                  :max="3"
+                  :max="1"
                   :min="0"
                   :step="1"
                   @update:model-value="handleSliderChange('rollerLevel', $event)"
@@ -464,7 +478,7 @@ function formatFruitName(name: string): string {
                 </div>
                 <Slider
                   :model-value="[field.stubbleShredLevel]"
-                  :max="3"
+                  :max="1"
                   :min="0"
                   :step="1"
                   @update:model-value="handleSliderChange('stubbleShredLevel', $event)"
