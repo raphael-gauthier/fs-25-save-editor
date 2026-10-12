@@ -12,7 +12,8 @@ import type {
   DensityEditPayload,
 } from "@/lib/types";
 
-const DENSITY_CACHE_FILE = "density-cache.json";
+// v2: entries before it decoded crops with the wrong fruit type order
+const DENSITY_CACHE_FILE = "density-cache-v2.json";
 
 interface DensityCacheEntry {
   data: FieldDensityData[];
@@ -21,9 +22,8 @@ interface DensityCacheEntry {
 }
 
 function cacheKey(savegamePath: string): string {
-  // Use the savegame folder name as key (e.g., "savegame1")
-  const parts = savegamePath.replace(/\\/g, "/").split("/");
-  return parts[parts.length - 1] || parts[parts.length - 2] || savegamePath;
+  // Full path: folder names like "savegame1" repeat across game installs
+  return savegamePath.replace(/\\/g, "/").replace(/\/+$/, "");
 }
 
 export const useFieldStore = defineStore("field", () => {
