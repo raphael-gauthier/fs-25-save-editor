@@ -14,6 +14,9 @@ pub struct Placeable {
     pub age: f64,
     pub position: Option<Position>,
     pub is_pre_placed: bool,
+    /// A map's pre-placed placeable the player removed (`isDeleted`): the map
+    /// no longer creates it
+    pub is_deleted: bool,
     pub is_under_construction: bool,
     /// Construction state, present only for `<constructible>` placeables.
     /// A finished building keeps its `<constructible>` block with state "OLD" and no inputs.

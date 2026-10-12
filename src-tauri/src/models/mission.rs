@@ -38,4 +38,8 @@ pub struct Mission {
     pub fruit_type: Option<String>,
     pub expected_liters: Option<f64>,
     pub deposited_liters: Option<f64>,
+    /// Deadline (`<endDate endDay>`): the monotonic day it ends
+    pub end_day: Option<u32>,
+    /// Deadline time of day in ms (`<endDate endDayTime>`)
+    pub end_day_time: Option<f64>,
 }

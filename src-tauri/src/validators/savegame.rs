@@ -178,6 +178,7 @@ mod tests {
             contract_settings: None,
             environment: None,
             economy: None,
+            game_settings: vec![],
             warnings: vec![],
         }
     }

@@ -75,6 +75,8 @@ pub fn parse_missions(path: &Path) -> Result<Vec<Mission>, AppError> {
                         fruit_type: None,
                         expected_liters: None,
                         deposited_liters: None,
+                        end_day: None,
+                        end_day_time: None,
                     });
                 } else if current_mission.is_some() {
                     // Child elements of a mission (non-empty, like <vehicles> with children)
@@ -96,6 +98,12 @@ pub fn parse_missions(path: &Path) -> Result<Vec<Mission>, AppError> {
                         "field" => {
                             if let Some(ref mut m) = current_mission {
                                 m.field_id = attr_u32_opt(e, "id");
+                            }
+                        }
+                        "endDate" => {
+                            if let Some(ref mut m) = current_mission {
+                                m.end_day = attr_u32_opt(e, "endDay");
+                                m.end_day_time = attr_f64_opt(e, "endDayTime");
                             }
                         }
                         _ => {}
@@ -123,6 +131,12 @@ pub fn parse_missions(path: &Path) -> Result<Vec<Mission>, AppError> {
                         "field" => {
                             if let Some(ref mut m) = current_mission {
                                 m.field_id = attr_u32_opt(e, "id");
+                            }
+                        }
+                        "endDate" => {
+                            if let Some(ref mut m) = current_mission {
+                                m.end_day = attr_u32_opt(e, "endDay");
+                                m.end_day_time = attr_f64_opt(e, "endDayTime");
                             }
                         }
                         _ => {}
@@ -154,6 +168,18 @@ pub fn parse_missions(path: &Path) -> Result<Vec<Mission>, AppError> {
 
 #[cfg(test)]
 mod tests {
+    fn reference_save() -> std::path::PathBuf {
+        std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("..").join("docs").join("savegames")
+    }
+
+    #[test]
+    fn test_parse_mission_deadlines_of_reference_save() {
+        let missions = parse_missions(&reference_save()).unwrap();
+        let with_deadline: Vec<&Mission> = missions.iter().filter(|m| m.end_day.is_some()).collect();
+        assert_eq!(with_deadline.len(), 15);
+        assert!(with_deadline.iter().all(|m| m.end_day_time.is_some_and(|t| (0.0..86_400_000.0).contains(&t))));
+    }
+
     use super::*;
 
     fn fixtures_path() -> std::path::PathBuf {

@@ -6,7 +6,7 @@ use crate::models::career::SavegameSummary;
 use crate::models::changes::{SavegameChanges, SaveResult};
 use crate::models::common::LocalizedMessage;
 use crate::models::SavegameData;
-use crate::parsers::career::{parse_career, parse_career_summary};
+use crate::parsers::career::{parse_career, parse_career_summary, parse_game_settings};
 use crate::parsers::farm::parse_farms;
 use crate::parsers::economy::parse_economy;
 use crate::parsers::environment::parse_environment;
@@ -118,6 +118,9 @@ pub fn load_savegame(path: String) -> Result<SavegameData, AppError> {
 
     // Parse career (required)
     let career = parse_career(&save_path)?;
+
+    // Editable game settings come from the same careerSavegame.xml
+    let game_settings = parse_game_settings(&save_path)?;
 
     // Parse farms (required)
     let farms = parse_farms(&save_path)?;
@@ -266,6 +269,7 @@ pub fn load_savegame(path: String) -> Result<SavegameData, AppError> {
         contract_settings,
         environment,
         economy,
+        game_settings,
         warnings,
     };
 
@@ -302,7 +306,8 @@ pub fn save_changes(path: String, changes: SavegameChanges) -> Result<SaveResult
         || changes.collectibles.is_some()
         || changes.contract_settings.is_some()
         || changes.environment.is_some()
-        || changes.economy.is_some();
+        || changes.economy.is_some()
+        || changes.game_settings.is_some();
 
     if !has_changes {
         return Ok(SaveResult {
@@ -315,6 +320,18 @@ pub fn save_changes(path: String, changes: SavegameChanges) -> Result<SaveResult
 
     // Create backup before any write (mandatory)
     let backup_info = backup_manager::create_backup(&save_path)?;
+
+    // Apply game settings
+    if let Some(ref settings) = changes.game_settings {
+        match writers::career::write_game_settings(&save_path, settings) {
+            Ok(()) => files_modified.push("careerSavegame.xml".to_string()),
+            Err(e) => errors.push(
+                LocalizedMessage::new("errors.fileWriteError")
+                    .with_param("file", "careerSavegame.xml")
+                    .with_param("details", e),
+            ),
+        }
+    }
 
     // Apply finance changes
     if let Some(ref finance) = changes.finance {
@@ -728,6 +745,7 @@ mod tests {
             contract_settings: None,
             environment: None,
             economy: None,
+            game_settings: None,
         };
         let result = save_changes(path.clone(), changes).unwrap();
         assert!(result.success);
@@ -756,6 +774,7 @@ mod tests {
             contract_settings: None,
             environment: None,
             economy: None,
+            game_settings: None,
         };
         save_changes(path.clone(), changes).unwrap();
 
@@ -783,6 +802,7 @@ mod tests {
             contract_settings: None,
             environment: None,
             economy: None,
+            game_settings: None,
         };
         let result = save_changes(path.clone(), changes).unwrap();
         assert!(result.success);
@@ -818,6 +838,7 @@ mod tests {
             contract_settings: None,
             environment: None,
             economy: None,
+            game_settings: None,
         };
         let result = save_changes(path.clone(), changes).unwrap();
         assert!(result.success);
@@ -856,6 +877,7 @@ mod tests {
             contract_settings: None,
             environment: None,
             economy: None,
+            game_settings: None,
         };
         save_changes(path.clone(), changes).unwrap();
 
@@ -900,6 +922,7 @@ mod tests {
             contract_settings: None,
             environment: None,
             economy: None,
+            game_settings: None,
         };
         save_changes(path.clone(), changes).unwrap();
 
@@ -986,6 +1009,7 @@ mod tests {
             contract_settings: None,
             environment: None,
             economy: None,
+            game_settings: None,
         };
         save_changes(path.clone(), changes).unwrap();
 
@@ -1046,6 +1070,76 @@ mod tests {
         let _ = std::fs::remove_dir_all(save.parent().unwrap());
     }
 
+    /// Game settings as the frontend's store sends them, saved through
+    /// save_changes and read back by load_savegame.
+    #[test]
+    fn test_save_changes_applies_game_settings_from_frontend_json() {
+        let reference = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("..").join("docs").join("savegames");
+        let save = std::env::temp_dir().join("fs25_test_game_settings_json").join("savegame1");
+        let _ = std::fs::remove_dir_all(save.parent().unwrap());
+        std::fs::create_dir_all(&save).unwrap();
+        for entry in std::fs::read_dir(&reference).unwrap().flatten() {
+            if entry.path().extension().and_then(|e| e.to_str()) == Some("xml") {
+                std::fs::copy(entry.path(), save.join(entry.file_name())).unwrap();
+            }
+        }
+        let changes: SavegameChanges = serde_json::from_value(serde_json::json!({
+            "gameSettings": [
+                { "key": "stonesEnabled", "value": "true" },
+                { "key": "timeScale", "value": "4.000000" },
+                { "key": "savegameName", "value": "Ferme & Fils" }
+            ]
+        }))
+        .unwrap();
+
+        let result = save_changes(save.display().to_string(), changes).unwrap();
+        assert!(result.errors.is_empty());
+
+        let data = load_savegame(save.display().to_string()).unwrap();
+        let value = |key: &str| data.game_settings.iter().find(|s| s.key == key).unwrap().value.clone();
+        assert_eq!(value("stonesEnabled"), "true");
+        assert_eq!(value("timeScale"), "4.000000");
+        assert_eq!(value("savegameName"), "Ferme & Fils");
+        assert_eq!(data.career.savegame_name, "Ferme & Fils");
+
+        // An invalid value is reported and nothing is written
+        let refused: SavegameChanges =
+            serde_json::from_value(serde_json::json!({ "gameSettings": [{ "key": "fuelUsage", "value": "7" }] })).unwrap();
+        let result = save_changes(save.display().to_string(), refused).unwrap();
+        assert!(!result.errors.is_empty());
+        assert_eq!(load_savegame(save.display().to_string()).unwrap().game_settings.iter().find(|s| s.key == "fuelUsage").unwrap().value, "2");
+        let _ = std::fs::remove_dir_all(save.parent().unwrap());
+    }
+
+    /// A building restore and a mission deadline as the frontend sends them.
+    #[test]
+    fn test_save_changes_restores_buildings_and_moves_deadlines_from_frontend_json() {
+        let reference = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("..").join("docs").join("savegames");
+        let save = std::env::temp_dir().join("fs25_test_restore_deadline_json").join("savegame1");
+        let _ = std::fs::remove_dir_all(save.parent().unwrap());
+        std::fs::create_dir_all(&save).unwrap();
+        for file in ["careerSavegame.xml", "placeables.xml", "missions.xml"] {
+            std::fs::copy(reference.join(file), save.join(file)).unwrap();
+        }
+        let deleted = crate::parsers::placeable::parse_placeables(&save).unwrap().into_iter().find(|p| p.is_deleted).unwrap();
+        let mission = crate::parsers::mission::parse_missions(&save).unwrap().into_iter().find(|m| m.end_day.is_some()).unwrap();
+        let end_day = mission.end_day.unwrap() + 7;
+
+        let changes: SavegameChanges = serde_json::from_value(serde_json::json!({
+            "placeables": [{ "index": deleted.index, "completeConstruction": false, "restore": true }],
+            "missions": [{ "uniqueId": mission.unique_id, "endDay": end_day }]
+        }))
+        .unwrap();
+        let result = save_changes(save.display().to_string(), changes).unwrap();
+        assert!(result.errors.is_empty());
+
+        let placeables = crate::parsers::placeable::parse_placeables(&save).unwrap();
+        assert!(!placeables[deleted.index].is_deleted);
+        let missions = crate::parsers::mission::parse_missions(&save).unwrap();
+        assert_eq!(missions.iter().find(|m| m.unique_id == mission.unique_id).unwrap().end_day, Some(end_day));
+        let _ = std::fs::remove_dir_all(save.parent().unwrap());
+    }
+
     #[test]
     fn test_save_changes_applies_placeable_and_husbandry_edits_together() {
         // Both write_placeable_changes and write_husbandry_changes rewrite
@@ -1077,6 +1171,7 @@ mod tests {
                 complete_construction: false,
                 silo_stocks: None,
                 object_storage: None,
+                restore: false,
                 production_storage: None,
             }]),
             husbandries: Some(vec![crate::models::changes::HusbandryChange {
@@ -1097,6 +1192,7 @@ mod tests {
             contract_settings: None,
             environment: None,
             economy: None,
+            game_settings: None,
         };
         let result = save_changes(path.clone(), changes).unwrap();
         assert!(result.success, "save_changes failed: {:?}", result.errors);
@@ -1162,6 +1258,7 @@ mod tests {
             contract_settings: None,
             environment: None,
             economy: None,
+            game_settings: None,
         };
         let result = save_changes(path.clone(), changes).unwrap();
         assert!(result.success, "save_changes failed: {:?}", result.errors);

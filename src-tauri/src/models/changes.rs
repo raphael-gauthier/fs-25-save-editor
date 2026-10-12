@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 
+use crate::models::career::GameSetting;
 use crate::models::placeable::SiloStorageKind;
 
 use super::common::LocalizedMessage;
@@ -20,6 +21,8 @@ pub struct SavegameChanges {
     pub contract_settings: Option<ContractSettingsChange>,
     pub environment: Option<EnvironmentChanges>,
     pub economy: Option<EconomyChanges>,
+    /// Game settings to set in careerSavegame.xml, checked before writing
+    pub game_settings: Option<Vec<GameSetting>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -125,6 +128,9 @@ pub struct PlaceableChange {
     pub silo_stocks: Option<Vec<SiloStockChange>>,
     /// Bales and pallets to remove, copy or finish fermenting in the object storage.
     pub object_storage: Option<ObjectStorageChange>,
+    /// Bring back a deleted pre-placed placeable: the map creates it again on load
+    #[serde(default)]
+    pub restore: bool,
 }
 
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
@@ -206,6 +212,8 @@ pub struct MissionChange {
     pub status: Option<String>,
     pub reimbursement: Option<f64>,
     pub deposited_liters: Option<f64>,
+    /// New deadline day (`<endDate endDay>`) of a mission that has one
+    pub end_day: Option<u32>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

@@ -4,6 +4,8 @@ import { useI18n } from "vue-i18n";
 import { useMissionStore } from "@/stores/mission";
 import { useFieldStore } from "@/stores/field";
 import { useSettingsStore } from "@/stores/settings";
+import { useWorldStore } from "@/stores/world";
+import { dayTimeToHHMM } from "@/lib/utils";
 import type { Mission } from "@/lib/types";
 import {
   Sheet,
@@ -52,6 +54,23 @@ const { t } = useI18n();
 const store = useMissionStore();
 const fieldStore = useFieldStore();
 const settings = useSettingsStore();
+const world = useWorldStore();
+
+/** Whole days left before the deadline, from the game's current day. */
+const daysLeft = computed(() => {
+  const endDay = original.value?.endDay;
+  const today = world.environment?.currentMonotonicDay;
+  if (endDay == null || today == null) return null;
+  return endDay - today;
+});
+
+function extendDeadline(days: number) {
+  const endDay = original.value?.endDay;
+  if (!props.mission || endDay == null) return;
+  // Never before today: the game would time the mission out at once
+  const today = world.environment?.currentMonotonicDay ?? endDay;
+  store.updateMission(props.mission.uniqueId, { endDay: Math.max(today, endDay + days) });
+}
 
 const original = computed(() => {
   if (!props.mission) return undefined;
@@ -202,6 +221,28 @@ function statusLabel(status: Mission["status"]): string {
           </div>
 
           <!-- Advanced mode -->
+          <!-- Deadline -->
+          <div v-if="original.endDay != null" class="space-y-2">
+            <Label>{{ t("mission.deadline") }}</Label>
+            <p class="text-sm">
+              {{ t("mission.deadlineDay", { day: original.endDay, time: dayTimeToHHMM((original.endDayTime ?? 0) / 1000) }) }}
+              <span v-if="daysLeft !== null" class="text-muted-foreground">
+                · {{ daysLeft < 0 ? t("mission.deadlinePassed") : t("mission.daysLeft", { count: daysLeft }) }}
+              </span>
+            </p>
+            <div class="flex flex-wrap gap-2">
+              <Button variant="outline" size="sm" :disabled="daysLeft !== null && daysLeft <= 0" @click="extendDeadline(-1)">
+                {{ t("mission.deadlineShift", { days: -1 }) }}
+              </Button>
+              <Button variant="outline" size="sm" @click="extendDeadline(1)">
+                {{ t("mission.deadlineShift", { days: "+1" }) }}
+              </Button>
+              <Button variant="outline" size="sm" @click="extendDeadline(7)">
+                {{ t("mission.deadlineShift", { days: "+7" }) }}
+              </Button>
+            </div>
+          </div>
+
           <template v-if="settings.advancedMode">
             <Separator />
 

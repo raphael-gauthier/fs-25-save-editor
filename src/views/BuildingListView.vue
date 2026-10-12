@@ -35,12 +35,14 @@ function openEditor(placeable: Placeable) {
 }
 
 function stateLabel(p: Placeable): string {
+  if (p.isDeleted) return t("building.deleted");
   if (p.isPrePlaced) return t("building.prePlaced");
   if (p.isUnderConstruction) return t("building.underConstruction");
   return t("building.ready");
 }
 
-function stateBadgeVariant(p: Placeable): "default" | "secondary" | "outline" {
+function stateBadgeVariant(p: Placeable): "default" | "secondary" | "outline" | "destructive" {
+  if (p.isDeleted) return "destructive";
   if (p.isUnderConstruction) return "secondary";
   if (p.isPrePlaced) return "outline";
   return "default";
@@ -105,6 +107,7 @@ function handleStateFilter(value: any) {
           <SelectItem value="ready">{{ t("building.ready") }}</SelectItem>
           <SelectItem value="underConstruction">{{ t("building.underConstruction") }}</SelectItem>
           <SelectItem value="prePlaced">{{ t("building.prePlaced") }}</SelectItem>
+          <SelectItem value="deleted">{{ t("building.deleted") }}</SelectItem>
         </SelectContent>
       </Select>
       <span class="text-sm text-muted-foreground">

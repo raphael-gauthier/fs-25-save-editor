@@ -62,7 +62,10 @@ pub fn write_mission_changes(
             }
             Ok(Event::Empty(ref e)) => {
                 let tag = e.name().as_ref().to_string();
-                if active_change.is_some() && tag == "info" {
+                if let (Some(day), "endDate") = (active_change.and_then(|c| c.end_day), tag.as_str()) {
+                    let elem = patch_end_day(e, day);
+                    write_event(&mut writer, &xml_path, Event::Empty(elem))?;
+                } else if active_change.is_some() && tag == "info" {
                     let change = active_change.unwrap();
                     let elem = patch_info(e, change);
                     write_event(&mut writer, &xml_path, Event::Empty(elem))?;
@@ -125,6 +128,19 @@ fn patch_mission_tag(e: &BytesStart, tag_name: &str, change: &MissionChange) -> 
     elem
 }
 
+/// `<endDate>` with its day set to `day`, the time of day kept.
+fn patch_end_day(e: &BytesStart, day: u32) -> BytesStart<'static> {
+    let mut elem = BytesStart::new("endDate");
+    for attr in e.attributes().flatten() {
+        if attr.key.as_ref() == "endDay" {
+            elem.push_attribute(("endDay", day.to_string().as_str()));
+        } else {
+            elem.push_attribute(attr);
+        }
+    }
+    elem
+}
+
 fn patch_harvest(e: &BytesStart, change: &MissionChange) -> BytesStart<'static> {
     let mut elem = BytesStart::new("harvest");
     for attr in e.attributes().flatten() {
@@ -176,6 +192,41 @@ fn write_event(
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn test_write_mission_end_day() {
+        let reference = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("..").join("docs").join("savegames");
+        let save = std::env::temp_dir().join("fs25_test_wm_end_day");
+        let _ = std::fs::remove_dir_all(&save);
+        std::fs::create_dir_all(&save).unwrap();
+        std::fs::copy(reference.join("missions.xml"), save.join("missions.xml")).unwrap();
+        let before = parse_missions(&save).unwrap();
+        let target = before.iter().find(|m| m.end_day.is_some()).unwrap();
+        let new_day = target.end_day.unwrap() + 30;
+        let change = MissionChange {
+            unique_id: target.unique_id.clone(),
+            reward: None,
+            completion: None,
+            status: None,
+            reimbursement: None,
+            deposited_liters: None,
+            end_day: Some(new_day),
+        };
+
+        write_mission_changes(&save, &[change]).unwrap();
+
+        let after = parse_missions(&save).unwrap();
+        for (b, a) in before.iter().zip(&after) {
+            if a.unique_id == target.unique_id {
+                assert_eq!(a.end_day, Some(new_day));
+                assert_eq!(a.end_day_time, b.end_day_time);
+                assert_eq!(a.reward, b.reward);
+            } else {
+                assert_eq!(a.end_day, b.end_day, "{}", a.unique_id);
+            }
+        }
+        let _ = std::fs::remove_dir_all(&save);
+    }
+
     use super::*;
     use crate::parsers::mission::parse_missions;
 
@@ -210,6 +261,7 @@ mod tests {
             status: None,
             reimbursement: None,
             deposited_liters: None,
+            end_day: None,
         }];
         write_mission_changes(&save, &changes).unwrap();
         let missions = parse_missions(&save).unwrap();
@@ -232,6 +284,7 @@ mod tests {
             status: Some("COMPLETED".to_string()),
             reimbursement: None,
             deposited_liters: None,
+            end_day: None,
         }];
         write_mission_changes(&save, &changes).unwrap();
         let missions = parse_missions(&save).unwrap();
@@ -257,6 +310,7 @@ mod tests {
             status: None,
             reimbursement: Some(5000.0),
             deposited_liters: None,
+            end_day: None,
         }];
         write_mission_changes(&save, &changes).unwrap();
         let after = parse_missions(&save).unwrap();

@@ -8,6 +8,7 @@ import { useAnimalStore } from "@/stores/animal";
 import { useMissionStore } from "@/stores/mission";
 import { useWorldStore } from "@/stores/world";
 import { useEconomyStore } from "@/stores/economy";
+import { useGameSettingsStore } from "@/stores/gameSettings";
 import type { SavegameChanges } from "@/lib/types";
 
 const showDiscardDialog = ref(false);
@@ -23,6 +24,7 @@ export function useUnsavedChanges() {
   const missionStore = useMissionStore();
   const worldStore = useWorldStore();
   const economyStore = useEconomyStore();
+  const gameSettingsStore = useGameSettingsStore();
 
   const isDirty = computed(
     () =>
@@ -34,7 +36,8 @@ export function useUnsavedChanges() {
       animalStore.isDirty ||
       missionStore.isDirty ||
       worldStore.isDirty ||
-      economyStore.isDirty,
+      economyStore.isDirty ||
+      gameSettingsStore.isDirty,
   );
 
   const changeCount = computed(
@@ -47,7 +50,8 @@ export function useUnsavedChanges() {
       animalStore.changeCount +
       missionStore.changeCount +
       worldStore.changeCount +
-      economyStore.changeCount,
+      economyStore.changeCount +
+      gameSettingsStore.changeCount,
   );
 
   function collectAllChanges(): SavegameChanges {
@@ -78,6 +82,8 @@ export function useUnsavedChanges() {
     if (envChanges) changes.environment = envChanges;
     const economyChanges = economyStore.getChanges();
     if (economyChanges) changes.economy = economyChanges;
+    const gameSettings = gameSettingsStore.getChanges();
+    if (gameSettings) changes.gameSettings = gameSettings;
     return changes;
   }
 
@@ -91,6 +97,7 @@ export function useUnsavedChanges() {
     missionStore.resetChanges();
     worldStore.resetChanges();
     economyStore.resetChanges();
+    gameSettingsStore.resetChanges();
   }
 
   function confirmDiscardIfDirty(): Promise<boolean> {

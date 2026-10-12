@@ -384,6 +384,8 @@ export interface Placeable {
   age: number;
   position: Position | null;
   isPrePlaced: boolean;
+  /** A pre-placed map building the player removed; the map no longer creates it */
+  isDeleted: boolean;
   isUnderConstruction: boolean;
   /** Present only for `<constructible>` placeables; a finished one stays in state "OLD". */
   construction: ConstructionState | null;
@@ -468,6 +470,8 @@ export interface PlaceableChangePayload {
   productionStorage?: ProductionStockChangePayload[];
   siloStocks?: SiloStockChangePayload[];
   objectStorage?: ObjectStorageChangePayload;
+  /** Bring back a deleted pre-placed building */
+  restore?: boolean;
 }
 
 export interface SiloStockChangePayload {
@@ -560,6 +564,10 @@ export interface Mission {
   fruitType: string | null;
   expectedLiters: number | null;
   depositedLiters: number | null;
+  /** Deadline: the monotonic day it ends */
+  endDay: number | null;
+  /** Deadline time of day, in ms */
+  endDayTime: number | null;
 }
 
 export interface Collectible {
@@ -580,6 +588,7 @@ export interface MissionChangePayload {
   status?: string;
   reimbursement?: number;
   depositedLiters?: number;
+  endDay?: number;
 }
 
 export interface CollectibleChangePayload {
@@ -662,6 +671,7 @@ export interface SavegameData {
   contractSettings: ContractSettings | null;
   environment: Environment | null;
   economy: Economy | null;
+  gameSettings: GameSetting[];
   warnings: LocalizedMessage[];
 }
 
@@ -748,6 +758,13 @@ export interface SavegameChanges {
   contractSettings?: ContractSettingsChangePayload;
   environment?: EnvironmentChanges;
   economy?: EconomyChanges;
+  gameSettings?: GameSetting[];
+}
+
+/** A careerSavegame.xml game setting the editor may change, as saved text. */
+export interface GameSetting {
+  key: string;
+  value: string;
 }
 
 export interface SaveResult {

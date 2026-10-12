@@ -27,6 +27,7 @@ import { useAnimalStore } from "@/stores/animal";
 import { useMissionStore } from "@/stores/mission";
 import { useWorldStore } from "@/stores/world";
 import { useEconomyStore } from "@/stores/economy";
+import { useGameSettingsStore } from "@/stores/gameSettings";
 import { useSettingsStore } from "@/stores/settings";
 import { useBackupStore } from "@/stores/backup";
 import { useTauri, translateError } from "@/composables/useTauri";
@@ -45,6 +46,7 @@ const animalStore = useAnimalStore();
 const missionStore = useMissionStore();
 const worldStore = useWorldStore();
 const economyStore = useEconomyStore();
+const gameSettingsStore = useGameSettingsStore();
 const settings = useSettingsStore();
 const backupStore = useBackupStore();
 const { invokeCommand } = useTauri();
@@ -149,6 +151,7 @@ async function handleSave() {
     missionStore.commitChanges();
     worldStore.commitChanges();
     economyStore.commitChanges();
+    gameSettingsStore.commitChanges();
 
     // Every save made a backup: keep only as many as the settings allow
     await backupStore.prune();
@@ -207,6 +210,7 @@ async function handleReload() {
         worldStore.hydrate(savegameStore.currentSavegame.environment);
       }
       economyStore.hydrate(savegameStore.currentSavegame.economy);
+      gameSettingsStore.hydrate(savegameStore.currentSavegame.gameSettings);
     }
   } finally {
     isReloading.value = false;

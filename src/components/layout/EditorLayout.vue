@@ -17,6 +17,7 @@ import { useAnimalStore } from "@/stores/animal";
 import { useMissionStore } from "@/stores/mission";
 import { useWorldStore } from "@/stores/world";
 import { useEconomyStore } from "@/stores/economy";
+import { useGameSettingsStore } from "@/stores/gameSettings";
 import { useSettingsStore } from "@/stores/settings";
 import AppSidebar from "./AppSidebar.vue";
 import AppHeader from "./AppHeader.vue";
@@ -32,6 +33,7 @@ const animalStore = useAnimalStore();
 const missionStore = useMissionStore();
 const worldStore = useWorldStore();
 const economyStore = useEconomyStore();
+const gameSettingsStore = useGameSettingsStore();
 const settings = useSettingsStore();
 const router = useRouter();
 
@@ -59,6 +61,7 @@ onMounted(async () => {
       worldStore.hydrate(store.currentSavegame.environment);
     }
     economyStore.hydrate(store.currentSavegame.economy);
+    gameSettingsStore.hydrate(store.currentSavegame.gameSettings);
 
     // Load density map data for fields (async, non-blocking)
     if (settings.gamePath && store.currentSavegame.career.mapId && store.currentPath) {

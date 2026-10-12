@@ -46,7 +46,9 @@ export const useBuildingStore = defineStore("building", () => {
     } else if (stateFilter.value === "underConstruction") {
       result = result.filter((p) => p.isUnderConstruction);
     } else if (stateFilter.value === "prePlaced") {
-      result = result.filter((p) => p.isPrePlaced);
+      result = result.filter((p) => p.isPrePlaced && !p.isDeleted);
+    } else if (stateFilter.value === "deleted") {
+      result = result.filter((p) => p.isDeleted);
     }
 
     return result.sort((a, b) => a.index - b.index);
@@ -78,6 +80,7 @@ export const useBuildingStore = defineStore("building", () => {
       if (p.farmId !== orig.farmId) count++;
       if (p.price !== orig.price) count++;
       if (p.isUnderConstruction !== orig.isUnderConstruction) count++;
+      if (p.isDeleted !== orig.isDeleted) count++;
       if (isProductionModified(p.productionStorage, orig.productionStorage)) count++;
       count += siloStockChanges(p.siloStorages, orig.siloStorages).length;
       if (objectChange(p, orig)) count++;
@@ -94,6 +97,7 @@ export const useBuildingStore = defineStore("building", () => {
       p.farmId !== orig.farmId ||
       p.price !== orig.price ||
       p.isUnderConstruction !== orig.isUnderConstruction ||
+      p.isDeleted !== orig.isDeleted ||
       isProductionModified(p.productionStorage, orig.productionStorage) ||
       siloStockChanges(p.siloStorages, orig.siloStorages).length > 0 ||
       objectChange(p, orig) !== null
@@ -152,6 +156,12 @@ export const useBuildingStore = defineStore("building", () => {
       const removed = new Set(group.indices.slice(delta));
       p.storedObjects = p.storedObjects.filter((_, i) => !removed.has(i));
     }
+  }
+
+  /** Brings back a deleted pre-placed building on the next load. */
+  function restorePlaceable(index: number) {
+    const p = placeables.value.find((pl) => pl.index === index);
+    if (p) p.isDeleted = false;
   }
 
   function finishFermentation(index: number) {
@@ -226,6 +236,7 @@ export const useBuildingStore = defineStore("building", () => {
         completeConstruction: orig.isUnderConstruction && !p.isUnderConstruction,
       };
       if (p.farmId !== orig.farmId) change.farmId = p.farmId;
+      if (orig.isDeleted && !p.isDeleted) change.restore = true;
       if (p.price !== orig.price) change.price = p.price;
 
       if (isProductionModified(p.productionStorage, orig.productionStorage)) {
@@ -274,6 +285,7 @@ export const useBuildingStore = defineStore("building", () => {
     setSiloStock,
     changeObjectCount,
     finishFermentation,
+    restorePlaceable,
     getOriginalByIndex,
     toggleSelection,
     selectAll,
