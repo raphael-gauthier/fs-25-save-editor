@@ -122,7 +122,7 @@ pnpm test:rust        # Rust tests (cargo test in src-tauri)
 
 ### Tauri Commands
 
-`list_savegames`, `load_savegame`, `save_changes`, `list_backups`, `create_backup`, `restore_backup`, `delete_backup`, `check_for_updates`, `load_field_density_data`, `save_density_edits` — invoked via `useTauri` composable wrapping `@tauri-apps/api`.
+`list_savegames`, `load_savegame`, `save_changes`, `list_backups`, `create_backup`, `restore_backup`, `delete_backup`, `prune_backups`, `check_for_updates`, `load_field_density_data`, `save_density_edits` — invoked via `useTauri` composable wrapping `@tauri-apps/api`.
 
 ## Key Conventions
 
@@ -144,9 +144,9 @@ Each domain store tracks dirty state: `isDirty`, `changeCount`, `getChanges()`, 
 Settings store persists to `settings.json` via Tauri plugin-store. Loaded in `App.vue` onMounted before UI renders. Access advanced mode via `settings.advancedMode` (not a separate composable).
 
 ### Density Maps (Fields)
-Field data comes from binary density maps (GDM/GRLE), not fields.xml. The `field.ts` store manages density data with a cache-first strategy: cached data from `density-cache.json` (plugin-store) displays instantly, then refreshes from the backend in the background. XML crop data is hidden behind advanced mode when density is available. Density edits are saved via a separate `save_density_edits` Tauri command alongside the XML `save_changes` command.
+Field data comes from binary density maps (GDM/GRLE), not fields.xml. The `field.ts` store manages density data with a cache-first strategy: cached data from `density-cache-v2.json` (plugin-store, keyed by full savegame path) displays instantly, then refreshes from the backend in the background. XML crop data is hidden behind advanced mode when density is available. Density edits are saved via a separate `save_density_edits` Tauri command alongside the XML `save_changes` command; it backs the savegame up itself when no XML save did, and stages every layer before replacing any.
 
-Fruit type resolution uses 4 sources: `maps_fruitTypes.xml` (base 25), map XML (e.g., MEADOW), game log (DLC types), and a hardcoded `KNOWN_EXTRA_FRUIT_TYPES` fallback (GREENBEAN, PEA, SPINACH).
+Fruit pixels (`FruitBits` / `FruitLayout` in `services/density_map.rs`): the type index takes the GDM's first compression range (5 bits on Riverbend, 7 on Pallegney), then a 4-bit growth state, then the haulm bit. Index `i` is the `i`-th `FoliageType` (1-based, 0 = bare) of the map i3d's fruit `FoliageMultiLayer`, followed by the types the game appends ("Loading additional fruit type" in log.txt, e.g. onion). Growth states are numbered per fruit from its foliage XML (`data/foliage/<fruit>/<fruit>.xml`, 1-based, first `isHarvestReady` = ready), so never assume a single "max growth" value. Field id = farmland id (a field belongs to the farmland under its center). Check density changes against real saves with the `#[ignore]` tests: `FS25_SAVE=<savegame dir> FS25_GAME=<install> [FS25_MAP=<mod map id>] cargo test -- --ignored` (they work on a temp copy).
 
 ## Git & Versioning
 
