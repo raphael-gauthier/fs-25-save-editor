@@ -35,7 +35,8 @@
     "collectibles": "Collectibles",
     "economy": "Économie",
     "backups": "Backups",
-    "settings": "Paramètres"
+    "settings": "Paramètres",
+    "farmlands": "Parcelles"
   },
   "savegame": {
     "selectSubtitle": "Sélectionnez une sauvegarde pour commencer l'édition",
@@ -531,7 +532,8 @@
     "soilMulch": "Broyer les chaumes",
     "pendingCrop": "{fruit} · {stage}",
     "pendingNoCrop": "Culture retirée",
-    "pendingGround": "Sol : {ground}"
+    "pendingGround": "Sol : {ground}",
+    "freeTransfer": "Changer de propriétaire sans payer :"
   },
   "world": {
     "title": "Monde et Météo",
@@ -750,5 +752,38 @@
     "withered": "Flétri",
     "harvested": "Récolté",
     "other": "Stade {n}"
+  },
+  "farmland": {
+    "title": "Parcelles",
+    "subtitle": "Acheter et vendre des terrains au prix du jeu",
+    "searchPlaceholder": "Rechercher une parcelle...",
+    "id": "Parcelle",
+    "field": "Champ",
+    "fieldNumber": "Champ {id}",
+    "area": "Surface",
+    "price": "Prix",
+    "owner": "Propriétaire",
+    "buildings": "Bâtiments",
+    "buy": "Acheter",
+    "sell": "Vendre",
+    "buySelected": "Acheter ({amount})",
+    "sellSelected": "Vendre ({amount})",
+    "money": "Argent disponible : {amount}",
+    "found": "{count} parcelle(s)",
+    "selected": "{count} parcelle(s) sélectionnée(s)",
+    "allOwners": "Tous les propriétaires",
+    "free": "Libres",
+    "mine": "Les miennes",
+    "others": "Autres fermes",
+    "noInfo": "Configurez le chemin du jeu dans les Paramètres pour connaître la surface et le prix des parcelles.",
+    "priceNote": "Prix du jeu : surface × prix à l'hectare de la carte × coefficient de la parcelle. La vente rembourse le même montant.",
+    "block": {
+      "notBuyable": "Parcelle inconnue de la carte",
+      "owned": "Déjà à vous",
+      "otherFarm": "Appartient à une autre ferme",
+      "notOwned": "Ne vous appartient pas",
+      "buildings": "Des bâtiments construits dessus empêchent la vente",
+      "money": "Pas assez d'argent"
+    }
   }
 }

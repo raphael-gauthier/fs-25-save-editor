@@ -10,6 +10,7 @@ import type {
   FarmlandChangePayload,
   FieldDensityData,
   DensityEditPayload,
+  FarmlandInfo,
   MapFruitType,
 } from "@/lib/types";
 
@@ -40,6 +41,8 @@ export const useFieldStore = defineStore("field", () => {
   const densityLoading = ref(false);
   const densityError = ref<string | null>(null);
   const densityFromCache = ref(false);
+  /** Area, price and buildings of the map's farmlands */
+  const farmlandInfo = ref<FarmlandInfo[]>([]);
   /** Crops the loaded map can grow, with their growth states */
   const mapFruitTypes = ref<MapFruitType[]>([]);
   const mapFruitTypesMapId = ref<string | null>(null);
@@ -401,12 +404,30 @@ export const useFieldStore = defineStore("field", () => {
     }
   }
 
+  async function loadFarmlandInfo(savegamePath: string, gamePath: string, mapId: string) {
+    try {
+      farmlandInfo.value = await invoke<FarmlandInfo[]>("load_farmlands_info", { savegamePath, gamePath, mapId });
+    } catch {
+      // Without it farmlands can only change owner, not be bought or sold
+      farmlandInfo.value = [];
+    }
+  }
+
+  function getFarmlandInfo(id: number): FarmlandInfo | undefined {
+    return farmlandInfo.value.find((f) => f.id === id);
+  }
+
+  function getOriginalFarmlandOwner(id: number): number | undefined {
+    return originalFarmlands.value.find((fl) => fl.id === id)?.farmId;
+  }
+
   function getMapFruitType(name: string): MapFruitType | undefined {
     return mapFruitTypes.value.find((f) => f.name === name);
   }
 
   async function loadDensityData(savegamePath: string, gamePath: string, mapId: string) {
     void loadMapFruitTypes(gamePath, mapId);
+    void loadFarmlandInfo(savegamePath, gamePath, mapId);
     densityLoading.value = true;
     densityError.value = null;
     densityFromCache.value = false;
@@ -458,6 +479,7 @@ export const useFieldStore = defineStore("field", () => {
     densityData.value = [];
     mapFruitTypes.value = [];
     mapFruitTypesMapId.value = null;
+    farmlandInfo.value = [];
     densityError.value = null;
     densityLoading.value = false;
     densityFromCache.value = false;
@@ -478,6 +500,9 @@ export const useFieldStore = defineStore("field", () => {
     densityData,
     mapFruitTypes,
     getMapFruitType,
+    farmlandInfo,
+    getFarmlandInfo,
+    getOriginalFarmlandOwner,
     densityLoading,
     densityError,
     densityFromCache,

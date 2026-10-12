@@ -35,7 +35,8 @@
     "collectibles": "Collectibles",
     "economy": "Economy",
     "backups": "Backups",
-    "settings": "Settings"
+    "settings": "Settings",
+    "farmlands": "Farmlands"
   },
   "savegame": {
     "selectSubtitle": "Select a savegame to start editing",
@@ -531,7 +532,8 @@
     "soilMulch": "Mulch stubble",
     "pendingCrop": "{fruit} · {stage}",
     "pendingNoCrop": "Crop removed",
-    "pendingGround": "Ground: {ground}"
+    "pendingGround": "Ground: {ground}",
+    "freeTransfer": "Change owner without paying:"
   },
   "world": {
     "title": "World & Weather",
@@ -750,5 +752,38 @@
     "withered": "Withered",
     "harvested": "Harvested",
     "other": "Stage {n}"
+  },
+  "farmland": {
+    "title": "Farmlands",
+    "subtitle": "Buy and sell land at the game's price",
+    "searchPlaceholder": "Search a farmland...",
+    "id": "Farmland",
+    "field": "Field",
+    "fieldNumber": "Field {id}",
+    "area": "Area",
+    "price": "Price",
+    "owner": "Owner",
+    "buildings": "Buildings",
+    "buy": "Buy",
+    "sell": "Sell",
+    "buySelected": "Buy ({amount})",
+    "sellSelected": "Sell ({amount})",
+    "money": "Available money: {amount}",
+    "found": "{count} farmland(s)",
+    "selected": "{count} farmland(s) selected",
+    "allOwners": "All owners",
+    "free": "Free",
+    "mine": "Mine",
+    "others": "Other farms",
+    "noInfo": "Set the game path in Settings to see farmland areas and prices.",
+    "priceNote": "Game price: area × the map's price per hectare × the farmland's scale. Selling refunds the same amount.",
+    "block": {
+      "notBuyable": "Farmland unknown to the map",
+      "owned": "Already yours",
+      "otherFarm": "Owned by another farm",
+      "notOwned": "Not yours",
+      "buildings": "Buildings built on it prevent selling",
+      "money": "Not enough money"
+    }
   }
 }

@@ -6,6 +6,8 @@ import { useSettingsStore } from "@/stores/settings";
 import type { Field, MapFruitType } from "@/lib/types";
 import { growthStageLabel } from "@/lib/utils";
 import { cropEdit, soilWorkEdit, type SoilWork } from "@/lib/fieldWork";
+import { formatMoney } from "@/lib/utils";
+import { useFarmlandTrade, PLAYER_FARM_ID } from "@/composables/useFarmlandTrade";
 import { FRUIT_TYPES, GROUND_TYPES, HARVEST_READY_STATES, MAX_GROWTH_STATE } from "@/lib/constants";
 import {
   Sheet,
@@ -47,6 +49,11 @@ const original = computed(() =>
 
 const farmland = computed(() =>
   props.field ? store.getFarmlandByFieldId(props.field.id) : undefined,
+);
+
+const trade = useFarmlandTrade();
+const farmlandInfo = computed(() =>
+  props.field ? store.getFarmlandInfo(props.field.id) : undefined,
 );
 
 const density = computed(() =>
@@ -496,7 +503,39 @@ function formatFruitName(name: string): string {
           <!-- Farmland owner (always visible, not from density maps) -->
           <div v-if="farmland" class="space-y-2">
             <Label>{{ t("field.farmlandOwner") }}</Label>
-            <Select :model-value="String(farmland.farmId)" @update:model-value="handleOwnerChange">
+            <div v-if="farmlandInfo" class="flex flex-wrap items-center justify-between gap-2 text-sm">
+              <span class="font-mono text-muted-foreground">
+                {{ farmlandInfo.areaHa.toFixed(2) }} ha · {{ formatMoney(farmlandInfo.price) }}
+              </span>
+              <Button
+                v-if="farmland.farmId === 0"
+                size="sm"
+                variant="outline"
+                :disabled="!!trade.buyBlock([farmland.id])"
+                :title="trade.buyBlock([farmland.id]) ? t(`farmland.block.${trade.buyBlock([farmland.id])}`) : ''"
+                @click="trade.buy([farmland.id])"
+              >
+                {{ t("farmland.buy") }}
+              </Button>
+              <Button
+                v-else-if="farmland.farmId === PLAYER_FARM_ID"
+                size="sm"
+                variant="outline"
+                :disabled="!!trade.sellBlock([farmland.id])"
+                :title="trade.sellBlock([farmland.id]) ? t(`farmland.block.${trade.sellBlock([farmland.id])}`) : ''"
+                @click="trade.sell([farmland.id])"
+              >
+                {{ t("farmland.sell") }}
+              </Button>
+            </div>
+            <p v-if="farmlandInfo && settings.advancedMode" class="text-xs text-muted-foreground">
+              {{ t("field.freeTransfer") }}
+            </p>
+            <Select
+              v-if="!farmlandInfo || settings.advancedMode"
+              :model-value="String(farmland.farmId)"
+              @update:model-value="handleOwnerChange"
+            >
               <SelectTrigger>
                 <SelectValue />
               </SelectTrigger>

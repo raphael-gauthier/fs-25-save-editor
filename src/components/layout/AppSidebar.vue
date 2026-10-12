@@ -21,6 +21,7 @@ import {
   Tractor,
   ShoppingCart,
   Wheat,
+  LandPlot,
   Cloud,
   Building2,
   ClipboardList,
@@ -50,6 +51,7 @@ const mainNav: NavItem[] = [
 
 const phase2Nav: NavItem[] = [
   { labelKey: "sidebar.fields", icon: Wheat, route: "/editor/fields" },
+  { labelKey: "sidebar.farmlands", icon: LandPlot, route: "/editor/farmlands" },
   { labelKey: "sidebar.world", icon: Cloud, route: "/editor/world" },
   { labelKey: "sidebar.buildings", icon: Building2, route: "/editor/buildings" },
   { labelKey: "sidebar.animals", icon: PiggyBank, route: "/editor/animals" },
