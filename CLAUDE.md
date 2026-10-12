@@ -118,11 +118,11 @@ pnpm test:rust        # Rust tests (cargo test in src-tauri)
 
 ### Routing
 
-`/` → SavegameSelector → `/editor/` with nested routes: finance, vehicles, vehicles/:id, sales, fields, world, buildings, missions, collectibles, settings, backups
+`/` → SavegameSelector → `/editor/` with nested routes: finance, vehicles, vehicles/:id, sales, fields, farmlands, world, buildings, missions, collectibles, settings, backups
 
 ### Tauri Commands
 
-`list_savegames`, `load_savegame`, `save_changes`, `list_backups`, `create_backup`, `restore_backup`, `delete_backup`, `prune_backups`, `check_for_updates`, `load_field_density_data`, `save_density_edits`, `load_map_fruit_types` — invoked via `useTauri` composable wrapping `@tauri-apps/api`.
+`list_savegames`, `load_savegame`, `save_changes`, `list_backups`, `create_backup`, `restore_backup`, `delete_backup`, `prune_backups`, `check_for_updates`, `load_field_density_data`, `save_density_edits`, `load_map_fruit_types`, `load_farmlands_info` — invoked via `useTauri` composable wrapping `@tauri-apps/api`.
 
 ## Key Conventions
 
@@ -146,7 +146,9 @@ Settings store persists to `settings.json` via Tauri plugin-store. Loaded in `Ap
 ### Density Maps (Fields)
 Field data comes from binary density maps (GDM/GRLE), not fields.xml. The `field.ts` store manages density data with a cache-first strategy: cached data from `density-cache-v3.json` (plugin-store, keyed by full savegame path) displays instantly, then refreshes from the backend in the background. XML crop data is hidden behind advanced mode when density is available. Density edits are saved via a separate `save_density_edits` Tauri command alongside the XML `save_changes` command; it backs the savegame up itself when no XML save did, and stages every layer before replacing any.
 
-Fruit pixels (`FruitBits` / `FruitLayout` in `services/density_map.rs`): the type index takes the GDM's first compression range (5 bits on Riverbend, 7 on Pallegney), then a 4-bit growth state, then the haulm bit. Index `i` is the `i`-th `FoliageType` (1-based, 0 = bare) of the map i3d's fruit `FoliageMultiLayer`, followed by the types the game appends ("Loading additional fruit type" in log.txt, e.g. onion). Growth states are numbered per fruit from its foliage XML (`data/foliage/<fruit>/<fruit>.xml`, 1-based, first `isHarvestReady` = ready), so never assume a single "max growth" value. Field id = farmland id (a field belongs to the farmland under its center); edits and per-field stats are clipped to the field polygon from the map i3d (`parsers/map_fields.rs`), the whole farmland only when the map defines none. Setting a crop sets the ground its growth state shows (sowing ground, then the fruit's one `groundType` change); `src/lib/fieldWork.ts` builds the editor's crop and soil work edits. Check density changes against real saves with the `#[ignore]` tests: `FS25_SAVE=<savegame dir> FS25_GAME=<install> [FS25_MAP=<mod map id>] cargo test -- --ignored` (they work on a temp copy).
+Fruit pixels (`FruitBits` / `FruitLayout` in `services/density_map.rs`): the type index takes the GDM's first compression range (5 bits on Riverbend, 7 on Pallegney), then a 4-bit growth state, then the haulm bit. Index `i` is the `i`-th `FoliageType` (1-based, 0 = bare) of the map i3d's fruit `FoliageMultiLayer`, followed by the types the game appends ("Loading additional fruit type" in log.txt, e.g. onion). Growth states are numbered per fruit from its foliage XML (`data/foliage/<fruit>/<fruit>.xml`, 1-based, first `isHarvestReady` = ready), so never assume a single "max growth" value. Field id = farmland id (a field belongs to the farmland under its center); edits and per-field stats are clipped to the field polygon from the map i3d (`parsers/map_fields.rs`), the whole farmland only when the map defines none. Setting a crop sets the ground its growth state shows (sowing ground, then the fruit's one `groundType` change); `src/lib/fieldWork.ts` builds the editor's crop and soil work edits.
+
+Farmland prices (`services/farmland.rs`): fixed `price`, else area × `pricePerHa` × `priceScale` from the map's `config/farmlands.xml`, area = farmland-map pixels at the terrain size. Verified to the unit against real `fieldPurchase`/`fieldSelling` stats; selling refunds the same price and no economic difficulty factor applies. `useFarmlandTrade` moves ownership and money together. Check density changes against real saves with the `#[ignore]` tests: `FS25_SAVE=<savegame dir> FS25_GAME=<install> [FS25_MAP=<mod map id>] cargo test -- --ignored` (they work on a temp copy).
 
 ## Git & Versioning
 
