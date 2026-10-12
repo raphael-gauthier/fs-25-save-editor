@@ -7,7 +7,7 @@ use crate::error::AppError;
 use crate::models::common::Position;
 use crate::models::placeable::{
     display_name_from_unique_id, placeable_display_name, ConstructionMaterial, ConstructionState,
-    Placeable, ProductionLine, ProductionStock,
+    Placeable, ProductionLine, ProductionStock, SiloStorage, SiloStorageKind,
 };
 use crate::parsers::attrs::{attr_f64, attr_str, attr_u8};
 
@@ -47,6 +47,9 @@ pub fn parse_placeables(path: &Path) -> Result<Vec<Placeable>, AppError> {
     let mut in_constructible = false;
     let mut in_production_point = false;
     let mut in_production_storage = false;
+    let mut in_silo = false;
+    // The silo `<storage>` or `<siloExtension>` whose `<node>`s are being read
+    let mut open_silo_storage: Option<SiloStorage> = None;
 
     loop {
         let event = reader.read_event().map_err(|e| AppError::XmlParseError {
@@ -74,6 +77,12 @@ pub fn parse_placeables(path: &Path) -> Result<Vec<Placeable>, AppError> {
                         in_production_storage = false;
                     }
                     "storage" if in_production_point => in_production_storage = false,
+                    "storage" | "siloExtension" => {
+                        if let (Some(storage), Some(p)) = (open_silo_storage.take(), current.as_mut()) {
+                            p.silo_storages.push(storage);
+                        }
+                    }
+                    "silo" => in_silo = false,
                     _ => {}
                 }
                 continue;
@@ -115,6 +124,7 @@ pub fn parse_placeables(path: &Path) -> Result<Vec<Placeable>, AppError> {
                     construction: None,
                     productions: Vec::new(),
                     production_storage: Vec::new(),
+                    silo_storages: Vec::new(),
                 };
 
                 placeable_index += 1;
@@ -154,6 +164,30 @@ pub fn parse_placeables(path: &Path) -> Result<Vec<Placeable>, AppError> {
                 }
             }
             "storage" if in_production_point => in_production_storage = !is_empty,
+            "silo" if current.is_some() => in_silo = !is_empty,
+            "storage" | "siloExtension" if current.is_some() && (in_silo || tag == "siloExtension") => {
+                let storage = SiloStorage {
+                    kind: if in_silo { SiloStorageKind::Silo } else { SiloStorageKind::Extension },
+                    index: if in_silo { attr_str(e, "index").parse().unwrap_or(0) } else { 0 },
+                    farm_id: attr_u8(e, "farmId"),
+                    stocks: Vec::new(),
+                };
+                if is_empty {
+                    if let Some(ref mut p) = current {
+                        p.silo_storages.push(storage);
+                    }
+                } else {
+                    open_silo_storage = Some(storage);
+                }
+            }
+            "node" if open_silo_storage.is_some() => {
+                if let Some(ref mut storage) = open_silo_storage {
+                    storage.stocks.push(ProductionStock {
+                        fill_type: attr_str(e, "fillType"),
+                        amount: attr_f64(e, "fillLevel"),
+                    });
+                }
+            }
             "node" if in_production_storage => {
                 if let Some(ref mut p) = current {
                     p.production_storage.push(ProductionStock {
@@ -190,6 +224,40 @@ mod tests {
         std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
             .join("tests")
             .join("fixtures")
+    }
+
+    fn reference_save() -> std::path::PathBuf {
+        std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("..").join("docs").join("savegames")
+    }
+
+    fn stock(fill_type: &str, amount: f64) -> ProductionStock {
+        ProductionStock { fill_type: fill_type.into(), amount }
+    }
+
+    #[test]
+    fn test_parse_silo_storages_of_reference_save() {
+        let placeables = parse_placeables(&reference_save()).unwrap();
+        let silos: Vec<&SiloStorage> = placeables.iter().flat_map(|p| &p.silo_storages).collect();
+        assert_eq!(silos.len(), 5);
+
+        let farm_silo = silos.iter().find(|s| s.stocks.len() == 2).unwrap();
+        assert_eq!((farm_silo.kind, farm_silo.index, farm_silo.farm_id), (SiloStorageKind::Silo, 1, 1));
+        assert_eq!(farm_silo.stocks, vec![stock("WHEAT", 20657.392578), stock("SUNFLOWER", 4855.552734)]);
+
+        // An empty storage is a self-closing <storage index="1" farmId="15"/>
+        let empty = silos.iter().find(|s| s.farm_id == 15).unwrap();
+        assert!(empty.stocks.is_empty());
+
+        let extension = silos.iter().find(|s| s.kind == SiloStorageKind::Extension).unwrap();
+        assert_eq!((extension.index, extension.farm_id), (0, 1));
+        assert_eq!(extension.stocks, vec![stock("WHEAT", 3274.029053)]);
+    }
+
+    #[test]
+    fn test_silo_storages_stay_out_of_production_stock() {
+        let placeables = parse_placeables(&reference_save()).unwrap();
+        let with_silo: Vec<&Placeable> = placeables.iter().filter(|p| !p.silo_storages.is_empty()).collect();
+        assert!(with_silo.iter().all(|p| p.production_storage.is_empty()));
     }
 
     #[test]

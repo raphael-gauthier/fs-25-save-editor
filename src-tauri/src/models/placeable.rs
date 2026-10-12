@@ -23,6 +23,30 @@ pub struct Placeable {
     /// Flat stock list of a `<productionPoint>`. The savegame does not distinguish
     /// inputs from outputs, nor record capacities — both live in the game's placeable XML.
     pub production_storage: Vec<ProductionStock>,
+    /// Farm silo storages: a `<silo>`'s `<storage>` elements and a `<siloExtension>`.
+    pub silo_storages: Vec<SiloStorage>,
+}
+
+/// Which element of placeables.xml holds a farm silo storage.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub enum SiloStorageKind {
+    /// `<silo><storage index>`: a silo, one storage per index
+    Silo,
+    /// `<siloExtension>`: extra capacity for the farm silo
+    Extension,
+}
+
+/// Fill levels of one farm silo storage. Only fill types holding something
+/// are saved, so a fill type the storage accepts may be missing.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct SiloStorage {
+    pub kind: SiloStorageKind,
+    /// `<storage index>` of a silo, 0 for an extension
+    pub index: u32,
+    pub farm_id: u8,
+    pub stocks: Vec<ProductionStock>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -47,7 +71,7 @@ pub struct ProductionLine {
     pub is_enabled: bool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct ProductionStock {
     pub fill_type: String,
