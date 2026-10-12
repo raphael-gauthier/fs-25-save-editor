@@ -13,4 +13,5 @@ pub mod husbandry;
 pub mod mission;
 pub mod placeable;
 pub mod sale;
+pub mod text;
 pub mod vehicle;

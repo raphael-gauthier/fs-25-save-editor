@@ -4,6 +4,7 @@ use quick_xml::events::{BytesStart, Event};
 use quick_xml::{Reader, Writer};
 
 use crate::error::AppError;
+use crate::writers::replace_xml_file;
 use crate::models::changes::{AnimalClusterChange, FillStockChange, HusbandryChange};
 
 /// Applies husbandry changes to placeables.xml.
@@ -47,10 +48,10 @@ pub fn write_husbandry_changes(
             Event::Eof => break,
             Event::Start(ref e) | Event::Empty(ref e) => {
                 let is_empty = matches!(event, Event::Empty(_));
-                let tag = e.name().as_ref().to_vec();
+                let tag = e.name().as_ref().to_string();
 
-                match tag.as_slice() {
-                    b"placeable" => {
+                match tag.as_str() {
+                    "placeable" => {
                         current = change_map.get(&placeable_index).copied();
                         placeable_index += 1;
                         cluster_index = 0;
@@ -60,21 +61,21 @@ pub fn write_husbandry_changes(
                         in_food = false;
                         in_meadow = false;
                     }
-                    b"clusters" => {
+                    "clusters" => {
                         in_clusters = !is_empty;
                         cluster_index = 0;
                     }
-                    b"husbandry" => in_husbandry = !is_empty,
-                    b"storage" if in_husbandry => in_husbandry_storage = !is_empty,
-                    b"husbandryFood" => in_food = !is_empty,
-                    b"husbandryMeadow" => in_meadow = !is_empty,
+                    "husbandry" => in_husbandry = !is_empty,
+                    "storage" if in_husbandry => in_husbandry_storage = !is_empty,
+                    "husbandryFood" => in_food = !is_empty,
+                    "husbandryMeadow" => in_meadow = !is_empty,
                     _ => {}
                 }
 
                 // Decide whether this element needs patching.
                 // Stock arms are added in Task 9.
-                let patched: Option<BytesStart<'static>> = match (current, tag.as_slice()) {
-                    (Some(change), b"animal") if in_clusters => {
+                let patched: Option<BytesStart<'static>> = match (current, tag.as_str()) {
+                    (Some(change), "animal") if in_clusters => {
                         let this_index = cluster_index;
                         cluster_index += 1;
                         change
@@ -83,20 +84,20 @@ pub fn write_husbandry_changes(
                             .and_then(|cs| cs.iter().find(|c| c.index == this_index))
                             .map(|c| patch_animal(e, c))
                     }
-                    (Some(change), b"fillLevel") if in_food => {
+                    (Some(change), "fillLevel") if in_food => {
                         find_stock(change.food.as_ref(), &attr_str(e, "fillType"))
                             .map(|sc| patch_amount(e, "fillLevel", "fillLevel", sc))
                     }
-                    (Some(change), b"node") if in_husbandry_storage => {
+                    (Some(change), "node") if in_husbandry_storage => {
                         find_stock(change.water.as_ref(), &attr_str(e, "fillType"))
                             .map(|sc| patch_amount(e, "node", "fillLevel", sc))
                     }
-                    (Some(change), b"fillType") if in_meadow => {
+                    (Some(change), "fillType") if in_meadow => {
                         find_stock(change.meadow.as_ref(), &attr_str(e, "name"))
                             .map(|sc| patch_amount(e, "fillType", "fillLevel", sc))
                     }
                     _ => {
-                        if tag.as_slice() == b"animal" && in_clusters {
+                        if tag == "animal" && in_clusters {
                             cluster_index += 1;
                         }
                         None
@@ -116,21 +117,21 @@ pub fn write_husbandry_changes(
             }
             Event::End(ref e) => {
                 match e.name().as_ref() {
-                    b"placeable" => {
+                    "placeable" => {
                         current = None;
                         in_husbandry = false;
                         in_husbandry_storage = false;
                         in_food = false;
                         in_meadow = false;
                     }
-                    b"clusters" => in_clusters = false,
-                    b"husbandry" => {
+                    "clusters" => in_clusters = false,
+                    "husbandry" => {
                         in_husbandry = false;
                         in_husbandry_storage = false;
                     }
-                    b"storage" if in_husbandry => in_husbandry_storage = false,
-                    b"husbandryFood" => in_food = false,
-                    b"husbandryMeadow" => in_meadow = false,
+                    "storage" if in_husbandry => in_husbandry_storage = false,
+                    "husbandryFood" => in_food = false,
+                    "husbandryMeadow" => in_meadow = false,
                     _ => {}
                 }
                 write_event(&mut writer, &xml_path, Event::End(e.clone().into_owned()))?;
@@ -141,10 +142,7 @@ pub fn write_husbandry_changes(
         }
     }
 
-    let output = writer.into_inner();
-    let tmp_path = xml_path.with_extension("xml.tmp");
-    std::fs::write(&tmp_path, &output)?;
-    std::fs::rename(&tmp_path, &xml_path)?;
+    replace_xml_file(&xml_path, &content, &writer.into_inner())?;
 
     Ok(())
 }
@@ -152,17 +150,18 @@ pub fn write_husbandry_changes(
 fn patch_animal(e: &BytesStart, change: &AnimalClusterChange) -> BytesStart<'static> {
     let mut elem = BytesStart::new("animal");
     for attr in e.attributes().flatten() {
-        let key = String::from_utf8_lossy(attr.key.as_ref()).to_string();
-        let original = String::from_utf8_lossy(&attr.value).to_string();
+        let key = attr.key.as_ref().to_string();
         let value = match key.as_str() {
             "numAnimals" => change.num_animals.map(|v| v.to_string()),
             "age" => change.age.map(|v| v.to_string()),
             "health" => change.health.map(|v| format!("{}", v.round() as i64)),
             "reproduction" => change.reproduction.map(|v| format!("{}", v.round() as i64)),
             _ => None,
+        };
+        match value {
+            Some(value) => elem.push_attribute((key.as_str(), value.as_str())),
+            None => elem.push_attribute(attr),
         }
-        .unwrap_or(original);
-        elem.push_attribute((key.as_str(), value.as_str()));
     }
     elem
 }
@@ -170,8 +169,8 @@ fn patch_animal(e: &BytesStart, change: &AnimalClusterChange) -> BytesStart<'sta
 fn attr_str(e: &BytesStart, key: &str) -> String {
     e.attributes()
         .flatten()
-        .find(|a| a.key.as_ref() == key.as_bytes())
-        .map(|a| String::from_utf8_lossy(&a.value).to_string())
+        .find(|a| a.key.as_ref() == key)
+        .map(|a| a.value.to_string())
         .unwrap_or_default()
 }
 
@@ -192,14 +191,11 @@ fn patch_amount(
 ) -> BytesStart<'static> {
     let mut elem = BytesStart::new(tag_name.to_string());
     for attr in e.attributes().flatten() {
-        let key = String::from_utf8_lossy(attr.key.as_ref()).to_string();
+        let key = attr.key.as_ref().to_string();
         if key == amount_key {
             elem.push_attribute((amount_key, format!("{:.6}", change.amount).as_str()));
         } else {
-            elem.push_attribute((
-                key.as_str(),
-                String::from_utf8_lossy(&attr.value).as_ref(),
-            ));
+            elem.push_attribute(attr);
         }
     }
     elem
@@ -352,7 +348,7 @@ mod tests {
         // fixture. That mutation only produces observable bleed when the EDITED
         // placeable's own `<placeable>` tag is self-closing (Event::Empty never pairs
         // with an End event, so the unconditional `current = None` reset in the
-        // `Event::End` `b"placeable"` arm never fires, leaving `current` stale for the
+        // `Event::End` `"placeable"` arm never fires, leaving `current` stale for the
         // next placeable). In `savegame_complete` the only self-closing placeable is
         // index 1 (a plain barn, not a husbandry), and the placeable immediately after
         // it (index 2) has no clusters/husbandryFood/husbandry-storage/husbandryMeadow

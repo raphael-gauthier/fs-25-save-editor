@@ -5,14 +5,14 @@ use quick_xml::Reader;
 
 use crate::error::AppError;
 use crate::models::environment::{Environment, WeatherEvent};
+use crate::parsers::text::resolve_ref;
 
 fn text_content(reader: &mut Reader<&[u8]>) -> String {
     let mut buf = String::new();
     loop {
         match reader.read_event() {
-            Ok(Event::Text(ref e)) => {
-                buf.push_str(&e.unescape().unwrap_or_default());
-            }
+            Ok(Event::Text(ref e)) => buf.push_str(e),
+            Ok(Event::GeneralRef(ref r)) => buf.push_str(&resolve_ref(r)),
             Ok(Event::End(_)) | Ok(Event::Eof) => break,
             _ => {}
         }
@@ -23,8 +23,8 @@ fn text_content(reader: &mut Reader<&[u8]>) -> String {
 fn attr_str(e: &quick_xml::events::BytesStart, key: &str) -> String {
     e.attributes()
         .flatten()
-        .find(|a| a.key.as_ref() == key.as_bytes())
-        .map(|a| String::from_utf8_lossy(&a.value).to_string())
+        .find(|a| a.key.as_ref() == key)
+        .map(|a| a.value.to_string())
         .unwrap_or_default()
 }
 
@@ -54,7 +54,7 @@ pub fn parse_environment(path: &Path) -> Result<Environment, AppError> {
     loop {
         match reader.read_event() {
             Ok(Event::Start(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
                 match tag.as_str() {
                     "dayTime" => {
                         day_time = text_content(&mut reader).parse().unwrap_or(0.0);
@@ -88,7 +88,7 @@ pub fn parse_environment(path: &Path) -> Result<Environment, AppError> {
                 }
             }
             Ok(Event::Empty(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
                 match tag.as_str() {
                     "instance" if in_forecast => {
                         weather_forecast.push(WeatherEvent {
@@ -110,7 +110,7 @@ pub fn parse_environment(path: &Path) -> Result<Environment, AppError> {
                 }
             }
             Ok(Event::End(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
                 match tag.as_str() {
                     "forecast" => in_forecast = false,
                     "weather" => in_weather = false,

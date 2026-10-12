@@ -5,12 +5,13 @@ use quick_xml::Reader;
 
 use crate::error::AppError;
 use crate::models::farm::{DailyFinance, Farm, FarmPlayer, FarmStatistics};
+use crate::parsers::text::resolve_ref;
 
 fn attr_str(e: &quick_xml::events::BytesStart, key: &str) -> String {
     e.attributes()
         .flatten()
-        .find(|a| a.key.as_ref() == key.as_bytes())
-        .map(|a| String::from_utf8_lossy(&a.value).to_string())
+        .find(|a| a.key.as_ref() == key)
+        .map(|a| a.value.to_string())
         .unwrap_or_default()
 }
 
@@ -35,9 +36,8 @@ fn read_text_content(reader: &mut Reader<&[u8]>) -> String {
     let mut text = String::new();
     loop {
         match reader.read_event() {
-            Ok(Event::Text(ref t)) => {
-                text = t.unescape().unwrap_or_default().to_string();
-            }
+            Ok(Event::Text(ref t)) => text.push_str(t),
+            Ok(Event::GeneralRef(ref r)) => text.push_str(&resolve_ref(r)),
             Ok(Event::End(_)) | Ok(Event::Eof) => break,
             _ => {}
         }
@@ -51,7 +51,7 @@ fn parse_statistics_children(reader: &mut Reader<&[u8]>) -> FarmStatistics {
     loop {
         match reader.read_event() {
             Ok(Event::Start(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
                 let text = read_text_content(reader);
                 let f = text.parse::<f64>().unwrap_or(0.0);
                 let u = text.parse::<u32>().unwrap_or(0);
@@ -112,7 +112,7 @@ fn parse_statistics_children(reader: &mut Reader<&[u8]>) -> FarmStatistics {
                 }
             }
             Ok(Event::End(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
                 if tag == "statistics" {
                     break;
                 }
@@ -131,7 +131,7 @@ fn parse_daily_finance_children(reader: &mut Reader<&[u8]>, day: u32) -> DailyFi
     loop {
         match reader.read_event() {
             Ok(Event::Start(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
                 let text = read_text_content(reader);
                 let f = text.parse::<f64>().unwrap_or(0.0);
                 match tag.as_str() {
@@ -159,7 +159,7 @@ fn parse_daily_finance_children(reader: &mut Reader<&[u8]>, day: u32) -> DailyFi
                 }
             }
             Ok(Event::End(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
                 if tag == "stats" {
                     break;
                 }
@@ -188,7 +188,7 @@ pub fn parse_farms(path: &Path) -> Result<Vec<Farm>, AppError> {
     loop {
         match reader.read_event() {
             Ok(Event::Start(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
                 match tag.as_str() {
                     "farm" => {
                         current_farm = Some(Farm {
@@ -221,7 +221,7 @@ pub fn parse_farms(path: &Path) -> Result<Vec<Farm>, AppError> {
                 }
             }
             Ok(Event::Empty(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
                 if let Some(ref mut farm) = current_farm {
                     match tag.as_str() {
                         "player" if in_players => {
@@ -253,7 +253,7 @@ pub fn parse_farms(path: &Path) -> Result<Vec<Farm>, AppError> {
                 }
             }
             Ok(Event::End(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
                 match tag.as_str() {
                     "farm" => {
                         if let Some(farm) = current_farm.take() {

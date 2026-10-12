@@ -60,7 +60,7 @@ pub fn parse_placeables(path: &Path) -> Result<Vec<Placeable>, AppError> {
             Event::Eof => break,
             Event::End(e) => {
                 match e.name().as_ref() {
-                    b"placeable" => {
+                    "placeable" => {
                         if let Some(p) = current.take() {
                             placeables.push(p);
                         }
@@ -68,12 +68,12 @@ pub fn parse_placeables(path: &Path) -> Result<Vec<Placeable>, AppError> {
                         in_production_point = false;
                         in_production_storage = false;
                     }
-                    b"constructible" => in_constructible = false,
-                    b"productionPoint" => {
+                    "constructible" => in_constructible = false,
+                    "productionPoint" => {
                         in_production_point = false;
                         in_production_storage = false;
                     }
-                    b"storage" if in_production_point => in_production_storage = false,
+                    "storage" if in_production_point => in_production_storage = false,
                     _ => {}
                 }
                 continue;
@@ -82,10 +82,10 @@ pub fn parse_placeables(path: &Path) -> Result<Vec<Placeable>, AppError> {
         };
 
         let Some(e) = elem else { continue };
-        let tag = e.name().as_ref().to_vec();
+        let tag = e.name().as_ref().to_string();
 
-        match tag.as_slice() {
-            b"placeable" => {
+        match tag.as_str() {
+            "placeable" => {
                 if let Some(p) = current.take() {
                     placeables.push(p);
                 }
@@ -125,8 +125,8 @@ pub fn parse_placeables(path: &Path) -> Result<Vec<Placeable>, AppError> {
                     current = Some(placeable);
                 }
             }
-            b"constructible" if current.is_some() => in_constructible = !is_empty,
-            b"state" if in_constructible => {
+            "constructible" if current.is_some() => in_constructible = !is_empty,
+            "state" if in_constructible => {
                 if let Some(ref mut p) = current {
                     p.construction = Some(ConstructionState {
                         state_name: attr_str(e, "name"),
@@ -134,7 +134,7 @@ pub fn parse_placeables(path: &Path) -> Result<Vec<Placeable>, AppError> {
                     });
                 }
             }
-            b"input" if in_constructible => {
+            "input" if in_constructible => {
                 if let Some(ref mut p) = current {
                     if let Some(ref mut c) = p.construction {
                         c.inputs.push(ConstructionMaterial {
@@ -144,8 +144,8 @@ pub fn parse_placeables(path: &Path) -> Result<Vec<Placeable>, AppError> {
                     }
                 }
             }
-            b"productionPoint" if current.is_some() => in_production_point = !is_empty,
-            b"production" if in_production_point => {
+            "productionPoint" if current.is_some() => in_production_point = !is_empty,
+            "production" if in_production_point => {
                 if let Some(ref mut p) = current {
                     p.productions.push(ProductionLine {
                         id: attr_str(e, "id"),
@@ -153,8 +153,8 @@ pub fn parse_placeables(path: &Path) -> Result<Vec<Placeable>, AppError> {
                     });
                 }
             }
-            b"storage" if in_production_point => in_production_storage = !is_empty,
-            b"node" if in_production_storage => {
+            "storage" if in_production_point => in_production_storage = !is_empty,
+            "node" if in_production_storage => {
                 if let Some(ref mut p) = current {
                     p.production_storage.push(ProductionStock {
                         fill_type: attr_str(e, "fillType"),

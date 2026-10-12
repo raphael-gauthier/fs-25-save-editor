@@ -4,6 +4,7 @@ use quick_xml::events::{BytesStart, Event};
 use quick_xml::{Reader, Writer};
 
 use crate::error::AppError;
+use crate::writers::replace_xml_file;
 use crate::models::changes::MissionChange;
 use crate::models::mission::MissionStatus;
 
@@ -35,7 +36,7 @@ pub fn write_mission_changes(
     loop {
         match reader.read_event() {
             Ok(Event::Start(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
                 if is_mission_tag(&tag) {
                     let id = attr_str(e, "uniqueId");
                     if let Some(change) = change_map.get(id.as_str()) {
@@ -60,7 +61,7 @@ pub fn write_mission_changes(
                 }
             }
             Ok(Event::Empty(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
                 if active_change.is_some() && tag == "info" {
                     let change = active_change.unwrap();
                     let elem = patch_info(e, change);
@@ -74,7 +75,7 @@ pub fn write_mission_changes(
                 }
             }
             Ok(Event::End(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
                 if Some(&tag) == active_mission_tag.as_ref() {
                     active_change = None;
                     active_mission_tag = None;
@@ -94,10 +95,7 @@ pub fn write_mission_changes(
         }
     }
 
-    let output = writer.into_inner();
-    let tmp_path = xml_path.with_extension("xml.tmp");
-    std::fs::write(&tmp_path, &output)?;
-    std::fs::rename(&tmp_path, &xml_path)?;
+    replace_xml_file(&xml_path, &content, &writer.into_inner())?;
 
     Ok(())
 }
@@ -105,25 +103,22 @@ pub fn write_mission_changes(
 fn attr_str(e: &BytesStart, key: &str) -> String {
     e.attributes()
         .flatten()
-        .find(|a| a.key.as_ref() == key.as_bytes())
-        .map(|a| String::from_utf8_lossy(&a.value).to_string())
+        .find(|a| a.key.as_ref() == key)
+        .map(|a| a.value.to_string())
         .unwrap_or_default()
 }
 
 fn patch_mission_tag(e: &BytesStart, tag_name: &str, change: &MissionChange) -> BytesStart<'static> {
     let mut elem = BytesStart::new(tag_name.to_string());
     for attr in e.attributes().flatten() {
-        let key = String::from_utf8_lossy(attr.key.as_ref()).to_string();
+        let key = attr.key.as_ref().to_string();
         match key.as_str() {
             "status" if change.status.is_some() => {
                 let status = MissionStatus::from_str(change.status.as_ref().unwrap());
                 elem.push_attribute(("status", status.to_xml_str()));
             }
             _ => {
-                elem.push_attribute((
-                    key.as_str(),
-                    String::from_utf8_lossy(&attr.value).as_ref(),
-                ));
+                elem.push_attribute(attr);
             }
         }
     }
@@ -133,16 +128,13 @@ fn patch_mission_tag(e: &BytesStart, tag_name: &str, change: &MissionChange) -> 
 fn patch_harvest(e: &BytesStart, change: &MissionChange) -> BytesStart<'static> {
     let mut elem = BytesStart::new("harvest");
     for attr in e.attributes().flatten() {
-        let key = String::from_utf8_lossy(attr.key.as_ref()).to_string();
+        let key = attr.key.as_ref().to_string();
         match key.as_str() {
             "depositedLiters" if change.deposited_liters.is_some() => {
                 elem.push_attribute(("depositedLiters", format!("{:.6}", change.deposited_liters.unwrap()).as_str()));
             }
             _ => {
-                elem.push_attribute((
-                    key.as_str(),
-                    String::from_utf8_lossy(&attr.value).as_ref(),
-                ));
+                elem.push_attribute(attr);
             }
         }
     }
@@ -152,7 +144,7 @@ fn patch_harvest(e: &BytesStart, change: &MissionChange) -> BytesStart<'static> 
 fn patch_info(e: &BytesStart, change: &MissionChange) -> BytesStart<'static> {
     let mut elem = BytesStart::new("info");
     for attr in e.attributes().flatten() {
-        let key = String::from_utf8_lossy(attr.key.as_ref()).to_string();
+        let key = attr.key.as_ref().to_string();
         match key.as_str() {
             "reward" if change.reward.is_some() => {
                 elem.push_attribute(("reward", format!("{:.6}", change.reward.unwrap()).as_str()));
@@ -164,10 +156,7 @@ fn patch_info(e: &BytesStart, change: &MissionChange) -> BytesStart<'static> {
                 elem.push_attribute(("reimbursement", format!("{:.6}", change.reimbursement.unwrap()).as_str()));
             }
             _ => {
-                elem.push_attribute((
-                    key.as_str(),
-                    String::from_utf8_lossy(&attr.value).as_ref(),
-                ));
+                elem.push_attribute(attr);
             }
         }
     }

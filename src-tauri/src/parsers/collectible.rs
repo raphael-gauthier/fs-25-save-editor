@@ -9,8 +9,8 @@ use crate::models::collectible::Collectible;
 fn attr_str(e: &quick_xml::events::BytesStart, key: &str) -> String {
     e.attributes()
         .flatten()
-        .find(|a| a.key.as_ref() == key.as_bytes())
-        .map(|a| String::from_utf8_lossy(&a.value).to_string())
+        .find(|a| a.key.as_ref() == key)
+        .map(|a| a.value.to_string())
         .unwrap_or_default()
 }
 
@@ -30,7 +30,7 @@ pub fn parse_collectibles(path: &Path) -> Result<Vec<Collectible>, AppError> {
     loop {
         match reader.read_event() {
             Ok(Event::Start(ref e)) | Ok(Event::Empty(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
                 if tag == "collectible" {
                     collectibles.push(Collectible {
                         index: attr_u32(e, "index"),

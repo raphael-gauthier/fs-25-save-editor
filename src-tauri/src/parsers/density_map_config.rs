@@ -45,13 +45,13 @@ pub fn parse_fruit_types_xml(data: &[u8]) -> Result<Vec<String>, AppError> {
 
     loop {
         match reader.read_event_into(&mut buf) {
-            Ok(Event::Empty(ref e)) if e.name().as_ref() == b"fruitType" => {
+            Ok(Event::Empty(ref e)) if e.name().as_ref() == "fruitType" => {
                 if let Some(filename) = e
                     .attributes()
                     .filter_map(|a| a.ok())
-                    .find(|a| a.key.as_ref() == b"filename")
+                    .find(|a| a.key.as_ref() == "filename")
                 {
-                    let filename_str = String::from_utf8_lossy(&filename.value);
+                    let filename_str = &filename.value;
                     let name = extract_fruit_name(&filename_str);
                     fruit_types.push(name);
                 }
@@ -100,21 +100,21 @@ pub fn parse_map_xml_fruit_types(data: &[u8]) -> Result<Vec<String>, AppError> {
 
     loop {
         match reader.read_event_into(&mut buf) {
-            Ok(Event::Start(ref e)) if e.name().as_ref() == b"fruitTypes" => {
+            Ok(Event::Start(ref e)) if e.name().as_ref() == "fruitTypes" => {
                 in_fruit_types = true;
             }
-            Ok(Event::End(ref e)) if e.name().as_ref() == b"fruitTypes" => {
+            Ok(Event::End(ref e)) if e.name().as_ref() == "fruitTypes" => {
                 in_fruit_types = false;
             }
             Ok(Event::Empty(ref e))
-                if in_fruit_types && e.name().as_ref() == b"fruitType" =>
+                if in_fruit_types && e.name().as_ref() == "fruitType" =>
             {
                 if let Some(filename) = e
                     .attributes()
                     .filter_map(|a| a.ok())
-                    .find(|a| a.key.as_ref() == b"filename")
+                    .find(|a| a.key.as_ref() == "filename")
                 {
-                    let filename_str = String::from_utf8_lossy(&filename.value);
+                    let filename_str = &filename.value;
                     let name = extract_fruit_name(&filename_str);
                     fruit_types.push(name);
                 }

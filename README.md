@@ -146,7 +146,6 @@ Releases are automated via GitHub Actions. When a version tag is pushed, the CI 
 | Styling | [Tailwind CSS 4](https://tailwindcss.com/) |
 | Icons | [Lucide](https://lucide.dev/) |
 | Notifications | [Sonner](https://vue-sonner.vercel.app/) |
-| Data Tables | [TanStack Table](https://tanstack.com/table) |
 | i18n | [vue-i18n](https://vue-i18n.intlify.dev/) |
 | Backend | [Rust](https://www.rust-lang.org/) |
 | XML Parsing | [quick-xml](https://docs.rs/quick-xml/) |

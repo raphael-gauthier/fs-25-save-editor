@@ -4,8 +4,10 @@ use quick_xml::events::{BytesEnd, BytesStart, BytesText, Event};
 use quick_xml::{Reader, Writer};
 
 use crate::error::AppError;
+use crate::writers::replace_xml_file;
 use crate::models::changes::EnvironmentChanges;
 use crate::models::environment::WeatherEvent;
+use crate::parsers::text::resolve_ref;
 
 /// Applies environment changes to environment.xml.
 ///
@@ -31,7 +33,7 @@ pub fn write_environment_changes(
     loop {
         match reader.read_event() {
             Ok(Event::Start(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
                 match tag.as_str() {
                     "dayTime" => {
                         write_ev(&mut writer, &xml_path, Event::Start(e.clone().into_owned()))?;
@@ -112,12 +114,11 @@ pub fn write_environment_changes(
                 if skip_until_forecast_end {
                     continue;
                 }
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
                 match tag.as_str() {
                     "snow" if in_weather && !in_forecast => {
                         if let Some(val) = changes.snow_height {
-                            let mut elem = BytesStart::new("snow");
-                            elem.push_attribute(("height", format!("{:.6}", val).as_str()));
+                            let elem = with_attribute(e, "height", &format!("{:.6}", val));
                             write_ev(&mut writer, &xml_path, Event::Empty(elem))?;
                         } else {
                             write_ev(
@@ -129,8 +130,7 @@ pub fn write_environment_changes(
                     }
                     "ground" if in_weather && !in_forecast => {
                         if let Some(val) = changes.ground_wetness {
-                            let mut elem = BytesStart::new("ground");
-                            elem.push_attribute(("wetness", format!("{:.6}", val).as_str()));
+                            let elem = with_attribute(e, "wetness", &format!("{:.6}", val));
                             write_ev(&mut writer, &xml_path, Event::Empty(elem))?;
                         } else {
                             write_ev(
@@ -163,7 +163,7 @@ pub fn write_environment_changes(
                 }
             }
             Ok(Event::End(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
                 match tag.as_str() {
                     "forecast" if in_weather => {
                         in_forecast = false;
@@ -207,10 +207,7 @@ pub fn write_environment_changes(
         }
     }
 
-    let output = writer.into_inner();
-    let tmp_path = xml_path.with_extension("xml.tmp");
-    std::fs::write(&tmp_path, &output)?;
-    std::fs::rename(&tmp_path, &xml_path)?;
+    replace_xml_file(&xml_path, &content, &writer.into_inner())?;
 
     Ok(())
 }
@@ -271,13 +268,30 @@ fn write_forecast_section(
     Ok(())
 }
 
+/// `e` with `key` set to `value`, every other attribute kept as written.
+fn with_attribute(e: &BytesStart, key: &str, value: &str) -> BytesStart<'static> {
+    let mut elem = BytesStart::new(e.name().as_ref().to_string());
+    let mut found = false;
+    for attr in e.attributes().flatten() {
+        if attr.key.as_ref() == key {
+            elem.push_attribute((key, value));
+            found = true;
+        } else {
+            elem.push_attribute(attr);
+        }
+    }
+    if !found {
+        elem.push_attribute((key, value));
+    }
+    elem
+}
+
 fn read_text_content(reader: &mut Reader<&[u8]>) -> String {
     let mut buf = String::new();
     loop {
         match reader.read_event() {
-            Ok(Event::Text(ref e)) => {
-                buf.push_str(&e.unescape().unwrap_or_default());
-            }
+            Ok(Event::Text(ref e)) => buf.push_str(e),
+            Ok(Event::GeneralRef(ref r)) => buf.push_str(&resolve_ref(r)),
             Ok(Event::End(_)) | Ok(Event::Eof) => break,
             _ => {}
         }

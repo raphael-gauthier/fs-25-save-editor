@@ -4,6 +4,7 @@ use quick_xml::events::{BytesStart, Event};
 use quick_xml::{Reader, Writer};
 
 use crate::error::AppError;
+use crate::writers::replace_xml_file;
 
 /// Modifies money and/or loan in farms.xml for the specified farm.
 /// Uses patch strategy: reads, modifies only the target attributes, rewrites atomically.
@@ -24,24 +25,20 @@ pub fn write_farm_finances(
     loop {
         match reader.read_event() {
             Ok(Event::Start(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
                 if tag == "farm" {
                     let current_id: u8 = e
                         .attributes()
                         .flatten()
-                        .find(|a| a.key.as_ref() == b"farmId")
-                        .map(|a| {
-                            String::from_utf8_lossy(&a.value)
-                                .parse()
-                                .unwrap_or(0)
-                        })
+                        .find(|a| a.key.as_ref() == "farmId")
+                        .map(|a| a.value.parse().unwrap_or(0))
                         .unwrap_or(0);
 
                     if current_id == farm_id {
                         let mut elem = BytesStart::new("farm");
                         for attr in e.attributes().flatten() {
                             let key =
-                                String::from_utf8_lossy(attr.key.as_ref()).to_string();
+                                attr.key.as_ref().to_string();
                             match key.as_str() {
                                 "money" if money.is_some() => {
                                     elem.push_attribute((
@@ -56,10 +53,7 @@ pub fn write_farm_finances(
                                     ));
                                 }
                                 _ => {
-                                    elem.push_attribute((
-                                        key.as_str(),
-                                        String::from_utf8_lossy(&attr.value).as_ref(),
-                                    ));
+                                    elem.push_attribute(attr);
                                 }
                             }
                         }
@@ -104,10 +98,7 @@ pub fn write_farm_finances(
         }
     }
 
-    let output = writer.into_inner();
-    let tmp_path = xml_path.with_extension("xml.tmp");
-    std::fs::write(&tmp_path, &output)?;
-    std::fs::rename(&tmp_path, &xml_path)?;
+    replace_xml_file(&xml_path, &content, &writer.into_inner())?;
 
     Ok(())
 }

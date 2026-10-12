@@ -4,6 +4,7 @@ use quick_xml::events::{BytesStart, BytesText, Event};
 use quick_xml::{Reader, Writer};
 
 use crate::error::AppError;
+use crate::writers::replace_xml_file;
 use crate::models::changes::ContractSettingsChange;
 
 pub fn write_contract_settings(
@@ -25,7 +26,7 @@ pub fn write_contract_settings(
     loop {
         match reader.read_event() {
             Ok(Event::Start(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
                 if tag == "settings" || tag == "contractSettings" {
                     let elem = patch_settings(e, &tag, changes);
                     write_event(&mut writer, &xml_path, Event::Start(elem))?;
@@ -55,7 +56,7 @@ pub fn write_contract_settings(
                 write_event(&mut writer, &xml_path, Event::End(e.clone().into_owned()))?;
             }
             Ok(Event::Empty(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
                 if tag == "settings" || tag == "contractSettings" {
                     let elem = patch_settings(e, &tag, changes);
                     write_event(&mut writer, &xml_path, Event::Empty(elem))?;
@@ -76,10 +77,7 @@ pub fn write_contract_settings(
         }
     }
 
-    let output = writer.into_inner();
-    let tmp_path = xml_path.with_extension("xml.tmp");
-    std::fs::write(&tmp_path, &output)?;
-    std::fs::rename(&tmp_path, &xml_path)?;
+    replace_xml_file(&xml_path, &content, &writer.into_inner())?;
 
     Ok(())
 }
@@ -87,7 +85,7 @@ pub fn write_contract_settings(
 fn patch_settings(e: &BytesStart, tag_name: &str, changes: &ContractSettingsChange) -> BytesStart<'static> {
     let mut elem = BytesStart::new(tag_name.to_string());
     for attr in e.attributes().flatten() {
-        let key = String::from_utf8_lossy(attr.key.as_ref()).to_string();
+        let key = attr.key.as_ref().to_string();
         match key.as_str() {
             "leaseVehicle" if changes.lease_vehicle.is_some() => {
                 elem.push_attribute(("leaseVehicle", format!("{:.6}", changes.lease_vehicle.unwrap()).as_str()));
@@ -99,10 +97,7 @@ fn patch_settings(e: &BytesStart, tag_name: &str, changes: &ContractSettingsChan
                 elem.push_attribute(("allowClearAdd", format!("{:.6}", changes.allow_clear_add.unwrap()).as_str()));
             }
             _ => {
-                elem.push_attribute((
-                    key.as_str(),
-                    String::from_utf8_lossy(&attr.value).as_ref(),
-                ));
+                elem.push_attribute(attr);
             }
         }
     }
@@ -177,5 +172,23 @@ mod tests {
         assert!(raw.contains("<allowClearAdd>1.000000</allowClearAdd>"));
         assert!(raw.contains("<r_contracts>"));
         let _ = std::fs::remove_dir_all(&save);
+    }
+
+    #[test]
+    fn test_patch_settings_keeps_other_attributes_as_written() {
+        let xml = r#"<settings leaseVehicle="2.000000" note="A&amp;B"/>"#;
+        let mut reader = Reader::from_str(xml);
+        let Ok(Event::Empty(e)) = reader.read_event() else { panic!("expected <settings/>") };
+        let changes = ContractSettingsChange {
+            lease_vehicle: Some(5.0),
+            mission_per_farm: None,
+            allow_clear_add: None,
+        };
+
+        let mut writer = Writer::new(Vec::new());
+        writer.write_event(Event::Empty(patch_settings(&e, "settings", &changes))).unwrap();
+        let written = String::from_utf8(writer.into_inner()).unwrap();
+
+        assert_eq!(written, r#"<settings leaseVehicle="5.000000" note="A&amp;B"/>"#);
     }
 }

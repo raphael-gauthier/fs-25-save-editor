@@ -9,8 +9,8 @@ use crate::models::economy::{Economy, FillTypePrice, GreatDemand, PeriodPrice};
 fn attr_str(e: &quick_xml::events::BytesStart, key: &str) -> String {
     e.attributes()
         .flatten()
-        .find(|a| a.key.as_ref() == key.as_bytes())
-        .map(|a| String::from_utf8_lossy(&a.value).to_string())
+        .find(|a| a.key.as_ref() == key)
+        .map(|a| a.value.to_string())
         .unwrap_or_default()
 }
 
@@ -56,7 +56,7 @@ pub fn parse_economy(path: &Path) -> Result<Economy, AppError> {
     loop {
         match reader.read_event() {
             Ok(Event::Start(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
                 match tag.as_str() {
                     "greatDemands" => {
                         in_great_demands = true;
@@ -98,7 +98,7 @@ pub fn parse_economy(path: &Path) -> Result<Economy, AppError> {
                 }
             }
             Ok(Event::Empty(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
                 match tag.as_str() {
                     "greatDemand" if in_great_demands => {
                         let unique_id = attr_str(e, "uniqueId");
@@ -128,7 +128,7 @@ pub fn parse_economy(path: &Path) -> Result<Economy, AppError> {
             Ok(Event::Text(ref e)) => {
                 if let Some(ref period_name) = current_period_name {
                     if let Some(ref mut ft) = current_fill_type {
-                        let text = e.unescape().unwrap_or_default().to_string();
+                        let text = e.as_ref().to_string();
                         if let Ok(price) = text.trim().parse::<u32>() {
                             ft.price_history.push(PeriodPrice {
                                 period: period_name.clone(),
@@ -139,7 +139,7 @@ pub fn parse_economy(path: &Path) -> Result<Economy, AppError> {
                 }
             }
             Ok(Event::End(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
                 match tag.as_str() {
                     "greatDemands" => {
                         in_great_demands = false;

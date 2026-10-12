@@ -9,8 +9,8 @@ use crate::models::contract::ContractSettings;
 fn attr_str(e: &quick_xml::events::BytesStart, key: &str) -> String {
     e.attributes()
         .flatten()
-        .find(|a| a.key.as_ref() == key.as_bytes())
-        .map(|a| String::from_utf8_lossy(&a.value).to_string())
+        .find(|a| a.key.as_ref() == key)
+        .map(|a| a.value.to_string())
         .unwrap_or_default()
 }
 
@@ -39,7 +39,7 @@ pub fn parse_contract_settings(path: &Path) -> Result<ContractSettings, AppError
     loop {
         match reader.read_event() {
             Ok(Event::Start(ref e)) | Ok(Event::Empty(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
                 if tag == "settings" || tag == "contractSettings" {
                     settings.lease_vehicle = attr_f64(e, "leaseVehicle");
                     settings.mission_per_farm = attr_f64(e, "missionPerFarm");
@@ -48,7 +48,7 @@ pub fn parse_contract_settings(path: &Path) -> Result<ContractSettings, AppError
                 current_tag = tag;
             }
             Ok(Event::Text(ref t)) => {
-                let text = String::from_utf8_lossy(t.as_ref()).trim().to_string();
+                let text = t.trim().to_string();
                 if let Ok(value) = text.parse::<f64>() {
                     match current_tag.as_str() {
                         "leaseVehicle" => settings.lease_vehicle = value,

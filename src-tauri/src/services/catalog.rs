@@ -6,6 +6,7 @@ use quick_xml::events::Event;
 use quick_xml::Reader;
 
 use crate::models::catalog::{CatalogVehicle, VehicleSource};
+use crate::parsers::text::resolve_ref;
 
 /// Scan base game vehicles directory and mod zips to build a vehicle catalog.
 pub fn scan_vehicle_catalog(game_path: &Path, mods_dir: &Path) -> Vec<CatalogVehicle> {
@@ -114,7 +115,7 @@ fn scan_mod_zip(zip_path: &Path, catalog: &mut Vec<CatalogVehicle>) {
     let xml_names: Vec<String> = (0..archive.len())
         .filter_map(|i| {
             let entry = archive.by_index(i).ok()?;
-            let name = entry.name().to_string();
+            let name = entry.name().ok()?.into_owned();
             if name.ends_with(".xml") && !name.contains("__MACOSX") {
                 Some(name)
             } else {
@@ -166,6 +167,7 @@ fn parse_store_data(xml_content: &str) -> Option<StoreData> {
 
     let mut in_store_data = false;
     let mut current_tag = String::new();
+    let mut text = String::new();
     let mut name = None;
     let mut brand = None;
     let mut category = None;
@@ -175,35 +177,32 @@ fn parse_store_data(xml_content: &str) -> Option<StoreData> {
     loop {
         match reader.read_event_into(&mut buf) {
             Ok(Event::Start(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                text.clear();
+                let tag = e.name().as_ref().to_string();
                 if tag == "storeData" {
                     in_store_data = true;
                 } else if in_store_data {
                     current_tag = tag;
                 }
             }
-            Ok(Event::Text(ref text)) => {
-                if in_store_data && !current_tag.is_empty() {
-                    if let Ok(value) = text.unescape() {
-                        let trimmed = value.trim().to_string();
-                        if !trimmed.is_empty() {
-                            match current_tag.as_str() {
-                                "name" => name = Some(clean_localized_name(&trimmed)),
-                                "brand" => brand = Some(trimmed),
-                                "category" => category = Some(trimmed),
-                                "price" => price = trimmed.parse::<u32>().ok(),
-                                _ => {}
-                            }
-                        }
-                    }
-                }
-            }
+            Ok(Event::Text(ref e)) => text.push_str(e),
+            Ok(Event::GeneralRef(ref r)) => text.push_str(&resolve_ref(r)),
             Ok(Event::End(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
                 if tag == "storeData" {
                     break;
                 }
                 if in_store_data {
+                    let trimmed = std::mem::take(&mut text).trim().to_string();
+                    if !trimmed.is_empty() {
+                        match current_tag.as_str() {
+                            "name" => name = Some(clean_localized_name(&trimmed)),
+                            "brand" => brand = Some(trimmed),
+                            "category" => category = Some(trimmed),
+                            "price" => price = trimmed.parse::<u32>().ok(),
+                            _ => {}
+                        }
+                    }
                     current_tag.clear();
                 }
             }
@@ -353,6 +352,42 @@ mod tests {
     }
 
     #[test]
+    fn test_scan_mod_zip_lists_vehicle_xml_entries() {
+        use std::io::Write;
+        use zip::write::SimpleFileOptions;
+
+        let dir = std::env::temp_dir().join("fs25_test_catalog_mod_zip");
+        let _ = fs::remove_dir_all(&dir);
+        fs::create_dir_all(&dir).unwrap();
+        let zip_path = dir.join("FS25_testMod.zip");
+
+        let mut writer = zip::ZipWriter::new(fs::File::create(&zip_path).unwrap());
+        let options = SimpleFileOptions::default();
+        writer.start_file("vehicles/tractor.xml", options).unwrap();
+        writer
+            .write_all(
+                br#"<vehicle><storeData><name>Mod Tractor</name><brand>LIZARD</brand><category>tractorsS</category><price>42000</price></storeData></vehicle>"#,
+            )
+            .unwrap();
+        writer.start_file("__MACOSX/vehicles/tractor.xml", options).unwrap();
+        writer.write_all(b"ignored").unwrap();
+        writer.start_file("modDesc.txt", options).unwrap();
+        writer.write_all(b"not xml").unwrap();
+        writer.finish().unwrap();
+
+        let mut catalog = Vec::new();
+        scan_mod_zip(&zip_path, &mut catalog);
+        let _ = fs::remove_dir_all(&dir);
+
+        assert_eq!(catalog.len(), 1);
+        assert_eq!(catalog[0].name, "Mod Tractor");
+        assert_eq!(
+            catalog[0].xml_filename,
+            "$moddir$FS25_testMod/vehicles/tractor.xml"
+        );
+    }
+
+    #[test]
     fn test_clean_localized_name() {
         assert_eq!(clean_localized_name("900 Vario"), "900 Vario");
         assert_eq!(
@@ -363,5 +398,13 @@ mod tests {
             clean_localized_name("$l10n_shop_myVehicle"),
             "My Vehicle"
         );
+    }
+
+    #[test]
+    fn test_parse_store_data_decodes_entities() {
+        let xml = r#"<vehicle><storeData><name>Lizard R&amp;D</name><brand>LIZARD</brand><category>tractorsS</category><price>42000</price></storeData></vehicle>"#;
+
+        let result = parse_store_data(xml).unwrap();
+        assert_eq!(result.name, "Lizard R&D");
     }
 }

@@ -9,8 +9,8 @@ use crate::models::field::{Farmland, Field};
 fn attr_str(e: &quick_xml::events::BytesStart, key: &str) -> String {
     e.attributes()
         .flatten()
-        .find(|a| a.key.as_ref() == key.as_bytes())
-        .map(|a| String::from_utf8_lossy(&a.value).to_string())
+        .find(|a| a.key.as_ref() == key)
+        .map(|a| a.value.to_string())
         .unwrap_or_default()
 }
 
@@ -35,7 +35,7 @@ pub fn parse_fields(path: &Path) -> Result<Vec<Field>, AppError> {
     loop {
         match reader.read_event() {
             Ok(Event::Empty(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
                 if tag == "field" {
                     fields.push(Field {
                         id: attr_u32(e, "id"),
@@ -83,7 +83,7 @@ pub fn parse_farmlands(path: &Path) -> Result<Vec<Farmland>, AppError> {
     loop {
         match reader.read_event() {
             Ok(Event::Empty(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
                 if tag == "farmland" {
                     farmlands.push(Farmland {
                         id: attr_u32(e, "id"),

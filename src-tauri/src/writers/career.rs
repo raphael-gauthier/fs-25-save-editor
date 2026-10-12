@@ -4,6 +4,7 @@ use quick_xml::events::{BytesStart, BytesText, Event};
 use quick_xml::{Reader, Writer};
 
 use crate::error::AppError;
+use crate::writers::replace_xml_file;
 
 /// Modifies the money in careerSavegame.xml.
 /// Supports both formats:
@@ -29,17 +30,17 @@ pub fn write_career_money(path: &Path, money: f64) -> Result<(), AppError> {
     loop {
         match reader.read_event() {
             Ok(Event::Start(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
                 if tag == "statistics" {
                     in_statistics = true;
                     // Pass through with attributes (may have attrs in some formats)
                     let mut elem = BytesStart::new("statistics");
                     for attr in e.attributes().flatten() {
-                        let key = String::from_utf8_lossy(attr.key.as_ref()).to_string();
+                        let key = attr.key.as_ref().to_string();
                         if key == "money" {
                             elem.push_attribute(("money", format!("{:.6}", money).as_str()));
                         } else {
-                            elem.push_attribute((key.as_str(), String::from_utf8_lossy(&attr.value).as_ref()));
+                            elem.push_attribute(attr);
                         }
                     }
                     writer.write_event(Event::Start(elem)).map_err(write_err)?;
@@ -62,7 +63,7 @@ pub fn write_career_money(path: &Path, money: f64) -> Result<(), AppError> {
                 }
             }
             Ok(Event::End(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
                 if tag == "money" && in_statistics {
                     in_money_tag = false;
                 } else if tag == "statistics" {
@@ -71,16 +72,16 @@ pub fn write_career_money(path: &Path, money: f64) -> Result<(), AppError> {
                 writer.write_event(Event::End(e.clone())).map_err(write_err)?;
             }
             Ok(Event::Empty(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
                 if tag == "statistics" {
                     // Self-closing format: <statistics money="..." />
                     let mut elem = BytesStart::new("statistics");
                     for attr in e.attributes().flatten() {
-                        let key = String::from_utf8_lossy(attr.key.as_ref()).to_string();
+                        let key = attr.key.as_ref().to_string();
                         if key == "money" {
                             elem.push_attribute(("money", format!("{:.6}", money).as_str()));
                         } else {
-                            elem.push_attribute((key.as_str(), String::from_utf8_lossy(&attr.value).as_ref()));
+                            elem.push_attribute(attr);
                         }
                     }
                     writer.write_event(Event::Empty(elem)).map_err(write_err)?;
@@ -101,10 +102,7 @@ pub fn write_career_money(path: &Path, money: f64) -> Result<(), AppError> {
         }
     }
 
-    let output = writer.into_inner();
-    let tmp_path = xml_path.with_extension("xml.tmp");
-    std::fs::write(&tmp_path, &output)?;
-    std::fs::rename(&tmp_path, &xml_path)?;
+    replace_xml_file(&xml_path, &content, &writer.into_inner())?;
 
     Ok(())
 }
@@ -153,5 +151,24 @@ mod tests {
         assert!((after.play_time - before.play_time).abs() < 0.01);
         assert_eq!(after.growth_mode, before.growth_mode);
         let _ = std::fs::remove_dir_all(&save);
+    }
+
+    #[test]
+    fn test_write_career_money_keeps_escaped_savegame_name() {
+        let save = setup_fixture("escaped_name");
+        let path = save.join("careerSavegame.xml");
+        let original = std::fs::read_to_string(&path).unwrap();
+        let start = original.find("<savegameName>").unwrap();
+        let end = original.find("</savegameName>").unwrap();
+        let escaped = format!("{}<savegameName>Ferme &amp; Fils{}", &original[..start], &original[end..]);
+        std::fs::write(&path, escaped).unwrap();
+
+        write_career_money(&save, 1234.0).unwrap();
+        let written = std::fs::read_to_string(&path).unwrap();
+        let career = parse_career(&save).unwrap();
+        let _ = std::fs::remove_dir_all(&save);
+
+        assert!(written.contains("<savegameName>Ferme &amp; Fils</savegameName>"));
+        assert_eq!(career.savegame_name, "Ferme & Fils");
     }
 }

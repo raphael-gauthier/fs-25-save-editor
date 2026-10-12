@@ -4,6 +4,7 @@ use quick_xml::events::{BytesStart, Event};
 use quick_xml::{Reader, Writer};
 
 use crate::error::AppError;
+use crate::writers::replace_xml_file;
 use crate::models::changes::{VehicleChange, FillUnitChange};
 
 /// Applies a list of vehicle changes to vehicles.xml.
@@ -36,7 +37,7 @@ pub fn write_vehicle_changes(
     loop {
         match reader.read_event() {
             Ok(Event::Start(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
 
                 if skip_until_vehicle_end {
                     skip_depth += 1;
@@ -90,7 +91,7 @@ pub fn write_vehicle_changes(
                     continue;
                 }
 
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
 
                 if tag == "unit" && in_fill_unit {
                     if let Some(fill_changes) = current_fill_changes {
@@ -131,7 +132,7 @@ pub fn write_vehicle_changes(
                 write_event(&mut writer, &xml_path, Event::Empty(e.clone().into_owned()))?;
             }
             Ok(Event::End(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
 
                 if skip_until_vehicle_end {
                     if tag == "vehicle" {
@@ -176,10 +177,7 @@ pub fn write_vehicle_changes(
         }
     }
 
-    let output = writer.into_inner();
-    let tmp_path = xml_path.with_extension("xml.tmp");
-    std::fs::write(&tmp_path, &output)?;
-    std::fs::rename(&tmp_path, &xml_path)?;
+    replace_xml_file(&xml_path, &content, &writer.into_inner())?;
 
     Ok(())
 }
@@ -187,8 +185,8 @@ pub fn write_vehicle_changes(
 fn attr_str(e: &BytesStart, key: &str) -> String {
     e.attributes()
         .flatten()
-        .find(|a| a.key.as_ref() == key.as_bytes())
-        .map(|a| String::from_utf8_lossy(&a.value).to_string())
+        .find(|a| a.key.as_ref() == key)
+        .map(|a| a.value.to_string())
         .unwrap_or_default()
 }
 
@@ -205,7 +203,7 @@ fn property_state_to_xml(state: &str) -> &str {
 fn patch_vehicle_start(e: &BytesStart, change: &VehicleChange) -> BytesStart<'static> {
     let mut elem = BytesStart::new("vehicle");
     for attr in e.attributes().flatten() {
-        let key = String::from_utf8_lossy(attr.key.as_ref()).to_string();
+        let key = attr.key.as_ref().to_string();
         match key.as_str() {
             "age" if change.age.is_some() => {
                 elem.push_attribute(("age", format!("{:.6}", change.age.unwrap()).as_str()));
@@ -229,10 +227,7 @@ fn patch_vehicle_start(e: &BytesStart, change: &VehicleChange) -> BytesStart<'st
                 ));
             }
             _ => {
-                elem.push_attribute((
-                    key.as_str(),
-                    String::from_utf8_lossy(&attr.value).as_ref(),
-                ));
+                elem.push_attribute(attr);
             }
         }
     }
@@ -242,7 +237,7 @@ fn patch_vehicle_start(e: &BytesStart, change: &VehicleChange) -> BytesStart<'st
 fn patch_wearable(e: &BytesStart, change: &VehicleChange) -> BytesStart<'static> {
     let mut elem = BytesStart::new("wearable");
     for attr in e.attributes().flatten() {
-        let key = String::from_utf8_lossy(attr.key.as_ref()).to_string();
+        let key = attr.key.as_ref().to_string();
         match key.as_str() {
             "damage" if change.damage.is_some() => {
                 elem.push_attribute(("damage", format!("{:.6}", change.damage.unwrap()).as_str()));
@@ -251,10 +246,7 @@ fn patch_wearable(e: &BytesStart, change: &VehicleChange) -> BytesStart<'static>
                 elem.push_attribute(("wear", format!("{:.6}", change.wear.unwrap()).as_str()));
             }
             _ => {
-                elem.push_attribute((
-                    key.as_str(),
-                    String::from_utf8_lossy(&attr.value).as_ref(),
-                ));
+                elem.push_attribute(attr);
             }
         }
     }
@@ -264,16 +256,13 @@ fn patch_wearable(e: &BytesStart, change: &VehicleChange) -> BytesStart<'static>
 fn patch_wearable_start(e: &BytesStart, change: &VehicleChange) -> BytesStart<'static> {
     let mut elem = BytesStart::new("wearable");
     for attr in e.attributes().flatten() {
-        let key = String::from_utf8_lossy(attr.key.as_ref()).to_string();
+        let key = attr.key.as_ref().to_string();
         match key.as_str() {
             "damage" if change.damage.is_some() => {
                 elem.push_attribute(("damage", format!("{:.6}", change.damage.unwrap()).as_str()));
             }
             _ => {
-                elem.push_attribute((
-                    key.as_str(),
-                    String::from_utf8_lossy(&attr.value).as_ref(),
-                ));
+                elem.push_attribute(attr);
             }
         }
     }
@@ -283,16 +272,13 @@ fn patch_wearable_start(e: &BytesStart, change: &VehicleChange) -> BytesStart<'s
 fn patch_wear_node(e: &BytesStart, change: &VehicleChange) -> BytesStart<'static> {
     let mut elem = BytesStart::new("wearNode");
     for attr in e.attributes().flatten() {
-        let key = String::from_utf8_lossy(attr.key.as_ref()).to_string();
+        let key = attr.key.as_ref().to_string();
         match key.as_str() {
             "amount" if change.wear.is_some() => {
                 elem.push_attribute(("amount", format!("{:.6}", change.wear.unwrap()).as_str()));
             }
             _ => {
-                elem.push_attribute((
-                    key.as_str(),
-                    String::from_utf8_lossy(&attr.value).as_ref(),
-                ));
+                elem.push_attribute(attr);
             }
         }
     }
@@ -302,7 +288,7 @@ fn patch_wear_node(e: &BytesStart, change: &VehicleChange) -> BytesStart<'static
 fn patch_fill_unit(e: &BytesStart, change: &FillUnitChange) -> BytesStart<'static> {
     let mut elem = BytesStart::new("unit");
     for attr in e.attributes().flatten() {
-        let key = String::from_utf8_lossy(attr.key.as_ref()).to_string();
+        let key = attr.key.as_ref().to_string();
         match key.as_str() {
             "fillLevel" => {
                 elem.push_attribute((
@@ -311,10 +297,7 @@ fn patch_fill_unit(e: &BytesStart, change: &FillUnitChange) -> BytesStart<'stati
                 ));
             }
             _ => {
-                elem.push_attribute((
-                    key.as_str(),
-                    String::from_utf8_lossy(&attr.value).as_ref(),
-                ));
+                elem.push_attribute(attr);
             }
         }
     }

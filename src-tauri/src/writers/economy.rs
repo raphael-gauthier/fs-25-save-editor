@@ -5,6 +5,7 @@ use quick_xml::events::{BytesStart, Event};
 use quick_xml::{Reader, Writer};
 
 use crate::error::AppError;
+use crate::writers::replace_xml_file;
 use crate::models::changes::{EconomyChanges, GreatDemandAddition, GreatDemandChange};
 
 pub fn write_economy_changes(
@@ -43,7 +44,7 @@ pub fn write_economy_changes(
     loop {
         match reader.read_event() {
             Ok(Event::Start(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
                 match tag.as_str() {
                     "greatDemands" => {
                         in_great_demands = true;
@@ -72,7 +73,7 @@ pub fn write_economy_changes(
                 }
             }
             Ok(Event::Empty(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
                 if tag == "greatDemand" && in_great_demands {
                     if deletions.contains(&demand_index) {
                         // Delete: replace with empty slot (no attributes)
@@ -91,7 +92,7 @@ pub fn write_economy_changes(
                 }
             }
             Ok(Event::End(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
                 if tag == "greatDemand" && skip_until_end_great_demand {
                     skip_until_end_great_demand = false;
                     // Already wrote empty slot, skip closing tag
@@ -122,10 +123,7 @@ pub fn write_economy_changes(
         }
     }
 
-    let output = writer.into_inner();
-    let tmp_path = xml_path.with_extension("xml.tmp");
-    std::fs::write(&tmp_path, &output)?;
-    std::fs::rename(&tmp_path, &xml_path)?;
+    replace_xml_file(&xml_path, &content, &writer.into_inner())?;
 
     Ok(())
 }
@@ -133,7 +131,7 @@ pub fn write_economy_changes(
 fn patch_great_demand(e: &BytesStart, change: &GreatDemandChange) -> BytesStart<'static> {
     let mut elem = BytesStart::new("greatDemand");
     for attr in e.attributes().flatten() {
-        let key = String::from_utf8_lossy(attr.key.as_ref()).to_string();
+        let key = attr.key.as_ref().to_string();
         match key.as_str() {
             "fillTypeName" if change.fill_type_name.is_some() => {
                 elem.push_attribute(("fillTypeName", change.fill_type_name.as_ref().unwrap().as_str()));
@@ -157,10 +155,7 @@ fn patch_great_demand(e: &BytesStart, change: &GreatDemandChange) -> BytesStart<
                 elem.push_attribute(("isValid", if change.is_valid.unwrap() { "true" } else { "false" }));
             }
             _ => {
-                elem.push_attribute((
-                    key.as_str(),
-                    String::from_utf8_lossy(&attr.value).as_ref(),
-                ));
+                elem.push_attribute(attr);
             }
         }
     }
