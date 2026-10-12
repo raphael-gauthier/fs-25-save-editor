@@ -595,7 +595,11 @@
     "productionEnabled": "Activée",
     "productionDisabled": "Désactivée",
     "productionStorage": "Stocks",
-    "position": "Position"
+    "position": "Position",
+    "deleted": "Supprimé",
+    "restore": "Restaurer le bâtiment",
+    "deletedDesc": "Bâtiment d'origine de la carte que vous avez supprimé. Le restaurer le fait réapparaître au chargement de la partie : vérifiez que rien n'a été construit à sa place.",
+    "restoredDesc": "Ce bâtiment réapparaîtra au prochain chargement de la partie."
   },
   "mission": {
     "title": "Missions et contrats",

@@ -34,7 +34,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { Building2, Hammer } from "@lucide/vue";
+import { Building2, Hammer, Undo2 } from "@lucide/vue";
 
 interface Props {
   placeable: Placeable | null;
@@ -133,6 +133,20 @@ function handleStockChange(fillType: string, event: Event) {
           </div>
 
           <!-- Construction section -->
+          <!-- Deleted pre-placed building -->
+          <div
+            v-if="placeable.isDeleted || store.getOriginalByIndex(placeable.index)?.isDeleted"
+            class="space-y-2 rounded-md border border-amber-500/40 bg-amber-500/5 p-3"
+          >
+            <p class="text-sm">
+              {{ placeable.isDeleted ? t("building.deletedDesc") : t("building.restoredDesc") }}
+            </p>
+            <Button v-if="placeable.isDeleted" variant="outline" class="w-full" @click="store.restorePlaceable(placeable.index)">
+              <Undo2 class="size-4" />
+              {{ t("building.restore") }}
+            </Button>
+          </div>
+
           <template v-if="placeable.construction">
             <Separator />
             <div class="space-y-4">

@@ -384,6 +384,8 @@ export interface Placeable {
   age: number;
   position: Position | null;
   isPrePlaced: boolean;
+  /** A pre-placed map building the player removed; the map no longer creates it */
+  isDeleted: boolean;
   isUnderConstruction: boolean;
   /** Present only for `<constructible>` placeables; a finished one stays in state "OLD". */
   construction: ConstructionState | null;
@@ -468,6 +470,8 @@ export interface PlaceableChangePayload {
   productionStorage?: ProductionStockChangePayload[];
   siloStocks?: SiloStockChangePayload[];
   objectStorage?: ObjectStorageChangePayload;
+  /** Bring back a deleted pre-placed building */
+  restore?: boolean;
 }
 
 export interface SiloStockChangePayload {

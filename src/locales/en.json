@@ -595,7 +595,11 @@
     "productionEnabled": "Enabled",
     "productionDisabled": "Disabled",
     "productionStorage": "Stocks",
-    "position": "Position"
+    "position": "Position",
+    "deleted": "Deleted",
+    "restore": "Restore building",
+    "deletedDesc": "An original map building you removed. Restoring it makes it reappear when the game loads: check nothing was built in its place.",
+    "restoredDesc": "This building will reappear the next time the game loads."
   },
   "mission": {
     "title": "Missions & Contracts",
