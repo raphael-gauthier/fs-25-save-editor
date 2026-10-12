@@ -518,7 +518,20 @@
     "maxPlow": "Labour max",
     "unknownFruit": "Inconnu ({index})",
     "densityCacheRefreshing": "Données en cache affichées — actualisation des données en arrière-plan...",
-    "densityCacheStale": "Données en cache affichées — l'actualisation a échoué, les données peuvent ne pas être à jour."
+    "densityCacheStale": "Données en cache affichées — l'actualisation a échoué, les données peuvent ne pas être à jour.",
+    "cropTitle": "Culture",
+    "cropFruit": "Culture",
+    "cropStage": "Stade",
+    "applyCrop": "Appliquer",
+    "noCrop": "Aucune (sol nu)",
+    "soilTitle": "Travail du sol",
+    "soilPlow": "Labourer",
+    "soilCultivate": "Cultiver",
+    "soilRoll": "Rouler",
+    "soilMulch": "Broyer les chaumes",
+    "pendingCrop": "{fruit} · {stage}",
+    "pendingNoCrop": "Culture retirée",
+    "pendingGround": "Sol : {ground}"
   },
   "world": {
     "title": "Monde et Météo",
@@ -728,5 +741,14 @@
       "attachmentNotFound": "Le véhicule « {name} » (id={id}) référence un attelage inexistant (id={attachmentId})",
       "fieldNoFarmland": "Le champ {fieldId} n'a pas de terrain agricole correspondant"
     }
+  },
+  "growthStage": {
+    "sown": "Semé",
+    "growing": "En croissance ({n}/{ready})",
+    "ready": "Prêt à récolter",
+    "preparable": "Prêt au défanage",
+    "withered": "Flétri",
+    "harvested": "Récolté",
+    "other": "Stade {n}"
   }
 }

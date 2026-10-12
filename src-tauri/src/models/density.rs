@@ -1,5 +1,7 @@
 use serde::{Deserialize, Serialize};
 
+use crate::parsers::foliage::FruitState;
+
 /// Edit payload for modifying density map data on a single farmland/field
 #[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
@@ -94,6 +96,17 @@ pub struct GroundCoverage {
     pub ground_type: String,
     /// Percentage of field with this ground type (0.0-100.0)
     pub percentage: f32,
+}
+
+/// A crop of the map with its growth states, for picking a fruit and state.
+#[derive(Debug, Clone, Serialize)]
+#[serde(rename_all = "camelCase")]
+pub struct MapFruitType {
+    /// Uppercased fruit type name, e.g. "WHEAT"
+    pub name: String,
+    /// States in density map order: state `n` is `states[n - 1]`
+    pub states: Vec<FruitState>,
+    pub harvest_ready_state: Option<u8>,
 }
 
 /// Distribution of a treatment level (lime, plow, spray, etc.)

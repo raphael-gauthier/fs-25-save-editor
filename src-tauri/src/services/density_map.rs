@@ -5,9 +5,11 @@ use std::path::{Path, PathBuf};
 use crate::error::AppError;
 use crate::models::density::{
     DensityEditPayload, FieldDensityData, FruitCoverage, GroundCoverage, LevelDistribution,
+    MapFruitType,
 };
 use crate::parsers::density_map_config::{self, GROUND_TYPES};
 use crate::parsers::foliage::{self, FruitGrowth};
+use crate::parsers::map_fields::{self, MapField};
 use crate::parsers::gdm::{self, GdmImage};
 use crate::parsers::grle::{self, GrleImage};
 
@@ -18,10 +20,11 @@ pub fn aggregate_field_data(
     map_id: &str,
 ) -> Result<Vec<FieldDensityData>, AppError> {
     // 1. Resolve map data and read farmlands
-    let (farmlands_grle, layout) = load_map_data(game_path, map_id)?;
+    let map = load_map_data(game_path, map_id)?;
+    let farmlands_grle = &map.farmlands;
 
     // 2. Build farmland pixel map (farmland_id → list of pixel coords)
-    let farmland_pixels = build_farmland_pixel_map(&farmlands_grle);
+    let farmland_pixels = build_farmland_pixel_map(farmlands_grle);
 
     if farmland_pixels.is_empty() {
         return Ok(Vec::new());
@@ -65,7 +68,8 @@ pub fn aggregate_field_data(
             &spray_grle,
             &roller_grle,
             &stubble_grle,
-            &layout,
+            &map.layout,
+            &map.fields,
         );
 
         results.push(density);
@@ -154,11 +158,75 @@ impl FruitLayout {
     }
 }
 
-/// Load map-specific data: farmlands GRLE + fruit layer layout
-fn load_map_data(
-    game_path: &Path,
-    map_id: &str,
-) -> Result<(GrleImage, FruitLayout), AppError> {
+/// Field polygons by the farmland they belong to (a field's id is the id of
+/// the farmland under its center), and the terrain size that places density
+/// map pixels in the world.
+#[derive(Debug, Default)]
+struct FieldShapes {
+    map_size: f32,
+    by_farmland: HashMap<u8, MapField>,
+}
+
+impl FieldShapes {
+    fn new(fields: Vec<MapField>, map_size: f32, farmlands: &GrleImage) -> Self {
+        let mut by_farmland = HashMap::new();
+        for field in fields {
+            let (x, z) = field.center();
+            let px = ((x / map_size + 0.5) * farmlands.width as f32).floor();
+            let pz = ((z / map_size + 0.5) * farmlands.height as f32).floor();
+            if px < 0.0 || pz < 0.0 || px >= farmlands.width as f32 || pz >= farmlands.height as f32 {
+                continue;
+            }
+            let farmland = farmlands.get_pixel(px as u32, pz as u32);
+            // The game drops a second field on the same farmland
+            if farmland != 0 {
+                by_farmland.entry(farmland).or_insert(field);
+            }
+        }
+        FieldShapes { map_size, by_farmland }
+    }
+
+    /// Whether pixel (x, y) of a `width`-pixel layer lies in `farmland`'s
+    /// field. Farmlands without a known field polygon keep all their pixels.
+    fn contains(&self, farmland: u8, x: u32, y: u32, width: u32) -> bool {
+        let Some(field) = self.by_farmland.get(&farmland) else { return true };
+        let meters_per_pixel = self.map_size / width as f32;
+        let world = |p: u32| (p as f32 + 0.5) * meters_per_pixel - self.map_size / 2.0;
+        field.contains(world(x), world(y))
+    }
+}
+
+/// Everything about a map the density code needs.
+#[derive(Debug)]
+pub(crate) struct MapData {
+    farmlands: GrleImage,
+    layout: FruitLayout,
+    fields: FieldShapes,
+}
+
+/// Crops the map can grow, in fruit layer order: fruit types shown on the
+/// map that have a slot in the fruits density map.
+fn map_fruit_types(layout: &FruitLayout) -> Vec<MapFruitType> {
+    layout
+        .type_names
+        .iter()
+        .filter_map(|name| layout.fruits.get(name))
+        .filter(|fruit| fruit.shown_on_map)
+        .map(|fruit| MapFruitType {
+            name: fruit.name.clone(),
+            states: fruit.states.clone(),
+            harvest_ready_state: fruit.harvest_ready_state(),
+        })
+        .collect()
+}
+
+/// Crops of the map `map_id`, with their growth states.
+pub fn load_map_fruit_types(game_path: &Path, map_id: &str) -> Result<Vec<MapFruitType>, AppError> {
+    Ok(map_fruit_types(&load_map_data(game_path, map_id)?.layout))
+}
+
+/// Load map-specific data: farmlands GRLE, fruit layer layout, field polygons
+fn load_map_data(game_path: &Path, map_id: &str) -> Result<MapData, AppError> {
     if map_id.contains('.') {
         // Modded map: e.g. "FS25_Pallegney.FS25_Pallegney"
         load_mod_map_data(game_path, map_id)
@@ -183,10 +251,7 @@ fn read_game_files(game_path: &Path, filenames: &[String]) -> Vec<Vec<u8>> {
         .collect()
 }
 
-fn load_builtin_map_data(
-    game_path: &Path,
-    map_id: &str,
-) -> Result<(GrleImage, FruitLayout), AppError> {
+fn load_builtin_map_data(game_path: &Path, map_id: &str) -> Result<MapData, AppError> {
     let map_dir = match map_id {
         "MapUS" => "mapUS",
         "MapEU" => "mapEU",
@@ -207,30 +272,40 @@ fn load_builtin_map_data(
             message: format!("Failed to read {}.i3d: {}", map_dir, e),
         }
     })?;
+    let i3d = String::from_utf8_lossy(&i3d);
     let mut layout = FruitLayout {
-        type_names: foliage::parse_fruit_layer_types(&String::from_utf8_lossy(&i3d)),
+        type_names: foliage::parse_fruit_layer_types(&i3d),
         fruits: HashMap::new(),
     };
 
+    let map_config = std::fs::read(map_path.join(format!("{}.xml", map_dir)))
+        .map(|data| density_map_config::parse_map_config(&data))
+        .unwrap_or_default();
     let mut fruit_files = std::fs::read(maps_dir.join("maps_fruitTypes.xml"))
         .map(|data| density_map_config::parse_fruit_type_filenames(&data))
         .unwrap_or_default();
-    if let Ok(map_xml) = std::fs::read(map_path.join(format!("{}.xml", map_dir))) {
-        fruit_files.extend(density_map_config::parse_fruit_type_filenames(&map_xml));
-    }
+    fruit_files.extend(map_config.fruit_type_filenames);
     layout.add_fruits(read_game_files(game_path, &fruit_files), false);
     layout.add_fruits(
         read_game_files(game_path, &additional_fruit_type_files(game_path)),
         true,
     );
 
-    Ok((farmlands_grle, layout))
+    let fields = field_shapes(&i3d, map_config.width, &farmlands_grle);
+    Ok(MapData { farmlands: farmlands_grle, layout, fields })
 }
 
-fn load_mod_map_data(
-    game_path: &Path,
-    map_id: &str,
-) -> Result<(GrleImage, FruitLayout), AppError> {
+/// Field polygons of the map i3d, when the map XML gives the terrain size.
+fn field_shapes(i3d: &str, map_size: Option<f32>, farmlands: &GrleImage) -> FieldShapes {
+    match map_size {
+        Some(size) if size > 0.0 => {
+            FieldShapes::new(map_fields::parse_map_fields(i3d), size, farmlands)
+        }
+        _ => FieldShapes::default(),
+    }
+}
+
+fn load_mod_map_data(game_path: &Path, map_id: &str) -> Result<MapData, AppError> {
     // Extract mod name from map_id like "FS25_Pallegney.FS25_Pallegney"
     let mod_name = map_id
         .split('.')
@@ -270,10 +345,12 @@ fn load_mod_map_data(
         message: format!("No map i3d declared in {}", map_config_file),
     })?;
     let i3d = read_file_from_zip(&zip_path, &i3d_file)?;
+    let i3d = String::from_utf8_lossy(&i3d);
     let mut layout = FruitLayout {
-        type_names: foliage::parse_fruit_layer_types(&String::from_utf8_lossy(&i3d)),
+        type_names: foliage::parse_fruit_layer_types(&i3d),
         fruits: HashMap::new(),
     };
+    let fields = field_shapes(&i3d, map_config.width, &farmlands_grle);
 
     let mut fruit_files = map_config.fruit_type_filenames;
     if let Some(file) = map_config.fruit_types_filename {
@@ -295,7 +372,7 @@ fn load_mod_map_data(
         true,
     );
 
-    Ok((farmlands_grle, layout))
+    Ok(MapData { farmlands: farmlands_grle, layout, fields })
 }
 
 /// Foliage files of the fruit types the game appends after a map's own fruit
@@ -406,6 +483,7 @@ fn aggregate_single_farmland(
     roller_grle: &Option<GrleImage>,
     stubble_grle: &Option<GrleImage>,
     layout: &FruitLayout,
+    fields: &FieldShapes,
 ) -> FieldDensityData {
     let bits = FruitBits::of(fruits_gdm);
 
@@ -432,6 +510,10 @@ fn aggregate_single_farmland(
                 let hy = (fy as u32) * scale + dy;
 
                 if hx >= fruits_gdm.width || hy >= fruits_gdm.height {
+                    continue;
+                }
+                // Only the field itself, not the rest of its farmland
+                if !fields.contains(farmland_id as u8, hx, hy, fruits_gdm.width) {
                     continue;
                 }
 
@@ -515,7 +597,7 @@ fn aggregate_single_farmland(
         .iter()
         .map(|(&idx, &(count, growth_sum))| {
             let name = layout.type_name(idx).cloned().unwrap_or_default();
-            let harvest_ready_state = layout.fruit_at(idx).and_then(|f| f.harvest_ready_state);
+            let harvest_ready_state = layout.fruit_at(idx).and_then(|f| f.harvest_ready_state());
             FruitCoverage {
                 fruit_type: name,
                 percentage: (count as f32 / total) * 100.0,
@@ -649,25 +731,31 @@ pub fn save_density_edits(
         return Ok(Vec::new());
     }
 
-    // Load map data to get farmland pixels and the fruit layer layout
-    let (farmlands_grle, layout) = load_map_data(game_path, map_id)?;
-    apply_density_edits(savegame_path, &farmlands_grle, &layout, edits, create_backup)
+    let map = load_map_data(game_path, map_id)?;
+    apply_density_edits(savegame_path, &map, edits, create_backup)
 }
 
-/// Applies `edits` to the savegame's density layers, using `farmlands_grle` to
-/// locate each farmland's pixels and `layout` to read and write fruits.
+/// Applies `edits` to the savegame's density layers: each edit covers its
+/// farmland's field polygon (the whole farmland when it has none), and
+/// `map.layout` reads and writes fruits.
 fn apply_density_edits(
     savegame_path: &Path,
-    farmlands_grle: &GrleImage,
-    layout: &FruitLayout,
+    map: &MapData,
     edits: &[DensityEditPayload],
     create_backup: bool,
 ) -> Result<Vec<String>, AppError> {
+    let farmlands_grle = &map.farmlands;
+    let layout = &map.layout;
     let farmland_pixels = build_farmland_pixel_map(farmlands_grle);
 
     // Determine which files need to be modified
     let needs_fruits = edits.iter().any(|e| e.set_fruit_name.is_some() || e.set_harvest_ready);
-    let needs_ground = edits.iter().any(|e| e.set_ground_type.is_some() || e.set_harvest_ready);
+    let sets_crop = |e: &DensityEditPayload| {
+        e.set_fruit_name.as_deref().is_some_and(|f| !f.is_empty() && f != "NONE")
+    };
+    let needs_ground = edits
+        .iter()
+        .any(|e| e.set_ground_type.is_some() || e.set_harvest_ready || sets_crop(e));
     let needs_lime = edits.iter().any(|e| e.set_lime_level.is_some());
     let needs_spray = edits.iter().any(|e| e.set_spray_level.is_some());
     let needs_plow = edits.iter().any(|e| e.set_plow_level.is_some());
@@ -720,7 +808,13 @@ fn apply_density_edits(
     // - crop_area_only: a growing fruit type (for harvest/mow — only affect crop pixels)
     // - field_area_only: ground_type 1-13 (for plow/cultivate — field ground, not grass/road)
     // - neither: modify all pixels in the farmland boundary
+    let hi_res_width = farmlands_grle.width * scale;
+    let in_field =
+        |hx: u32, hy: u32, edit: &DensityEditPayload| map.fields.contains(edit.farmland_id as u8, hx, hy, hi_res_width);
     let should_modify_pixel = |hx: u32, hy: u32, edit: &DensityEditPayload| -> bool {
+        if !in_field(hx, hy, edit) {
+            return false;
+        }
         if edit.crop_area_only {
             if let Some(ref fg) = fruits_gdm_for_filter {
                 if hx < fg.width && hy < fg.height {
@@ -747,8 +841,10 @@ fn apply_density_edits(
         true
     };
 
-    // Ground types fruits show once harvest ready, set alongside them
-    let mut harvest_ready_ground: Vec<(u32, u32, u16)> = Vec::new();
+    // Ground types of the growth states fruits are set to, set alongside them
+    let mut fruit_ground: Vec<(u32, u32, u16)> = Vec::new();
+    let ground_index =
+        |g: &str| GROUND_TYPES.iter().position(|&t| t == g).map(|i| i as u16);
 
     // Modify fruits GDM
     if needs_fruits {
@@ -774,6 +870,14 @@ fn apply_density_edits(
                     })?;
                     (index, edit.set_growth_state.unwrap_or(0))
                 };
+                // An explicit ground type wins over the one the growth state shows
+                let ground = match edit.set_ground_type {
+                    Some(_) => None,
+                    None => layout
+                        .fruit_at(type_index)
+                        .and_then(|f| f.ground_for_state(growth))
+                        .and_then(ground_index),
+                };
 
                 for_each_hi_res_pixel(pixels, scale, |hx, hy| {
                     if hx < fruits_gdm.width && hy < fruits_gdm.height
@@ -781,6 +885,9 @@ fn apply_density_edits(
                     {
                         let current = fruits_gdm.get_pixel(hx, hy);
                         fruits_gdm.set_pixel(hx, hy, bits.encode(current, type_index, growth));
+                        if let Some(ground) = ground {
+                            fruit_ground.push((hx, hy, ground));
+                        }
                     }
                 });
             }
@@ -788,7 +895,7 @@ fn apply_density_edits(
             if edit.set_harvest_ready {
                 // Every growing crop pixel jumps to its own fruit's harvest-ready state
                 for_each_hi_res_pixel(pixels, scale, |hx, hy| {
-                    if hx >= fruits_gdm.width || hy >= fruits_gdm.height {
+                    if hx >= fruits_gdm.width || hy >= fruits_gdm.height || !in_field(hx, hy, edit) {
                         return;
                     }
                     let current = fruits_gdm.get_pixel(hx, hy);
@@ -800,14 +907,10 @@ fn apply_density_edits(
                     let Some(fruit) = layout.fruit_at(type_index).filter(|f| f.shown_on_map) else {
                         return;
                     };
-                    let Some(ready) = fruit.harvest_ready_state else { return };
+                    let Some(ready) = fruit.harvest_ready_state() else { return };
                     fruits_gdm.set_pixel(hx, hy, bits.encode(current, type_index, ready));
-                    if let Some(ground) = fruit
-                        .harvest_ready_ground
-                        .as_deref()
-                        .and_then(|g| GROUND_TYPES.iter().position(|&t| t == g))
-                    {
-                        harvest_ready_ground.push((hx, hy, ground as u16));
+                    if let Some(ground) = fruit.ground_for_state(ready).and_then(ground_index) {
+                        fruit_ground.push((hx, hy, ground));
                     }
                 });
             }
@@ -848,7 +951,7 @@ fn apply_density_edits(
                     }
                 }
             }
-            for &(hx, hy, ground_type) in &harvest_ready_ground {
+            for &(hx, hy, ground_type) in &fruit_ground {
                 let current = ground_gdm.get_pixel(hx, hy);
                 ground_gdm.set_pixel(hx, hy, (current & !0xF) | ground_type);
             }
@@ -1095,18 +1198,31 @@ mod tests {
     ];
     const BARLEY: usize = 9;
 
+    /// A fruit whose state `ready` is harvest ready and changes the ground
+    /// to `ground`, followed by a withered and a cut state.
     fn growth(name: &str, shown_on_map: bool, ready: u8, ground: Option<&str>) -> FruitGrowth {
+        let state = |i: u8| crate::parsers::foliage::FruitState {
+            name: format!("state{}", i),
+            is_harvest_ready: i == ready,
+            is_preparable: false,
+            is_withered: i == ready + 1,
+            is_cut: i == ready + 2,
+        };
         FruitGrowth {
             name: name.to_string(),
             shown_on_map,
-            harvest_ready_state: Some(ready),
-            harvest_ready_ground: ground.map(str::to_string),
+            states: (1..=ready + 2).map(state).collect(),
+            sowing_ground: "SOWN".to_string(),
+            ground_change: ground.map(|g| (ready, g.to_string())),
         }
     }
 
     /// Harvest-ready states from data/foliage/<fruit>/<fruit>.xml
     fn map_us_layout() -> FruitLayout {
+        let mut potato = growth("POTATO", true, 9, None);
+        potato.sowing_ground = "RIDGE_SOWN".to_string();
         let fruits = [
+            potato,
             growth("MEADOW", false, 4, None),
             growth("WHEAT", true, 8, Some("HARVEST_READY")),
             growth("BARLEY", true, 8, Some("HARVEST_READY")),
@@ -1116,6 +1232,11 @@ mod tests {
             type_names: MAP_US_TYPES.iter().map(|s| s.to_string()).collect(),
             fruits: fruits.into_iter().map(|f| (f.name.clone(), f)).collect(),
         }
+    }
+
+    /// The reference save's map layout over `farmlands`, without field polygons.
+    fn map_data(farmlands: GrleImage) -> MapData {
+        MapData { farmlands, layout: map_us_layout(), fields: FieldShapes::default() }
     }
 
     fn read_gdm(save: &Path, file: &str) -> GdmImage {
@@ -1183,7 +1304,7 @@ mod tests {
             set_harvest_ready: true,
             ..Default::default()
         };
-        apply_density_edits(&save, &farmland_at(fx, fy), &map_us_layout(), &[edit], false).unwrap();
+        apply_density_edits(&save, &map_data(farmland_at(fx, fy)), &[edit], false).unwrap();
 
         let fruits = read_gdm(&save, "densityMap_fruits.gdm");
         let ground = read_gdm(&save, "densityMap_ground.gdm");
@@ -1215,10 +1336,102 @@ mod tests {
             set_harvest_ready: true,
             ..Default::default()
         };
-        let _ = apply_density_edits(&save, &farmland_at(fx, fy), &map_us_layout(), &[edit], false);
+        let _ = apply_density_edits(&save, &map_data(farmland_at(fx, fy)), &[edit], false);
 
         assert_eq!(block(&read_gdm(&save, "densityMap_fruits.gdm"), fx, fy), before);
         let _ = std::fs::remove_dir_all(save.parent().unwrap());
+    }
+
+    #[test]
+    fn test_edits_stay_inside_the_field_polygon() {
+        let save = reference_density_save("field_polygon");
+        let lime_before = grle::parse_grle(&std::fs::read(save.join("infoLayer_limeLevel.grle")).unwrap()).unwrap();
+        // farmland_map(): farmland pixels 500..516 on a 2048 m map with a
+        // 1024 farmland grid, i.e. world -24..8 m. The field covers its west
+        // half, world x -24..-8 m, i.e. 4096-layer pixels x 2000..2032.
+        let field = MapField {
+            name: "field1".into(),
+            polygon: vec![(-24.0, -24.0), (-8.0, -24.0), (-8.0, 8.0), (-24.0, 8.0)],
+        };
+        let farmlands = farmland_map();
+        let map = MapData {
+            fields: FieldShapes::new(vec![field], 2048.0, &farmlands),
+            farmlands,
+            layout: map_us_layout(),
+        };
+        let edit = DensityEditPayload {
+            farmland_id: 1,
+            set_lime_level: Some(3),
+            ..Default::default()
+        };
+
+        apply_density_edits(&save, &map, &[edit], false).unwrap();
+
+        let lime = grle::parse_grle(&std::fs::read(save.join("infoLayer_limeLevel.grle")).unwrap()).unwrap();
+        for y in 2000..2064 {
+            for x in 2000..2064 {
+                let expected = if x < 2032 { 3 } else { lime_before.get_pixel(x, y) };
+                assert_eq!(lime.get_pixel(x, y), expected, "pixel {} {}", x, y);
+            }
+        }
+        let _ = std::fs::remove_dir_all(save.parent().unwrap());
+    }
+
+    /// Sets `fruit` at `state` on farmland_map()'s block and returns the
+    /// (fruit name, state, ground type name) of one of its pixels.
+    fn set_fruit_on_block(name: &str, fruit: &str, state: u8, ground: Option<u8>) -> (String, u8, String) {
+        let save = reference_density_save(name);
+        let edit = DensityEditPayload {
+            farmland_id: 1,
+            set_fruit_name: Some(fruit.to_string()),
+            set_growth_state: Some(state),
+            set_ground_type: ground,
+            ..Default::default()
+        };
+        apply_density_edits(&save, &map_data(farmland_map()), &[edit], false).unwrap();
+
+        let fruits = read_gdm(&save, "densityMap_fruits.gdm");
+        let bits = FruitBits::of(&fruits);
+        let pixel = fruits.get_pixel(2010, 2010);
+        let layout = map_us_layout();
+        let ground = read_gdm(&save, "densityMap_ground.gdm").get_pixel(2010, 2010) & 0xF;
+        let _ = std::fs::remove_dir_all(save.parent().unwrap());
+        (
+            layout.type_name(bits.type_index(pixel)).cloned().unwrap_or_default(),
+            bits.state(pixel),
+            GROUND_TYPES[ground as usize].to_string(),
+        )
+    }
+
+    #[test]
+    fn test_set_fruit_sets_the_ground_of_its_growth_state() {
+        assert_eq!(set_fruit_on_block("sown_wheat", "WHEAT", 2, None), ("WHEAT".into(), 2, "SOWN".into()));
+        assert_eq!(
+            set_fruit_on_block("ready_wheat", "WHEAT", 8, None),
+            ("WHEAT".into(), 8, "HARVEST_READY".into())
+        );
+        assert_eq!(
+            set_fruit_on_block("potato", "POTATO", 3, None),
+            ("POTATO".into(), 3, "RIDGE_SOWN".into())
+        );
+    }
+
+    #[test]
+    fn test_set_fruit_keeps_an_explicit_ground_type() {
+        let plowed = GROUND_TYPES.iter().position(|&g| g == "PLOWED").unwrap() as u8;
+        assert_eq!(
+            set_fruit_on_block("explicit_ground", "WHEAT", 2, Some(plowed)),
+            ("WHEAT".into(), 2, "PLOWED".into())
+        );
+    }
+
+    #[test]
+    fn test_map_fruit_types_lists_crops_in_layer_order() {
+        let crops = map_fruit_types(&map_us_layout());
+        let names: Vec<&str> = crops.iter().map(|c| c.name.as_str()).collect();
+        assert_eq!(names, vec!["WHEAT", "BARLEY", "POTATO", "CARROT"]);
+        assert_eq!(crops[0].harvest_ready_state, Some(8));
+        assert_eq!(crops[0].states.len(), 10);
     }
 
     #[test]
@@ -1232,7 +1445,7 @@ mod tests {
             ..Default::default()
         };
 
-        let result = apply_density_edits(&save, &farmland_map(), &map_us_layout(), &[edit], false);
+        let result = apply_density_edits(&save, &map_data(farmland_map()), &[edit], false);
 
         assert!(result.is_err());
         assert!(std::fs::read(save.join("densityMap_fruits.gdm")).unwrap() == fruits_before);
@@ -1254,7 +1467,7 @@ mod tests {
             clear_stones: true,
             ..Default::default()
         };
-        apply_density_edits(&save, &farmland_at(fx, fy), &map_us_layout(), &[edit], false).unwrap();
+        apply_density_edits(&save, &map_data(farmland_at(fx, fy)), &[edit], false).unwrap();
 
         let after = block(&read_gdm(&save, "densityMap_stones.gdm"), fx, fy);
         let expected: Vec<u16> = before
@@ -1283,8 +1496,7 @@ mod tests {
 
         let result = apply_density_edits(
             &save,
-            &farmland_map(),
-            &map_us_layout(),
+            &map_data(farmland_map()),
             &[fruit_and_lime_edit()],
             false,
         );
@@ -1302,8 +1514,7 @@ mod tests {
 
         let modified = apply_density_edits(
             &save,
-            &farmland_map(),
-            &map_us_layout(),
+            &map_data(farmland_map()),
             &[fruit_and_lime_edit()],
             true,
         )
@@ -1324,8 +1535,7 @@ mod tests {
 
         apply_density_edits(
             &save,
-            &farmland_map(),
-            &map_us_layout(),
+            &map_data(farmland_map()),
             &[fruit_and_lime_edit()],
             false,
         )
@@ -1391,11 +1601,19 @@ mod tests {
         let map = std::env::var("FS25_MAP").unwrap_or_else(|_| "MapUS".to_string());
         let density = aggregate_field_data(&save, &game, &map).unwrap();
         let fields = crate::parsers::field::parse_fields(&save).unwrap();
+        let map_data = load_map_data(&game, &map).unwrap();
+        let shapes = map_data.fields.by_farmland.len();
+        println!("{} field polygons", shapes);
+        let crops = map_fruit_types(&map_data.layout);
+        println!("crops: {:?}", crops.iter().map(|c| c.name.as_str()).collect::<Vec<_>>());
+        assert!(crops.iter().all(|c| c.harvest_ready_state.is_some() && !c.states.is_empty()));
+        assert!(shapes * 10 >= fields.len() * 9, "most fields have a polygon");
 
-        // fields.xml is the game's own summary of each field's crop
+        // fields.xml is the game's own summary of each field's crop. Fruits
+        // the map does not define come from other mods renaming a slot.
         let mut matched = 0;
         let mut compared = 0;
-        for field in fields.iter().filter(|f| f.fruit_type != "UNKNOWN") {
+        for field in fields.iter().filter(|f| map_data.layout.fruits.contains_key(&f.fruit_type)) {
             let Some(d) = density.iter().find(|d| d.farmland_id == field.id) else { continue };
             let crops: Vec<&str> = d.fruit_distribution.iter().map(|f| f.fruit_type.as_str()).collect();
             compared += 1;
@@ -1406,7 +1624,7 @@ mod tests {
             }
         }
         println!("{} of {} fields found their fields.xml crop", matched, compared);
-        // Fields and farmlands do not always share an id, so a few miss
+        // fields.xml lags behind the density maps on a few fields
         assert!(compared > 0 && matched * 10 >= compared * 8);
     }
 
@@ -1414,7 +1632,7 @@ mod tests {
     #[ignore = "needs FS25_SAVE / FS25_GAME pointing at a real savegame and install"]
     fn test_real_save_harvest_ready_sets_each_crop_to_its_own_state() {
         let (save, game, map) = real_save_copy("harvest_ready");
-        let (_, layout) = load_map_data(&game, &map).unwrap();
+        let layout = load_map_data(&game, &map).unwrap().layout;
         let farmlands: Vec<u32> = aggregate_field_data(&save, &game, &map)
             .unwrap()
             .iter()
@@ -1435,13 +1653,47 @@ mod tests {
         let mut checked = 0;
         for d in aggregate_field_data(&save, &game, &map).unwrap() {
             for crop in &d.fruit_distribution {
-                assert_eq!(crop.harvest_ready_state, layout.fruits[&crop.fruit_type].harvest_ready_state);
-                let Some(ready) = crop.harvest_ready_state else { continue };
+                let ready = crop.harvest_ready_state.expect("every crop has a harvest-ready state");
+                assert_eq!(Some(ready), layout.fruits[&crop.fruit_type].harvest_ready_state());
                 assert_eq!(crop.avg_growth, ready as f32, "{} on farmland {}", crop.fruit_type, d.farmland_id);
                 checked += 1;
             }
         }
         println!("{} crops on {} farmlands checked", checked, farmlands.len());
+        let _ = std::fs::remove_dir_all(save.parent().unwrap());
+    }
+    #[test]
+    #[ignore = "needs FS25_SAVE / FS25_GAME pointing at a real savegame and install"]
+    fn test_real_save_plow_then_sow_wheat() {
+        let (save, game, map) = real_save_copy("plow_sow");
+        let field = aggregate_field_data(&save, &game, &map)
+            .unwrap()
+            .into_iter()
+            .find(|d| !d.fruit_distribution.is_empty())
+            .expect("a field with a crop")
+            .farmland_id;
+        // What the editor sends after "Plow" then "Apply" wheat at stage 2
+        let edit = DensityEditPayload {
+            farmland_id: field,
+            set_fruit_name: Some("WHEAT".to_string()),
+            set_growth_state: Some(2),
+            set_plow_level: Some(1),
+            clear_weeds: true,
+            ..Default::default()
+        };
+
+        save_density_edits(&save, &game, &map, &[edit], false).unwrap();
+
+        let after = aggregate_field_data(&save, &game, &map).unwrap();
+        let d = after.iter().find(|d| d.farmland_id == field).unwrap();
+        assert_eq!(d.fruit_distribution.len(), 1);
+        assert_eq!(d.fruit_distribution[0].fruit_type, "WHEAT");
+        assert_eq!(d.fruit_distribution[0].avg_growth, 2.0);
+        assert!(d.fruit_distribution[0].percentage > 99.0, "wheat covers the field");
+        assert_eq!(d.ground_type_distribution[0].ground_type, "SOWN");
+        assert!(d.ground_type_distribution[0].percentage > 99.0);
+        assert_eq!(d.plow_status.pct_at_max, 100.0);
+        assert_eq!(d.weed_coverage, 0.0);
         let _ = std::fs::remove_dir_all(save.parent().unwrap());
     }
 }

@@ -518,7 +518,20 @@
     "maxPlow": "Max plow",
     "unknownFruit": "Unknown ({index})",
     "densityCacheRefreshing": "Displaying cached data — refreshing field data in the background...",
-    "densityCacheStale": "Displaying cached data — refresh failed, data may not be up to date."
+    "densityCacheStale": "Displaying cached data — refresh failed, data may not be up to date.",
+    "cropTitle": "Crop",
+    "cropFruit": "Crop",
+    "cropStage": "Stage",
+    "applyCrop": "Apply",
+    "noCrop": "None (bare soil)",
+    "soilTitle": "Soil work",
+    "soilPlow": "Plow",
+    "soilCultivate": "Cultivate",
+    "soilRoll": "Roll",
+    "soilMulch": "Mulch stubble",
+    "pendingCrop": "{fruit} · {stage}",
+    "pendingNoCrop": "Crop removed",
+    "pendingGround": "Ground: {ground}"
   },
   "world": {
     "title": "World & Weather",
@@ -728,5 +741,14 @@
       "attachmentNotFound": "Vehicle \"{name}\" (id={id}) references a non-existent attachment (id={attachmentId})",
       "fieldNoFarmland": "Field {fieldId} has no matching farmland"
     }
+  },
+  "growthStage": {
+    "sown": "Sown",
+    "growing": "Growing ({n}/{ready})",
+    "ready": "Ready to harvest",
+    "preparable": "Ready for haulm topping",
+    "withered": "Withered",
+    "harvested": "Harvested",
+    "other": "Stage {n}"
   }
 }

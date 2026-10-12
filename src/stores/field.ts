@@ -10,10 +10,12 @@ import type {
   FarmlandChangePayload,
   FieldDensityData,
   DensityEditPayload,
+  MapFruitType,
 } from "@/lib/types";
 
-// v2: entries before it decoded crops with the wrong fruit type order
-const DENSITY_CACHE_FILE = "density-cache-v2.json";
+// v3: v1 decoded crops with the wrong fruit type order, v2 counted whole
+// farmlands instead of field polygons
+const DENSITY_CACHE_FILE = "density-cache-v3.json";
 
 interface DensityCacheEntry {
   data: FieldDensityData[];
@@ -38,6 +40,9 @@ export const useFieldStore = defineStore("field", () => {
   const densityLoading = ref(false);
   const densityError = ref<string | null>(null);
   const densityFromCache = ref(false);
+  /** Crops the loaded map can grow, with their growth states */
+  const mapFruitTypes = ref<MapFruitType[]>([]);
+  const mapFruitTypesMapId = ref<string | null>(null);
 
   // Density edit tracking
   const densityEdits = ref<Map<number, DensityEditPayload>>(new Map());
@@ -384,7 +389,24 @@ export const useFieldStore = defineStore("field", () => {
     originalFarmlands.value = JSON.parse(JSON.stringify(farmlands.value));
   }
 
+  async function loadMapFruitTypes(gamePath: string, mapId: string) {
+    if (mapFruitTypesMapId.value === mapId && mapFruitTypes.value.length > 0) return;
+    try {
+      mapFruitTypes.value = await invoke<MapFruitType[]>("load_map_fruit_types", { gamePath, mapId });
+      mapFruitTypesMapId.value = mapId;
+    } catch {
+      // Without it the editor only offers the quick actions
+      mapFruitTypes.value = [];
+      mapFruitTypesMapId.value = null;
+    }
+  }
+
+  function getMapFruitType(name: string): MapFruitType | undefined {
+    return mapFruitTypes.value.find((f) => f.name === name);
+  }
+
   async function loadDensityData(savegamePath: string, gamePath: string, mapId: string) {
+    void loadMapFruitTypes(gamePath, mapId);
     densityLoading.value = true;
     densityError.value = null;
     densityFromCache.value = false;
@@ -434,6 +456,8 @@ export const useFieldStore = defineStore("field", () => {
 
   function clearDensityData() {
     densityData.value = [];
+    mapFruitTypes.value = [];
+    mapFruitTypesMapId.value = null;
     densityError.value = null;
     densityLoading.value = false;
     densityFromCache.value = false;
@@ -452,6 +476,8 @@ export const useFieldStore = defineStore("field", () => {
     changeCount,
     // Density map data
     densityData,
+    mapFruitTypes,
+    getMapFruitType,
     densityLoading,
     densityError,
     densityFromCache,
