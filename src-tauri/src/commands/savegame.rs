@@ -6,7 +6,7 @@ use crate::models::career::SavegameSummary;
 use crate::models::changes::{SavegameChanges, SaveResult};
 use crate::models::common::LocalizedMessage;
 use crate::models::SavegameData;
-use crate::parsers::career::{parse_career, parse_career_summary};
+use crate::parsers::career::{parse_career, parse_career_summary, parse_game_settings};
 use crate::parsers::farm::parse_farms;
 use crate::parsers::economy::parse_economy;
 use crate::parsers::environment::parse_environment;
@@ -118,6 +118,9 @@ pub fn load_savegame(path: String) -> Result<SavegameData, AppError> {
 
     // Parse career (required)
     let career = parse_career(&save_path)?;
+
+    // Editable game settings come from the same careerSavegame.xml
+    let game_settings = parse_game_settings(&save_path)?;
 
     // Parse farms (required)
     let farms = parse_farms(&save_path)?;
@@ -266,6 +269,7 @@ pub fn load_savegame(path: String) -> Result<SavegameData, AppError> {
         contract_settings,
         environment,
         economy,
+        game_settings,
         warnings,
     };
 
@@ -302,7 +306,8 @@ pub fn save_changes(path: String, changes: SavegameChanges) -> Result<SaveResult
         || changes.collectibles.is_some()
         || changes.contract_settings.is_some()
         || changes.environment.is_some()
-        || changes.economy.is_some();
+        || changes.economy.is_some()
+        || changes.game_settings.is_some();
 
     if !has_changes {
         return Ok(SaveResult {
@@ -315,6 +320,18 @@ pub fn save_changes(path: String, changes: SavegameChanges) -> Result<SaveResult
 
     // Create backup before any write (mandatory)
     let backup_info = backup_manager::create_backup(&save_path)?;
+
+    // Apply game settings
+    if let Some(ref settings) = changes.game_settings {
+        match writers::career::write_game_settings(&save_path, settings) {
+            Ok(()) => files_modified.push("careerSavegame.xml".to_string()),
+            Err(e) => errors.push(
+                LocalizedMessage::new("errors.fileWriteError")
+                    .with_param("file", "careerSavegame.xml")
+                    .with_param("details", e),
+            ),
+        }
+    }
 
     // Apply finance changes
     if let Some(ref finance) = changes.finance {
@@ -728,6 +745,7 @@ mod tests {
             contract_settings: None,
             environment: None,
             economy: None,
+            game_settings: None,
         };
         let result = save_changes(path.clone(), changes).unwrap();
         assert!(result.success);
@@ -756,6 +774,7 @@ mod tests {
             contract_settings: None,
             environment: None,
             economy: None,
+            game_settings: None,
         };
         save_changes(path.clone(), changes).unwrap();
 
@@ -783,6 +802,7 @@ mod tests {
             contract_settings: None,
             environment: None,
             economy: None,
+            game_settings: None,
         };
         let result = save_changes(path.clone(), changes).unwrap();
         assert!(result.success);
@@ -818,6 +838,7 @@ mod tests {
             contract_settings: None,
             environment: None,
             economy: None,
+            game_settings: None,
         };
         let result = save_changes(path.clone(), changes).unwrap();
         assert!(result.success);
@@ -856,6 +877,7 @@ mod tests {
             contract_settings: None,
             environment: None,
             economy: None,
+            game_settings: None,
         };
         save_changes(path.clone(), changes).unwrap();
 
@@ -900,6 +922,7 @@ mod tests {
             contract_settings: None,
             environment: None,
             economy: None,
+            game_settings: None,
         };
         save_changes(path.clone(), changes).unwrap();
 
@@ -986,6 +1009,7 @@ mod tests {
             contract_settings: None,
             environment: None,
             economy: None,
+            game_settings: None,
         };
         save_changes(path.clone(), changes).unwrap();
 
@@ -1097,6 +1121,7 @@ mod tests {
             contract_settings: None,
             environment: None,
             economy: None,
+            game_settings: None,
         };
         let result = save_changes(path.clone(), changes).unwrap();
         assert!(result.success, "save_changes failed: {:?}", result.errors);
@@ -1162,6 +1187,7 @@ mod tests {
             contract_settings: None,
             environment: None,
             economy: None,
+            game_settings: None,
         };
         let result = save_changes(path.clone(), changes).unwrap();
         assert!(result.success, "save_changes failed: {:?}", result.errors);

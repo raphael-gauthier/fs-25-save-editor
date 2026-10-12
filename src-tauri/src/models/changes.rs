@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 
+use crate::models::career::GameSetting;
 use crate::models::placeable::SiloStorageKind;
 
 use super::common::LocalizedMessage;
@@ -20,6 +21,8 @@ pub struct SavegameChanges {
     pub contract_settings: Option<ContractSettingsChange>,
     pub environment: Option<EnvironmentChanges>,
     pub economy: Option<EconomyChanges>,
+    /// Game settings to set in careerSavegame.xml, checked before writing
+    pub game_settings: Option<Vec<GameSetting>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

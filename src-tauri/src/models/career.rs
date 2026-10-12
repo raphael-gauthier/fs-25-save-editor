@@ -12,6 +12,15 @@ pub struct SavegameSummary {
     pub economic_difficulty: String,
 }
 
+/// A game setting of careerSavegame.xml's `<settings>` the editor may change,
+/// with its saved text.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct GameSetting {
+    pub key: String,
+    pub value: String,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct CareerSavegame {

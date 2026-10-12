@@ -5,7 +5,8 @@ use quick_xml::Reader;
 
 use crate::error::AppError;
 use crate::parsers::text::resolve_ref;
-use crate::models::career::{CareerSavegame, SavegameSummary};
+use crate::models::career::{CareerSavegame, GameSetting, SavegameSummary};
+use crate::validators::game_settings::setting_kind;
 
 /// Parse careerSavegame.xml and extract only the fields needed for the summary.
 /// Uses quick-xml event-based Reader for selective lightweight parsing.
@@ -132,6 +133,61 @@ pub fn parse_career_summary(path: &Path) -> Result<SavegameSummary, AppError> {
 }
 
 /// Parse careerSavegame.xml with all CareerSavegame fields.
+/// The editable settings (validators::game_settings) found in
+/// careerSavegame.xml's `<settings>`, in file order.
+pub fn parse_game_settings(path: &Path) -> Result<Vec<GameSetting>, AppError> {
+    let xml_path = path.join("careerSavegame.xml");
+    let content = std::fs::read_to_string(&xml_path).map_err(|e| AppError::IoError {
+        message: format!("{}: {}", xml_path.display(), e),
+    })?;
+
+    let mut reader = Reader::from_str(&content);
+    let mut settings = Vec::new();
+    let mut in_settings = false;
+    // The editable setting being read, and its text so far
+    let mut open: Option<(String, String)> = None;
+
+    loop {
+        match reader.read_event() {
+            Ok(Event::Start(ref e)) => {
+                let tag = e.name().as_ref().to_string();
+                if tag == "settings" {
+                    in_settings = true;
+                } else if in_settings && setting_kind(&tag).is_some() {
+                    open = Some((tag, String::new()));
+                }
+            }
+            Ok(Event::Text(ref e)) => {
+                if let Some((_, ref mut text)) = open {
+                    text.push_str(e);
+                }
+            }
+            Ok(Event::GeneralRef(ref r)) => {
+                if let Some((_, ref mut text)) = open {
+                    text.push_str(&resolve_ref(r));
+                }
+            }
+            Ok(Event::End(ref e)) => {
+                if e.name().as_ref() == "settings" {
+                    in_settings = false;
+                } else if let Some((key, value)) = open.take() {
+                    settings.push(GameSetting { key, value: value.trim().to_string() });
+                }
+            }
+            Ok(Event::Eof) => break,
+            Err(e) => {
+                return Err(AppError::XmlParseError {
+                    file: xml_path.display().to_string(),
+                    message: e.to_string(),
+                })
+            }
+            _ => {}
+        }
+    }
+
+    Ok(settings)
+}
+
 pub fn parse_career(path: &Path) -> Result<CareerSavegame, AppError> {
     let xml_path = path.join("careerSavegame.xml");
     let content = std::fs::read_to_string(&xml_path).map_err(|e| AppError::IoError {
@@ -346,6 +402,31 @@ mod tests {
 
     /// The reference save with only its name changed to one the game writes
     /// escaped: `&` is stored as `&amp;`.
+    #[test]
+    fn test_parse_game_settings_of_reference_save() {
+        let dir = reference_save_named("fs25_test_game_settings", "Ma partie");
+        let settings = parse_game_settings(&dir).unwrap();
+        let value = |key: &str| settings.iter().find(|s| s.key == key).map(|s| s.value.as_str());
+        assert_eq!(value("savegameName"), Some("Ma partie"));
+        assert_eq!(value("economicDifficulty"), Some("EASY"));
+        assert_eq!(value("fuelUsage"), Some("2"));
+        assert_eq!(value("timeScale"), Some("1.000000"));
+        assert_eq!(value("helperBuySeeds"), Some("false"));
+        // Revisions and other settings outside the editable list are left out
+        assert_eq!(value("densityMapRevision"), None);
+        assert_eq!(value("growthMode"), None);
+        assert_eq!(settings.len(), crate::validators::game_settings::GAME_SETTINGS.len());
+        let _ = fs::remove_dir_all(&dir);
+    }
+
+    #[test]
+    fn test_parse_game_settings_unescapes_the_name() {
+        let dir = reference_save_named("fs25_test_game_settings_name", "Ferme &amp; Fils");
+        let settings = parse_game_settings(&dir).unwrap();
+        assert_eq!(settings[0], GameSetting { key: "savegameName".into(), value: "Ferme & Fils".into() });
+        let _ = fs::remove_dir_all(&dir);
+    }
+
     fn reference_save_named(dir_name: &str, escaped_name: &str) -> std::path::PathBuf {
         let reference = std::path::PathBuf::from(env!("CARGO_MANIFEST_DIR"))
             .join("..")

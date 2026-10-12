@@ -19,7 +19,7 @@ pub mod vehicle;
 
 use serde::{Deserialize, Serialize};
 
-use career::CareerSavegame;
+use career::{CareerSavegame, GameSetting};
 use collectible::Collectible;
 use common::LocalizedMessage;
 use contract::ContractSettings;
@@ -50,5 +50,7 @@ pub struct SavegameData {
     pub contract_settings: Option<ContractSettings>,
     pub environment: Option<Environment>,
     pub economy: Option<Economy>,
+    /// Editable game settings of careerSavegame.xml
+    pub game_settings: Vec<GameSetting>,
     pub warnings: Vec<LocalizedMessage>,
 }
