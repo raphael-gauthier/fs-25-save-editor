@@ -2,6 +2,7 @@ import { defineStore } from "pinia";
 import { ref } from "vue";
 import { useTauri } from "@/composables/useTauri";
 import { useSavegameStore } from "@/stores/savegame";
+import { useSettingsStore } from "@/stores/settings";
 import type { BackupInfo } from "@/lib/types";
 
 export const useBackupStore = defineStore("backup", () => {
@@ -41,6 +42,7 @@ export const useBackupStore = defineStore("backup", () => {
       const info = await invokeCommand<BackupInfo>("create_backup", {
         savegamePath: path,
       });
+      await prune();
       await listBackups();
       return info;
     } finally {
@@ -58,6 +60,7 @@ export const useBackupStore = defineStore("backup", () => {
         savegamePath: path,
         backupName,
       });
+      await prune();
       await listBackups();
     } finally {
       isRestoring.value = false;
@@ -75,6 +78,21 @@ export const useBackupStore = defineStore("backup", () => {
     await listBackups();
   }
 
+  /** Deletes the oldest backups beyond the max backups setting. */
+  async function prune() {
+    const path = currentPath();
+    if (!path) return;
+    try {
+      await invokeCommand<string[]>("prune_backups", {
+        savegamePath: path,
+        keep: useSettingsStore().maxBackups,
+      });
+    } catch (e) {
+      // Keeping an extra backup is harmless; never fail the action for it
+      console.warn("Could not prune backups", e);
+    }
+  }
+
   async function openFolder() {
     const path = currentPath();
     if (!path) return;
@@ -88,6 +106,7 @@ export const useBackupStore = defineStore("backup", () => {
     isRestoring,
     listBackups,
     create,
+    prune,
     restore,
     deleteBackup,
     openFolder,

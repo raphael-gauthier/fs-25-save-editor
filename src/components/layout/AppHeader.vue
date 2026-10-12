@@ -28,6 +28,7 @@ import { useMissionStore } from "@/stores/mission";
 import { useWorldStore } from "@/stores/world";
 import { useEconomyStore } from "@/stores/economy";
 import { useSettingsStore } from "@/stores/settings";
+import { useBackupStore } from "@/stores/backup";
 import { useTauri, translateError } from "@/composables/useTauri";
 import { useUnsavedChanges } from "@/composables/useUnsavedChanges";
 import type { SaveResult } from "@/lib/types";
@@ -45,6 +46,7 @@ const missionStore = useMissionStore();
 const worldStore = useWorldStore();
 const economyStore = useEconomyStore();
 const settings = useSettingsStore();
+const backupStore = useBackupStore();
 const { invokeCommand } = useTauri();
 const { isDirty, changeCount, collectAllChanges, confirmDiscardIfDirty, resetAll } =
   useUnsavedChanges();
@@ -147,6 +149,9 @@ async function handleSave() {
     missionStore.commitChanges();
     worldStore.commitChanges();
     economyStore.commitChanges();
+
+    // Every save made a backup: keep only as many as the settings allow
+    await backupStore.prune();
 
     // Reload density data to reflect edits
     if (hasDensityEdits && settings.gamePath && savegameStore.currentSavegame?.career.mapId) {
