@@ -7,7 +7,7 @@ use crate::error::AppError;
 use crate::models::common::Position;
 use crate::models::placeable::{
     display_name_from_unique_id, placeable_display_name, ConstructionMaterial, ConstructionState,
-    Placeable, ProductionLine, ProductionStock, SiloStorage, SiloStorageKind,
+    Placeable, ProductionLine, ProductionStock, SiloStorage, SiloStorageKind, StoredObject,
 };
 use crate::parsers::attrs::{attr_f64, attr_str, attr_u8};
 
@@ -50,6 +50,8 @@ pub fn parse_placeables(path: &Path) -> Result<Vec<Placeable>, AppError> {
     let mut in_silo = false;
     // The silo `<storage>` or `<siloExtension>` whose `<node>`s are being read
     let mut open_silo_storage: Option<SiloStorage> = None;
+    let mut in_object_storage = false;
+    let mut in_object = false;
 
     loop {
         let event = reader.read_event().map_err(|e| AppError::XmlParseError {
@@ -83,6 +85,8 @@ pub fn parse_placeables(path: &Path) -> Result<Vec<Placeable>, AppError> {
                         }
                     }
                     "silo" => in_silo = false,
+                    "objectStorage" => in_object_storage = false,
+                    "object" => in_object = false,
                     _ => {}
                 }
                 continue;
@@ -125,6 +129,7 @@ pub fn parse_placeables(path: &Path) -> Result<Vec<Placeable>, AppError> {
                     productions: Vec::new(),
                     production_storage: Vec::new(),
                     silo_storages: Vec::new(),
+                    stored_objects: Vec::new(),
                 };
 
                 placeable_index += 1;
@@ -165,6 +170,25 @@ pub fn parse_placeables(path: &Path) -> Result<Vec<Placeable>, AppError> {
             }
             "storage" if in_production_point => in_production_storage = !is_empty,
             "silo" if current.is_some() => in_silo = !is_empty,
+            "objectStorage" if current.is_some() => in_object_storage = !is_empty,
+            "object" if in_object_storage && !in_object => {
+                if let Some(ref mut p) = current {
+                    p.stored_objects.push(StoredObject {
+                        class_name: attr_str(e, "className"),
+                        filename: attr_str(e, "filename"),
+                        fill_type: attr_str(e, "fillType"),
+                        fill_level: attr_f64(e, "fillLevel"),
+                        wrapping_state: attr_f64(e, "wrappingState"),
+                        is_fermenting: false,
+                    });
+                }
+                in_object = !is_empty;
+            }
+            "fermentation" if in_object => {
+                if let Some(object) = current.as_mut().and_then(|p| p.stored_objects.last_mut()) {
+                    object.is_fermenting = attr_str(e, "isFermenting") == "true";
+                }
+            }
             "storage" | "siloExtension" if current.is_some() && (in_silo || tag == "siloExtension") => {
                 let storage = SiloStorage {
                     kind: if in_silo { SiloStorageKind::Silo } else { SiloStorageKind::Extension },
@@ -251,6 +275,43 @@ mod tests {
         let extension = silos.iter().find(|s| s.kind == SiloStorageKind::Extension).unwrap();
         assert_eq!((extension.index, extension.farm_id), (0, 1));
         assert_eq!(extension.stocks, vec![stock("WHEAT", 3274.029053)]);
+    }
+
+    #[test]
+    fn test_parse_object_storage_of_reference_save() {
+        let placeables = parse_placeables(&reference_save()).unwrap();
+        let objects: Vec<&StoredObject> = placeables.iter().flat_map(|p| &p.stored_objects).collect();
+        assert_eq!(objects.len(), 101);
+        let count = |class: &str, fill_type: &str| {
+            objects.iter().filter(|o| o.class_name == class && o.fill_type == fill_type).count()
+        };
+        assert_eq!(count("Bale", "STRAW"), 29);
+        assert_eq!(count("Vehicle", "BREAD"), 19);
+        let silage = objects.iter().find(|o| o.fill_type == "SILAGE").unwrap();
+        assert_eq!(silage.wrapping_state, 1.0);
+        assert!(silage.filename.ends_with(".xml") && silage.fill_level > 0.0);
+        assert!(objects.iter().all(|o| !o.is_fermenting));
+    }
+
+    #[test]
+    fn test_parse_fermenting_stored_bale() {
+        // Bale.lua saves a fermenting bale's state as a <fermentation> child
+        let dir = std::env::temp_dir().join("fs25_test_fermenting_bale");
+        let _ = std::fs::create_dir_all(&dir);
+        std::fs::write(
+            dir.join("placeables.xml"),
+            r#"<placeables><placeable filename="data/placeables/mapUS/objectStorage/objectStorage.xml" farmId="1"><objectStorage>
+            <object className="Bale" filename="data/objects/bales/squarebales/squarebale220/squarebale220.xml" fillLevel="4000.000000" fillType="GRASS_WINDROW" variationIndex="2" farmId="1" isMissionBale="false" wrappingState="1.000000" wrappingColor="1 1 1">
+                <fermentation isFermenting="true" time="1234.000000"/>
+            </object>
+            <object className="Bale" filename="data/objects/bales/squarebales/squarebale220/squarebale220.xml" fillLevel="4000.000000" fillType="SILAGE" variationIndex="2" farmId="1" isMissionBale="false" wrappingState="1.000000" wrappingColor="1 1 1"/>
+        </objectStorage></placeable></placeables>"#,
+        )
+        .unwrap();
+        let placeables = parse_placeables(&dir).unwrap();
+        let fermenting: Vec<bool> = placeables[0].stored_objects.iter().map(|o| o.is_fermenting).collect();
+        assert_eq!(fermenting, vec![true, false]);
+        let _ = std::fs::remove_dir_all(&dir);
     }
 
     #[test]

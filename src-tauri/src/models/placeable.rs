@@ -25,6 +25,23 @@ pub struct Placeable {
     pub production_storage: Vec<ProductionStock>,
     /// Farm silo storages: a `<silo>`'s `<storage>` elements and a `<siloExtension>`.
     pub silo_storages: Vec<SiloStorage>,
+    /// Bales and pallets in an `<objectStorage>`, in file order.
+    pub stored_objects: Vec<StoredObject>,
+}
+
+/// A bale or pallet kept in an object storage.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct StoredObject {
+    /// "Bale" or "Vehicle" (pallets)
+    pub class_name: String,
+    pub filename: String,
+    pub fill_type: String,
+    pub fill_level: f64,
+    /// 1 for a wrapped bale, 0 otherwise
+    pub wrapping_state: f64,
+    /// A wrapped bale still fermenting (`<fermentation isFermenting="true">`)
+    pub is_fermenting: bool,
 }
 
 /// Which element of placeables.xml holds a farm silo storage.
