@@ -29,8 +29,9 @@ pub struct DensityEditPayload {
     /// Set ground type (0-15, see GROUND_TYPES constant)
     #[serde(skip_serializing_if = "Option::is_none")]
     pub set_ground_type: Option<u8>,
-    /// Move every growing fruit pixel to its own fruit type's harvest-ready
-    /// growth state, and the ground to the type that state shows.
+    /// Move every growing crop pixel (fruits shown on the map, so not meadow)
+    /// to its own fruit type's harvest-ready growth state, and the ground to
+    /// the type that state shows.
     #[serde(default)]
     pub set_harvest_ready: bool,
     /// Clear all weeds (set to 0)

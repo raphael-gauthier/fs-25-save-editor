@@ -786,7 +786,7 @@ fn apply_density_edits(
             }
 
             if edit.set_harvest_ready {
-                // Every growing fruit pixel jumps to its own fruit's harvest-ready state
+                // Every growing crop pixel jumps to its own fruit's harvest-ready state
                 for_each_hi_res_pixel(pixels, scale, |hx, hy| {
                     if hx >= fruits_gdm.width || hy >= fruits_gdm.height {
                         return;
@@ -796,7 +796,10 @@ fn apply_density_edits(
                     if bits.state(current) == 0 {
                         return;
                     }
-                    let Some(fruit) = layout.fruit_at(type_index) else { return };
+                    // Meadow and other fruits hidden from the map grow outside fields
+                    let Some(fruit) = layout.fruit_at(type_index).filter(|f| f.shown_on_map) else {
+                        return;
+                    };
                     let Some(ready) = fruit.harvest_ready_state else { return };
                     fruits_gdm.set_pixel(hx, hy, bits.encode(current, type_index, ready));
                     if let Some(ground) = fruit
@@ -1193,6 +1196,28 @@ mod tests {
                 assert_eq!(ground.get_pixel(hx, hy) & 0xF, harvest_ready);
             }
         }
+        let _ = std::fs::remove_dir_all(save.parent().unwrap());
+    }
+
+    #[test]
+    fn test_harvest_ready_leaves_meadow_alone() {
+        let save = reference_density_save("harvest_ready_meadow");
+        let fruits = read_gdm(&save, "densityMap_fruits.gdm");
+        let bits = FruitBits::of(&fruits);
+        let meadow = map_us_layout().type_index_of("MEADOW").unwrap();
+        let (fx, fy) = find_block(&fruits, |b| {
+            b.iter().all(|&p| bits.type_index(p) == meadow && bits.state(p) > 0 && bits.state(p) != 4)
+        });
+        let before = block(&fruits, fx, fy);
+
+        let edit = DensityEditPayload {
+            farmland_id: 1,
+            set_harvest_ready: true,
+            ..Default::default()
+        };
+        let _ = apply_density_edits(&save, &farmland_at(fx, fy), &map_us_layout(), &[edit], false);
+
+        assert_eq!(block(&read_gdm(&save, "densityMap_fruits.gdm"), fx, fy), before);
         let _ = std::fs::remove_dir_all(save.parent().unwrap());
     }
 
