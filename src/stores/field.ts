@@ -307,7 +307,13 @@ export const useFieldStore = defineStore("field", () => {
     return Array.from(densityEdits.value.values());
   }
 
-  async function saveDensityEdits(savegamePath: string, gamePath: string, mapId: string): Promise<string[]> {
+  /** `createBackup` should be false only when the XML save of the same action already made one. */
+  async function saveDensityEdits(
+    savegamePath: string,
+    gamePath: string,
+    mapId: string,
+    createBackup: boolean,
+  ): Promise<string[]> {
     const edits = getDensityEdits();
     if (edits.length === 0) return [];
     const result = await invoke<string[]>("save_density_edits", {
@@ -315,6 +321,7 @@ export const useFieldStore = defineStore("field", () => {
       gamePath,
       mapId,
       edits,
+      createBackup,
     });
     densityEdits.value = new Map();
     return result;

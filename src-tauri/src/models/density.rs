@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
 
 /// Edit payload for modifying density map data on a single farmland/field
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Default, Serialize, Deserialize)]
 #[serde(rename_all = "camelCase")]
 pub struct DensityEditPayload {
     pub farmland_id: u32,

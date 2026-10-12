@@ -534,12 +534,14 @@ impl LevelAccumulator {
 }
 
 /// Apply density map edits and write modified files back to the savegame directory.
-/// Returns the list of files that were modified.
+/// When `create_backup` is set, the savegame is backed up before any layer is
+/// replaced. Returns the list of files that were modified.
 pub fn save_density_edits(
     savegame_path: &Path,
     game_path: &Path,
     map_id: &str,
     edits: &[DensityEditPayload],
+    create_backup: bool,
 ) -> Result<Vec<String>, AppError> {
     if edits.is_empty() {
         return Ok(Vec::new());
@@ -547,7 +549,19 @@ pub fn save_density_edits(
 
     // Load map data to get farmland pixels and fruit type mapping
     let (farmlands_grle, fruit_types) = load_map_data(game_path, map_id)?;
-    let farmland_pixels = build_farmland_pixel_map(&farmlands_grle);
+    apply_density_edits(savegame_path, &farmlands_grle, &fruit_types, edits, create_backup)
+}
+
+/// Applies `edits` to the savegame's density layers, using `farmlands_grle` to
+/// locate each farmland's pixels and `fruit_types` to resolve fruit names.
+fn apply_density_edits(
+    savegame_path: &Path,
+    farmlands_grle: &GrleImage,
+    fruit_types: &[String],
+    edits: &[DensityEditPayload],
+    create_backup: bool,
+) -> Result<Vec<String>, AppError> {
+    let farmland_pixels = build_farmland_pixel_map(farmlands_grle);
 
     // Determine which files need to be modified
     let needs_fruits = edits.iter().any(|e| e.set_fruit_name.is_some());
@@ -594,7 +608,9 @@ pub fn save_density_edits(
         None
     };
 
-    let mut modified_files = Vec::new();
+    // Every layer is encoded in memory first, so a failure on any layer
+    // leaves the savegame untouched.
+    let mut pending: Vec<(PathBuf, Vec<u8>)> = Vec::new();
 
     // Helper: check if a pixel should be modified based on filter mode.
     // - crop_area_only: fruit_idx > 0 (for harvest/mow — only affect crop pixels)
@@ -670,9 +686,7 @@ pub fn save_density_edits(
             }
         }
 
-        let encoded = gdm::write_gdm(&fruits_gdm, &original_data)?;
-        std::fs::write(&fruits_path, &encoded)?;
-        modified_files.push("densityMap_fruits.gdm".to_string());
+        pending.push((fruits_path, gdm::write_gdm(&fruits_gdm, &original_data)?));
     }
 
     // Modify ground GDM
@@ -708,9 +722,7 @@ pub fn save_density_edits(
                 }
             }
 
-            let encoded = gdm::write_gdm(&ground_gdm, &original_data)?;
-            std::fs::write(&ground_path, &encoded)?;
-            modified_files.push("densityMap_ground.gdm".to_string());
+            pending.push((ground_path, gdm::write_gdm(&ground_gdm, &original_data)?));
         }
     }
 
@@ -743,9 +755,7 @@ pub fn save_density_edits(
                 }
             }
 
-            let encoded = gdm::write_gdm(&weed_gdm, &original_data)?;
-            std::fs::write(&weed_path, &encoded)?;
-            modified_files.push("densityMap_weed.gdm".to_string());
+            pending.push((weed_path, gdm::write_gdm(&weed_gdm, &original_data)?));
         }
     }
 
@@ -778,9 +788,7 @@ pub fn save_density_edits(
                 }
             }
 
-            let encoded = gdm::write_gdm(&stones_gdm, &original_data)?;
-            std::fs::write(&stones_path, &encoded)?;
-            modified_files.push("densityMap_stones.gdm".to_string());
+            pending.push((stones_path, gdm::write_gdm(&stones_gdm, &original_data)?));
         }
     }
 
@@ -788,7 +796,7 @@ pub fn save_density_edits(
     let modify_grle = |filename: &str,
                        edits: &[DensityEditPayload],
                        get_value: &dyn Fn(&DensityEditPayload) -> Option<u8>|
-     -> Result<Option<String>, AppError> {
+     -> Result<Option<(PathBuf, Vec<u8>)>, AppError> {
         let path = savegame_path.join(filename);
         let original_data = std::fs::read(&path).map_err(|e| AppError::DensityMapError {
             message: format!("Failed to read {}: {}", filename, e),
@@ -823,9 +831,7 @@ pub fn save_density_edits(
         }
 
         if modified {
-            let encoded = grle::write_grle(&image, &header);
-            std::fs::write(&path, &encoded)?;
-            Ok(Some(filename.to_string()))
+            Ok(Some((path, grle::write_grle(&image, &header))))
         } else {
             Ok(None)
         }
@@ -833,38 +839,235 @@ pub fn save_density_edits(
 
     // Modify GRLE info layers
     if needs_lime {
-        if let Some(name) = modify_grle("infoLayer_limeLevel.grle", edits, &|e| e.set_lime_level)?
+        if let Some(layer) = modify_grle("infoLayer_limeLevel.grle", edits, &|e| e.set_lime_level)?
         {
-            modified_files.push(name);
+            pending.push(layer);
         }
     }
     if needs_spray {
-        if let Some(name) =
+        if let Some(layer) =
             modify_grle("infoLayer_sprayLevel.grle", edits, &|e| e.set_spray_level)?
         {
-            modified_files.push(name);
+            pending.push(layer);
         }
     }
     if needs_plow {
-        if let Some(name) = modify_grle("infoLayer_plowLevel.grle", edits, &|e| e.set_plow_level)?
+        if let Some(layer) = modify_grle("infoLayer_plowLevel.grle", edits, &|e| e.set_plow_level)?
         {
-            modified_files.push(name);
+            pending.push(layer);
         }
     }
     if needs_roller {
-        if let Some(name) =
+        if let Some(layer) =
             modify_grle("infoLayer_rollerLevel.grle", edits, &|e| e.set_roller_level)?
         {
-            modified_files.push(name);
+            pending.push(layer);
         }
     }
     if needs_stubble {
-        if let Some(name) = modify_grle("infoLayer_stubbleShredLevel.grle", edits, &|e| {
+        if let Some(layer) = modify_grle("infoLayer_stubbleShredLevel.grle", edits, &|e| {
             e.set_stubble_shred_level
         })? {
-            modified_files.push(name);
+            pending.push(layer);
         }
     }
 
-    Ok(modified_files)
+    if pending.is_empty() {
+        return Ok(Vec::new());
+    }
+    if create_backup {
+        crate::backup::manager::create_backup(savegame_path)?;
+    }
+    replace_files(&pending)
+}
+
+/// Replaces every file in `pending`: all contents go to temp files first and
+/// only once each one is written are they renamed over the originals.
+/// Returns the file names that were replaced.
+fn replace_files(pending: &[(PathBuf, Vec<u8>)]) -> Result<Vec<String>, AppError> {
+    let tmp_path = |path: &Path| {
+        let mut name = path.file_name().unwrap_or_default().to_os_string();
+        name.push(".tmp");
+        path.with_file_name(name)
+    };
+
+    for (i, (path, bytes)) in pending.iter().enumerate() {
+        if let Err(e) = std::fs::write(tmp_path(path), bytes) {
+            for (written, _) in &pending[..=i] {
+                let _ = std::fs::remove_file(tmp_path(written));
+            }
+            return Err(e.into());
+        }
+    }
+
+    let mut replaced = Vec::with_capacity(pending.len());
+    for (path, _) in pending {
+        std::fs::rename(tmp_path(path), path)?;
+        replaced.push(path.file_name().unwrap_or_default().to_string_lossy().into_owned());
+    }
+    Ok(replaced)
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    const DENSITY_FILES: [&str; 9] = [
+        "densityMap_fruits.gdm",
+        "densityMap_ground.gdm",
+        "densityMap_weed.gdm",
+        "densityMap_stones.gdm",
+        "infoLayer_limeLevel.grle",
+        "infoLayer_plowLevel.grle",
+        "infoLayer_sprayLevel.grle",
+        "infoLayer_rollerLevel.grle",
+        "infoLayer_stubbleShredLevel.grle",
+    ];
+
+    /// Copies the reference save's density layers into a fresh `<name>/savegame1`.
+    fn reference_density_save(name: &str) -> PathBuf {
+        let src = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("..")
+            .join("docs")
+            .join("savegames");
+        let root = std::env::temp_dir().join(format!("fs25_test_density_{}", name));
+        let _ = std::fs::remove_dir_all(&root);
+        let save = root.join("savegame1");
+        std::fs::create_dir_all(&save).unwrap();
+        for file in DENSITY_FILES {
+            std::fs::copy(src.join(file), save.join(file)).unwrap();
+        }
+        save
+    }
+
+    /// A 1024x1024 farmland map (a quarter of the 4096 layers) where a
+    /// 16x16 block is farmland 1 and everything else is unowned.
+    fn farmland_map() -> GrleImage {
+        let mut pixels = vec![0u8; 1024 * 1024];
+        for y in 500..516 {
+            for x in 500..516 {
+                pixels[y * 1024 + x] = 1;
+            }
+        }
+        GrleImage { width: 1024, height: 1024, pixels }
+    }
+
+    fn fruit_and_lime_edit() -> DensityEditPayload {
+        DensityEditPayload {
+            farmland_id: 1,
+            set_fruit_name: Some("WHEAT".to_string()),
+            set_growth_state: Some(8),
+            set_lime_level: Some(3),
+            ..Default::default()
+        }
+    }
+
+    #[test]
+    fn test_apply_writes_nothing_when_a_later_layer_fails() {
+        let save = reference_density_save("partial_failure");
+        let fruits_before = std::fs::read(save.join("densityMap_fruits.gdm")).unwrap();
+        std::fs::remove_file(save.join("infoLayer_limeLevel.grle")).unwrap();
+
+        let result = apply_density_edits(
+            &save,
+            &farmland_map(),
+            &["WHEAT".to_string()],
+            &[fruit_and_lime_edit()],
+            false,
+        );
+
+        assert!(result.is_err());
+        let fruits_after = std::fs::read(save.join("densityMap_fruits.gdm")).unwrap();
+        assert!(fruits_after == fruits_before, "fruits layer was written before the lime layer failed");
+        let _ = std::fs::remove_dir_all(save.parent().unwrap());
+    }
+
+    #[test]
+    fn test_apply_backs_up_original_layers_before_writing() {
+        let save = reference_density_save("backup");
+        let fruits_before = std::fs::read(save.join("densityMap_fruits.gdm")).unwrap();
+
+        let modified = apply_density_edits(
+            &save,
+            &farmland_map(),
+            &["WHEAT".to_string()],
+            &[fruit_and_lime_edit()],
+            true,
+        )
+        .unwrap();
+        assert!(modified.contains(&"densityMap_fruits.gdm".to_string()));
+        assert!(std::fs::read(save.join("densityMap_fruits.gdm")).unwrap() != fruits_before);
+
+        let backups = crate::backup::manager::list_backups(&save).unwrap();
+        assert_eq!(backups.len(), 1);
+        let backed_up = std::fs::read(PathBuf::from(&backups[0].path).join("densityMap_fruits.gdm")).unwrap();
+        assert!(backed_up == fruits_before, "backup does not hold the original fruits layer");
+        let _ = std::fs::remove_dir_all(save.parent().unwrap());
+    }
+
+    #[test]
+    fn test_apply_skips_backup_when_not_requested() {
+        let save = reference_density_save("no_backup");
+
+        apply_density_edits(
+            &save,
+            &farmland_map(),
+            &["WHEAT".to_string()],
+            &[fruit_and_lime_edit()],
+            false,
+        )
+        .unwrap();
+
+        assert!(crate::backup::manager::list_backups(&save).unwrap().is_empty());
+        let leftovers: Vec<_> = std::fs::read_dir(&save)
+            .unwrap()
+            .flatten()
+            .filter(|e| e.file_name().to_string_lossy().ends_with(".tmp"))
+            .collect();
+        assert!(leftovers.is_empty(), "temporary files left behind");
+        let _ = std::fs::remove_dir_all(save.parent().unwrap());
+    }
+    /// Copies the density layers of the real savegame named by `FS25_SAVE`
+    /// (never written to) and returns it with the game install `FS25_GAME`
+    /// and map id `FS25_MAP`. Run with `cargo test -- --ignored`.
+    fn real_save_copy(name: &str) -> (PathBuf, PathBuf, String) {
+        let src = PathBuf::from(std::env::var("FS25_SAVE").expect("FS25_SAVE"));
+        let game = PathBuf::from(std::env::var("FS25_GAME").expect("FS25_GAME"));
+        let map = std::env::var("FS25_MAP").unwrap_or_else(|_| "MapUS".to_string());
+        let root = std::env::temp_dir().join(format!("fs25_real_density_{}", name));
+        let _ = std::fs::remove_dir_all(&root);
+        let save = root.join("savegame1");
+        std::fs::create_dir_all(&save).unwrap();
+        for file in DENSITY_FILES {
+            std::fs::copy(src.join(file), save.join(file)).unwrap();
+        }
+        (save, game, map)
+    }
+
+    #[test]
+    #[ignore = "needs FS25_SAVE / FS25_GAME pointing at a real savegame and install"]
+    fn test_real_save_lime_edit_only_touches_its_farmland() {
+        let (save, game, map) = real_save_copy("lime");
+        let before = aggregate_field_data(&save, &game, &map).unwrap();
+        let target = before.iter().find(|d| d.lime_status.avg_level < 3.0).expect("a farmland below max lime");
+
+        let edit = DensityEditPayload {
+            farmland_id: target.farmland_id,
+            set_lime_level: Some(3),
+            ..Default::default()
+        };
+        let modified = save_density_edits(&save, &game, &map, &[edit], true).unwrap();
+        assert_eq!(modified, vec!["infoLayer_limeLevel.grle".to_string()]);
+        assert_eq!(crate::backup::manager::list_backups(&save).unwrap().len(), 1);
+
+        let after = aggregate_field_data(&save, &game, &map).unwrap();
+        for (b, a) in before.iter().zip(&after) {
+            if a.farmland_id == target.farmland_id {
+                assert_eq!(a.lime_status.avg_level, 3.0);
+            } else {
+                assert_eq!(a.lime_status.avg_level, b.lime_status.avg_level, "farmland {} changed", a.farmland_id);
+            }
+        }
+        let _ = std::fs::remove_dir_all(save.parent().unwrap());
+    }
 }

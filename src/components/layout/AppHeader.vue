@@ -108,9 +108,10 @@ async function handleSave() {
   isSaving.value = true;
   try {
     let totalFilesModified = 0;
+    const hasXmlChanges = Object.values(changes).some(Boolean);
 
-    // Save XML changes
-    if (Object.values(changes).some(Boolean)) {
+    // Save XML changes (save_changes backs the savegame up first)
+    if (hasXmlChanges) {
       const result = await invokeCommand<SaveResult>("save_changes", {
         path: savegameStore.currentPath,
         changes,
@@ -131,6 +132,7 @@ async function handleSave() {
         savegameStore.currentPath,
         settings.gamePath,
         savegameStore.currentSavegame.career.mapId,
+        !hasXmlChanges,
       );
       totalFilesModified += densityFiles.length;
     }
