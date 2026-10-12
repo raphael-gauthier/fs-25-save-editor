@@ -114,7 +114,7 @@ fn scan_mod_zip(zip_path: &Path, catalog: &mut Vec<CatalogVehicle>) {
     let xml_names: Vec<String> = (0..archive.len())
         .filter_map(|i| {
             let entry = archive.by_index(i).ok()?;
-            let name = entry.name().to_string();
+            let name = entry.name().ok()?.into_owned();
             if name.ends_with(".xml") && !name.contains("__MACOSX") {
                 Some(name)
             } else {

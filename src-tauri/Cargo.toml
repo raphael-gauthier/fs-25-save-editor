@@ -33,6 +33,6 @@ dirs = "7"
 regex-lite = "0.1"
 image = { version = "0.25", default-features = false, features = ["png"] }
 image_dds = { version = "0.7", default-features = false, features = ["ddsfile", "image"] }
-zip = { version = "8", default-features = false, features = ["deflate"] }
+zip = { version = "9", default-features = false, features = ["deflate"] }
 reqwest = { version = "0.13", features = ["json", "rustls"], default-features = false }
 
