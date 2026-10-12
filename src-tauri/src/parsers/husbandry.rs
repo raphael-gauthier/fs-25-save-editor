@@ -45,7 +45,7 @@ pub fn parse_husbandries(path: &Path) -> Result<Vec<Husbandry>, AppError> {
             Event::Empty(e) => (e, true),
             Event::End(e) => {
                 match e.name().as_ref() {
-                    b"placeable" => {
+                    "placeable" => {
                         if is_husbandry {
                             if let Some(h) = current.take() {
                                 husbandries.push(h);
@@ -59,14 +59,14 @@ pub fn parse_husbandries(path: &Path) -> Result<Vec<Husbandry>, AppError> {
                         in_food = false;
                         in_meadow = false;
                     }
-                    b"husbandry" => {
+                    "husbandry" => {
                         in_husbandry = false;
                         in_husbandry_storage = false;
                     }
-                    b"storage" if in_husbandry => in_husbandry_storage = false,
-                    b"clusters" => in_clusters = false,
-                    b"husbandryFood" => in_food = false,
-                    b"husbandryMeadow" => in_meadow = false,
+                    "storage" if in_husbandry => in_husbandry_storage = false,
+                    "clusters" => in_clusters = false,
+                    "husbandryFood" => in_food = false,
+                    "husbandryMeadow" => in_meadow = false,
                     _ => {}
                 }
                 continue;
@@ -76,7 +76,7 @@ pub fn parse_husbandries(path: &Path) -> Result<Vec<Husbandry>, AppError> {
         };
 
         match e.name().as_ref() {
-            b"placeable" => {
+            "placeable" => {
                 // Guards a malformed file: flush a previous husbandry whose
                 // </placeable> never arrived before this one started.
                 if is_husbandry {
@@ -115,16 +115,16 @@ pub fn parse_husbandries(path: &Path) -> Result<Vec<Husbandry>, AppError> {
                     current = None;
                 }
             }
-            b"husbandry" => {
+            "husbandry" => {
                 is_husbandry = true;
                 in_husbandry = !is_empty;
                 if let Some(ref mut h) = current {
                     h.production_factor = attr_f64(e, "productionFactor");
                 }
             }
-            b"husbandryAnimals" => is_husbandry = true,
-            b"clusters" => in_clusters = !is_empty,
-            b"animal" if in_clusters => {
+            "husbandryAnimals" => is_husbandry = true,
+            "clusters" => in_clusters = !is_empty,
+            "animal" if in_clusters => {
                 if let Some(ref mut h) = current {
                     h.clusters.push(AnimalCluster {
                         index: h.clusters.len(),
@@ -136,11 +136,11 @@ pub fn parse_husbandries(path: &Path) -> Result<Vec<Husbandry>, AppError> {
                     });
                 }
             }
-            b"husbandryFood" => {
+            "husbandryFood" => {
                 is_husbandry = true;
                 in_food = !is_empty;
             }
-            b"fillLevel" if in_food => {
+            "fillLevel" if in_food => {
                 if let Some(ref mut h) = current {
                     h.food.push(FillStock {
                         fill_type: attr_str(e, "fillType"),
@@ -148,11 +148,11 @@ pub fn parse_husbandries(path: &Path) -> Result<Vec<Husbandry>, AppError> {
                     });
                 }
             }
-            b"husbandryMeadow" => {
+            "husbandryMeadow" => {
                 is_husbandry = true;
                 in_meadow = !is_empty;
             }
-            b"fillType" if in_meadow => {
+            "fillType" if in_meadow => {
                 if let Some(ref mut h) = current {
                     h.meadow.push(MeadowStock {
                         fill_type: attr_str(e, "name"),
@@ -161,8 +161,8 @@ pub fn parse_husbandries(path: &Path) -> Result<Vec<Husbandry>, AppError> {
                     });
                 }
             }
-            b"storage" if in_husbandry => in_husbandry_storage = !is_empty,
-            b"node" if in_husbandry_storage => {
+            "storage" if in_husbandry => in_husbandry_storage = !is_empty,
+            "node" if in_husbandry_storage => {
                 if let Some(ref mut h) = current {
                     h.water.push(FillStock {
                         fill_type: attr_str(e, "fillType"),

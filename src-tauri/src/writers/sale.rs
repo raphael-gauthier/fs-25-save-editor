@@ -33,7 +33,7 @@ pub fn write_sale_changes(
     loop {
         match reader.read_event() {
             Ok(Event::Start(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
 
                 if skip_until_item_end {
                     skip_depth += 1;
@@ -61,7 +61,7 @@ pub fn write_sale_changes(
             // Real saves write every sale as a self-closing <item .../>, so this
             // branch — not the Start one above — is what handles them.
             Ok(Event::Empty(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
 
                 if skip_until_item_end {
                     continue;
@@ -89,7 +89,7 @@ pub fn write_sale_changes(
                 }
             }
             Ok(Event::End(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
 
                 if skip_until_item_end {
                     if tag == "item" {
@@ -131,7 +131,7 @@ pub fn write_sale_changes(
 fn patch_item_start(e: &BytesStart, change: &SaleChange) -> BytesStart<'static> {
     let mut elem = BytesStart::new("item");
     for attr in e.attributes().flatten() {
-        let key = String::from_utf8_lossy(attr.key.as_ref()).to_string();
+        let key = attr.key.as_ref().to_string();
         match key.as_str() {
             "price" if change.price.is_some() => {
                 elem.push_attribute(("price", change.price.unwrap().to_string().as_str()));
@@ -157,7 +157,7 @@ fn patch_item_start(e: &BytesStart, change: &SaleChange) -> BytesStart<'static> 
             _ => {
                 elem.push_attribute((
                     key.as_str(),
-                    String::from_utf8_lossy(&attr.value).as_ref(),
+                    attr.value.as_ref(),
                 ));
             }
         }

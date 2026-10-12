@@ -23,7 +23,7 @@ pub fn write_field_changes(path: &Path, changes: &[FieldChange]) -> Result<(), A
     loop {
         match reader.read_event() {
             Ok(Event::Empty(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
                 if tag == "field" {
                     let id = attr_u32(e, "id");
                     if let Some(change) = change_map.get(&id) {
@@ -81,7 +81,7 @@ pub fn write_farmland_changes(path: &Path, changes: &[FarmlandChange]) -> Result
     loop {
         match reader.read_event() {
             Ok(Event::Empty(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
                 if tag == "farmland" {
                     let id = attr_u32(e, "id");
                     if let Some(change) = change_map.get(&id) {
@@ -126,8 +126,8 @@ pub fn write_farmland_changes(path: &Path, changes: &[FarmlandChange]) -> Result
 fn attr_str(e: &BytesStart, key: &str) -> String {
     e.attributes()
         .flatten()
-        .find(|a| a.key.as_ref() == key.as_bytes())
-        .map(|a| String::from_utf8_lossy(&a.value).to_string())
+        .find(|a| a.key.as_ref() == key)
+        .map(|a| a.value.to_string())
         .unwrap_or_default()
 }
 
@@ -138,7 +138,7 @@ fn attr_u32(e: &BytesStart, key: &str) -> u32 {
 fn patch_field(e: &BytesStart, change: &FieldChange) -> BytesStart<'static> {
     let mut elem = BytesStart::new("field");
     for attr in e.attributes().flatten() {
-        let key = String::from_utf8_lossy(attr.key.as_ref()).to_string();
+        let key = attr.key.as_ref().to_string();
         match key.as_str() {
             "fruitType" if change.fruit_type.is_some() => {
                 elem.push_attribute(("fruitType", change.fruit_type.as_ref().unwrap().as_str()));
@@ -215,7 +215,7 @@ fn patch_field(e: &BytesStart, change: &FieldChange) -> BytesStart<'static> {
             _ => {
                 elem.push_attribute((
                     key.as_str(),
-                    String::from_utf8_lossy(&attr.value).as_ref(),
+                    attr.value.as_ref(),
                 ));
             }
         }
@@ -226,7 +226,7 @@ fn patch_field(e: &BytesStart, change: &FieldChange) -> BytesStart<'static> {
 fn patch_farmland(e: &BytesStart, change: &FarmlandChange) -> BytesStart<'static> {
     let mut elem = BytesStart::new("farmland");
     for attr in e.attributes().flatten() {
-        let key = String::from_utf8_lossy(attr.key.as_ref()).to_string();
+        let key = attr.key.as_ref().to_string();
         match key.as_str() {
             "farmId" => {
                 elem.push_attribute(("farmId", change.farm_id.to_string().as_str()));
@@ -234,7 +234,7 @@ fn patch_farmland(e: &BytesStart, change: &FarmlandChange) -> BytesStart<'static
             _ => {
                 elem.push_attribute((
                     key.as_str(),
-                    String::from_utf8_lossy(&attr.value).as_ref(),
+                    attr.value.as_ref(),
                 ));
             }
         }

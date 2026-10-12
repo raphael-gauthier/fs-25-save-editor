@@ -29,17 +29,17 @@ pub fn write_career_money(path: &Path, money: f64) -> Result<(), AppError> {
     loop {
         match reader.read_event() {
             Ok(Event::Start(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
                 if tag == "statistics" {
                     in_statistics = true;
                     // Pass through with attributes (may have attrs in some formats)
                     let mut elem = BytesStart::new("statistics");
                     for attr in e.attributes().flatten() {
-                        let key = String::from_utf8_lossy(attr.key.as_ref()).to_string();
+                        let key = attr.key.as_ref().to_string();
                         if key == "money" {
                             elem.push_attribute(("money", format!("{:.6}", money).as_str()));
                         } else {
-                            elem.push_attribute((key.as_str(), String::from_utf8_lossy(&attr.value).as_ref()));
+                            elem.push_attribute((key.as_str(), attr.value.as_ref()));
                         }
                     }
                     writer.write_event(Event::Start(elem)).map_err(write_err)?;
@@ -62,7 +62,7 @@ pub fn write_career_money(path: &Path, money: f64) -> Result<(), AppError> {
                 }
             }
             Ok(Event::End(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
                 if tag == "money" && in_statistics {
                     in_money_tag = false;
                 } else if tag == "statistics" {
@@ -71,16 +71,16 @@ pub fn write_career_money(path: &Path, money: f64) -> Result<(), AppError> {
                 writer.write_event(Event::End(e.clone())).map_err(write_err)?;
             }
             Ok(Event::Empty(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
                 if tag == "statistics" {
                     // Self-closing format: <statistics money="..." />
                     let mut elem = BytesStart::new("statistics");
                     for attr in e.attributes().flatten() {
-                        let key = String::from_utf8_lossy(attr.key.as_ref()).to_string();
+                        let key = attr.key.as_ref().to_string();
                         if key == "money" {
                             elem.push_attribute(("money", format!("{:.6}", money).as_str()));
                         } else {
-                            elem.push_attribute((key.as_str(), String::from_utf8_lossy(&attr.value).as_ref()));
+                            elem.push_attribute((key.as_str(), attr.value.as_ref()));
                         }
                     }
                     writer.write_event(Event::Empty(elem)).map_err(write_err)?;

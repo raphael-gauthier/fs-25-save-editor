@@ -26,7 +26,7 @@ pub fn write_collectible_changes(
     loop {
         match reader.read_event() {
             Ok(Event::Empty(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
                 if tag == "collectible" {
                     let index = attr_u32(e, "index");
                     if let Some(change) = change_map.get(&index) {
@@ -63,8 +63,8 @@ pub fn write_collectible_changes(
 fn attr_str(e: &BytesStart, key: &str) -> String {
     e.attributes()
         .flatten()
-        .find(|a| a.key.as_ref() == key.as_bytes())
-        .map(|a| String::from_utf8_lossy(&a.value).to_string())
+        .find(|a| a.key.as_ref() == key)
+        .map(|a| a.value.to_string())
         .unwrap_or_default()
 }
 
@@ -75,7 +75,7 @@ fn attr_u32(e: &BytesStart, key: &str) -> u32 {
 fn patch_collectible(e: &BytesStart, change: &CollectibleChange) -> BytesStart<'static> {
     let mut elem = BytesStart::new("collectible");
     for attr in e.attributes().flatten() {
-        let key = String::from_utf8_lossy(attr.key.as_ref()).to_string();
+        let key = attr.key.as_ref().to_string();
         match key.as_str() {
             "isCollected" => {
                 elem.push_attribute(("isCollected", if change.collected { "true" } else { "false" }));
@@ -83,7 +83,7 @@ fn patch_collectible(e: &BytesStart, change: &CollectibleChange) -> BytesStart<'
             _ => {
                 elem.push_attribute((
                     key.as_str(),
-                    String::from_utf8_lossy(&attr.value).as_ref(),
+                    attr.value.as_ref(),
                 ));
             }
         }

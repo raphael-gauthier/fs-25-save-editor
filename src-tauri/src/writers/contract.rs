@@ -25,7 +25,7 @@ pub fn write_contract_settings(
     loop {
         match reader.read_event() {
             Ok(Event::Start(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
                 if tag == "settings" || tag == "contractSettings" {
                     let elem = patch_settings(e, &tag, changes);
                     write_event(&mut writer, &xml_path, Event::Start(elem))?;
@@ -55,7 +55,7 @@ pub fn write_contract_settings(
                 write_event(&mut writer, &xml_path, Event::End(e.clone().into_owned()))?;
             }
             Ok(Event::Empty(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
                 if tag == "settings" || tag == "contractSettings" {
                     let elem = patch_settings(e, &tag, changes);
                     write_event(&mut writer, &xml_path, Event::Empty(elem))?;
@@ -87,7 +87,7 @@ pub fn write_contract_settings(
 fn patch_settings(e: &BytesStart, tag_name: &str, changes: &ContractSettingsChange) -> BytesStart<'static> {
     let mut elem = BytesStart::new(tag_name.to_string());
     for attr in e.attributes().flatten() {
-        let key = String::from_utf8_lossy(attr.key.as_ref()).to_string();
+        let key = attr.key.as_ref().to_string();
         match key.as_str() {
             "leaseVehicle" if changes.lease_vehicle.is_some() => {
                 elem.push_attribute(("leaseVehicle", format!("{:.6}", changes.lease_vehicle.unwrap()).as_str()));
@@ -101,7 +101,7 @@ fn patch_settings(e: &BytesStart, tag_name: &str, changes: &ContractSettingsChan
             _ => {
                 elem.push_attribute((
                     key.as_str(),
-                    String::from_utf8_lossy(&attr.value).as_ref(),
+                    attr.value.as_ref(),
                 ));
             }
         }

@@ -8,6 +8,7 @@ use quick_xml::events::Event;
 use quick_xml::Reader;
 
 use crate::error::AppError;
+use crate::parsers::text::resolve_ref;
 
 #[derive(Clone)]
 pub struct VehicleImageService {
@@ -33,32 +34,32 @@ impl VehicleImageService {
 
         let mut in_store_data = false;
         let mut in_image = false;
+        let mut image = String::new();
         let mut buf = Vec::new();
 
         loop {
             match reader.read_event_into(&mut buf) {
                 Ok(Event::Start(ref e)) => {
                     let tag = e.name();
-                    if tag.as_ref() == b"storeData" {
+                    if tag.as_ref() == "storeData" {
                         in_store_data = true;
-                    } else if in_store_data && tag.as_ref() == b"image" {
+                    } else if in_store_data && tag.as_ref() == "image" {
                         in_image = true;
+                        image.clear();
                     }
                 }
                 Ok(Event::Empty(ref e)) => {
                     // Handle <set path="vehicle.storeData.image" value="..."/> in parentFile mods
-                    if e.name().as_ref() == b"set" {
+                    if e.name().as_ref() == "set" {
                         let mut path_val = String::new();
                         let mut value_val = String::new();
                         for attr in e.attributes().flatten() {
                             match attr.key.as_ref() {
-                                b"path" => {
-                                    path_val =
-                                        String::from_utf8_lossy(&attr.value).to_string();
+                                "path" => {
+                                    path_val = attr.value.to_string();
                                 }
-                                b"value" => {
-                                    value_val =
-                                        String::from_utf8_lossy(&attr.value).to_string();
+                                "value" => {
+                                    value_val = attr.value.to_string();
                                 }
                                 _ => {}
                             }
@@ -68,21 +69,17 @@ impl VehicleImageService {
                         }
                     }
                 }
-                Ok(Event::Text(ref text)) => {
-                    if in_image {
-                        if let Ok(value) = text.unescape() {
-                            let trimmed = value.trim().to_string();
-                            if !trimmed.is_empty() {
-                                return Some(trimmed);
-                            }
-                        }
-                    }
-                }
+                Ok(Event::Text(ref e)) if in_image => image.push_str(e),
+                Ok(Event::GeneralRef(ref r)) if in_image => image.push_str(&resolve_ref(r)),
                 Ok(Event::End(ref e)) => {
                     let tag = e.name();
-                    if tag.as_ref() == b"image" {
+                    if tag.as_ref() == "image" {
                         in_image = false;
-                    } else if tag.as_ref() == b"storeData" {
+                        let trimmed = image.trim();
+                        if !trimmed.is_empty() {
+                            return Some(trimmed.to_string());
+                        }
+                    } else if tag.as_ref() == "storeData" {
                         in_store_data = false;
                     }
                 }

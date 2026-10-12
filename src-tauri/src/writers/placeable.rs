@@ -38,7 +38,7 @@ pub fn write_placeable_changes(
     loop {
         match reader.read_event() {
             Ok(Event::Start(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
 
                 match tag.as_str() {
                     "placeable" if !in_placeable => {
@@ -91,7 +91,7 @@ pub fn write_placeable_changes(
                 }
             }
             Ok(Event::Empty(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
 
                 // A self-closing <placeable .../> (pre-placed buildings, ~37% of a real
                 // save) never opens a Start/End pair, so it never sets `in_placeable`.
@@ -148,7 +148,7 @@ pub fn write_placeable_changes(
                 )?;
             }
             Ok(Event::End(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
 
                 match tag.as_str() {
                     "placeable" if in_placeable => {
@@ -197,15 +197,15 @@ pub fn write_placeable_changes(
 fn attr_str(e: &BytesStart, key: &str) -> String {
     e.attributes()
         .flatten()
-        .find(|a| a.key.as_ref() == key.as_bytes())
-        .map(|a| String::from_utf8_lossy(&a.value).to_string())
+        .find(|a| a.key.as_ref() == key)
+        .map(|a| a.value.to_string())
         .unwrap_or_default()
 }
 
 fn patch_placeable_start(e: &BytesStart, change: &PlaceableChange) -> BytesStart<'static> {
     let mut elem = BytesStart::new("placeable");
     for attr in e.attributes().flatten() {
-        let key = String::from_utf8_lossy(attr.key.as_ref()).to_string();
+        let key = attr.key.as_ref().to_string();
         match key.as_str() {
             "farmId" if change.farm_id.is_some() => {
                 elem.push_attribute((
@@ -222,7 +222,7 @@ fn patch_placeable_start(e: &BytesStart, change: &PlaceableChange) -> BytesStart
             _ => {
                 elem.push_attribute((
                     key.as_str(),
-                    String::from_utf8_lossy(&attr.value).as_ref(),
+                    attr.value.as_ref(),
                 ));
             }
         }
@@ -234,7 +234,7 @@ fn patch_placeable_start(e: &BytesStart, change: &PlaceableChange) -> BytesStart
 fn patch_construction_input_complete(e: &BytesStart) -> BytesStart<'static> {
     let mut elem = BytesStart::new("input");
     for attr in e.attributes().flatten() {
-        let key = String::from_utf8_lossy(attr.key.as_ref()).to_string();
+        let key = attr.key.as_ref().to_string();
         match key.as_str() {
             "remainingAmount" => {
                 elem.push_attribute(("remainingAmount", "0.000000"));
@@ -242,7 +242,7 @@ fn patch_construction_input_complete(e: &BytesStart) -> BytesStart<'static> {
             _ => {
                 elem.push_attribute((
                     key.as_str(),
-                    String::from_utf8_lossy(&attr.value).as_ref(),
+                    attr.value.as_ref(),
                 ));
             }
         }
@@ -253,7 +253,7 @@ fn patch_construction_input_complete(e: &BytesStart) -> BytesStart<'static> {
 fn patch_storage_node(e: &BytesStart, change: &ProductionStockChange) -> BytesStart<'static> {
     let mut elem = BytesStart::new("node");
     for attr in e.attributes().flatten() {
-        let key = String::from_utf8_lossy(attr.key.as_ref()).to_string();
+        let key = attr.key.as_ref().to_string();
         match key.as_str() {
             "fillLevel" => {
                 elem.push_attribute((
@@ -264,7 +264,7 @@ fn patch_storage_node(e: &BytesStart, change: &ProductionStockChange) -> BytesSt
             _ => {
                 elem.push_attribute((
                     key.as_str(),
-                    String::from_utf8_lossy(&attr.value).as_ref(),
+                    attr.value.as_ref(),
                 ));
             }
         }

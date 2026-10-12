@@ -47,7 +47,7 @@ pub fn parse_vehicles(path: &Path) -> Result<Vec<Vehicle>, AppError> {
     loop {
         match reader.read_event() {
             Ok(Event::Start(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
                 match tag.as_str() {
                     "vehicle" if !in_vehicle => {
                         in_vehicle = true;
@@ -103,7 +103,7 @@ pub fn parse_vehicles(path: &Path) -> Result<Vec<Vehicle>, AppError> {
                 }
             }
             Ok(Event::Empty(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
                 if let Some(ref mut vb) = current_vehicle {
                     match tag.as_str() {
                         // The root component carries the vehicle transform as
@@ -162,7 +162,7 @@ pub fn parse_vehicles(path: &Path) -> Result<Vec<Vehicle>, AppError> {
                 }
             }
             Ok(Event::End(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
                 match tag.as_str() {
                     "vehicle" if in_vehicle => {
                         in_vehicle = false;

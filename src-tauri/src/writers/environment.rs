@@ -6,6 +6,7 @@ use quick_xml::{Reader, Writer};
 use crate::error::AppError;
 use crate::models::changes::EnvironmentChanges;
 use crate::models::environment::WeatherEvent;
+use crate::parsers::text::resolve_ref;
 
 /// Applies environment changes to environment.xml.
 ///
@@ -31,7 +32,7 @@ pub fn write_environment_changes(
     loop {
         match reader.read_event() {
             Ok(Event::Start(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
                 match tag.as_str() {
                     "dayTime" => {
                         write_ev(&mut writer, &xml_path, Event::Start(e.clone().into_owned()))?;
@@ -112,7 +113,7 @@ pub fn write_environment_changes(
                 if skip_until_forecast_end {
                     continue;
                 }
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
                 match tag.as_str() {
                     "snow" if in_weather && !in_forecast => {
                         if let Some(val) = changes.snow_height {
@@ -163,7 +164,7 @@ pub fn write_environment_changes(
                 }
             }
             Ok(Event::End(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
                 match tag.as_str() {
                     "forecast" if in_weather => {
                         in_forecast = false;
@@ -275,9 +276,8 @@ fn read_text_content(reader: &mut Reader<&[u8]>) -> String {
     let mut buf = String::new();
     loop {
         match reader.read_event() {
-            Ok(Event::Text(ref e)) => {
-                buf.push_str(&e.unescape().unwrap_or_default());
-            }
+            Ok(Event::Text(ref e)) => buf.push_str(e),
+            Ok(Event::GeneralRef(ref r)) => buf.push_str(&resolve_ref(r)),
             Ok(Event::End(_)) | Ok(Event::Eof) => break,
             _ => {}
         }

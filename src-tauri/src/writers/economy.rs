@@ -43,7 +43,7 @@ pub fn write_economy_changes(
     loop {
         match reader.read_event() {
             Ok(Event::Start(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
                 match tag.as_str() {
                     "greatDemands" => {
                         in_great_demands = true;
@@ -72,7 +72,7 @@ pub fn write_economy_changes(
                 }
             }
             Ok(Event::Empty(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
                 if tag == "greatDemand" && in_great_demands {
                     if deletions.contains(&demand_index) {
                         // Delete: replace with empty slot (no attributes)
@@ -91,7 +91,7 @@ pub fn write_economy_changes(
                 }
             }
             Ok(Event::End(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
                 if tag == "greatDemand" && skip_until_end_great_demand {
                     skip_until_end_great_demand = false;
                     // Already wrote empty slot, skip closing tag
@@ -133,7 +133,7 @@ pub fn write_economy_changes(
 fn patch_great_demand(e: &BytesStart, change: &GreatDemandChange) -> BytesStart<'static> {
     let mut elem = BytesStart::new("greatDemand");
     for attr in e.attributes().flatten() {
-        let key = String::from_utf8_lossy(attr.key.as_ref()).to_string();
+        let key = attr.key.as_ref().to_string();
         match key.as_str() {
             "fillTypeName" if change.fill_type_name.is_some() => {
                 elem.push_attribute(("fillTypeName", change.fill_type_name.as_ref().unwrap().as_str()));
@@ -159,7 +159,7 @@ fn patch_great_demand(e: &BytesStart, change: &GreatDemandChange) -> BytesStart<
             _ => {
                 elem.push_attribute((
                     key.as_str(),
-                    String::from_utf8_lossy(&attr.value).as_ref(),
+                    attr.value.as_ref(),
                 ));
             }
         }

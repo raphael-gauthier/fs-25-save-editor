@@ -4,6 +4,7 @@ use quick_xml::events::Event;
 use quick_xml::Reader;
 
 use crate::error::AppError;
+use crate::parsers::text::resolve_ref;
 use crate::models::career::{CareerSavegame, SavegameSummary};
 
 /// Parse careerSavegame.xml and extract only the fields needed for the summary.
@@ -24,21 +25,23 @@ pub fn parse_career_summary(path: &Path) -> Result<SavegameSummary, AppError> {
     let mut play_time: f64 = 0.0;
 
     let mut current_tag = String::new();
+    let mut text = String::new();
     let mut in_settings = false;
     let mut in_statistics = false;
 
     loop {
         match reader.read_event() {
             Ok(Event::Start(ref e)) => {
-                let tag_name = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                text.clear();
+                let tag_name = e.name().as_ref().to_string();
                 match tag_name.as_str() {
                     "settings" => in_settings = true,
                     "statistics" => {
                         in_statistics = true;
                         // Also check attributes (format: <statistics money="..." />)
                         for attr in e.attributes().flatten() {
-                            let key = String::from_utf8_lossy(attr.key.as_ref()).to_string();
-                            let val = String::from_utf8_lossy(&attr.value).to_string();
+                            let key = attr.key.as_ref().to_string();
+                            let val = attr.value.to_string();
                             match key.as_str() {
                                 "money" => money = val.parse().unwrap_or(0.0),
                                 "playTime" => play_time = val.parse().unwrap_or(0.0),
@@ -54,8 +57,36 @@ pub fn parse_career_summary(path: &Path) -> Result<SavegameSummary, AppError> {
                     current_tag = tag_name;
                 }
             }
+            Ok(Event::Text(ref e)) => text.push_str(e),
+            Ok(Event::GeneralRef(ref r)) => text.push_str(&resolve_ref(r)),
             Ok(Event::End(ref e)) => {
-                let tag_name = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let text = std::mem::take(&mut text);
+                // An empty element yields no text: keep the field's default.
+                if !text.is_empty() {
+                    if in_settings {
+                        match current_tag.as_str() {
+                            "savegameName" => savegame_name = text,
+                            "mapTitle" => map_title = text,
+                            "saveDateFormatted" => save_date = text,
+                            "economicDifficulty" => {
+                                economic_difficulty = match text.trim() {
+                                    "1" => "EASY".to_string(),
+                                    "2" => "NORMAL".to_string(),
+                                    "3" => "HARD".to_string(),
+                                    other => other.to_string(),
+                                };
+                            }
+                            _ => {}
+                        }
+                    } else if in_statistics {
+                        match current_tag.as_str() {
+                            "money" => money = text.trim().parse().unwrap_or(0.0),
+                            "playTime" => play_time = text.trim().parse().unwrap_or(0.0),
+                            _ => {}
+                        }
+                    }
+                }
+                let tag_name = e.name().as_ref().to_string();
                 if tag_name == "settings" {
                     in_settings = false;
                 } else if tag_name == "statistics" {
@@ -63,38 +94,13 @@ pub fn parse_career_summary(path: &Path) -> Result<SavegameSummary, AppError> {
                 }
                 current_tag.clear();
             }
-            Ok(Event::Text(ref e)) => {
-                let text = e.unescape().unwrap_or_default().to_string();
-                if in_settings {
-                    match current_tag.as_str() {
-                        "savegameName" => savegame_name = text,
-                        "mapTitle" => map_title = text,
-                        "saveDateFormatted" => save_date = text,
-                        "economicDifficulty" => {
-                            economic_difficulty = match text.trim() {
-                                "1" => "EASY".to_string(),
-                                "2" => "NORMAL".to_string(),
-                                "3" => "HARD".to_string(),
-                                other => other.to_string(),
-                            };
-                        }
-                        _ => {}
-                    }
-                } else if in_statistics {
-                    match current_tag.as_str() {
-                        "money" => money = text.trim().parse().unwrap_or(0.0),
-                        "playTime" => play_time = text.trim().parse().unwrap_or(0.0),
-                        _ => {}
-                    }
-                }
-            }
             Ok(Event::Empty(ref e)) => {
-                let tag_name = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag_name = e.name().as_ref().to_string();
                 // Self-closing format: <statistics money="..." playTime="..." />
                 if tag_name == "statistics" {
                     for attr in e.attributes().flatten() {
-                        let key = String::from_utf8_lossy(attr.key.as_ref()).to_string();
-                        let val = String::from_utf8_lossy(&attr.value).to_string();
+                        let key = attr.key.as_ref().to_string();
+                        let val = attr.value.to_string();
                         match key.as_str() {
                             "money" => money = val.parse().unwrap_or(0.0),
                             "playTime" => play_time = val.parse().unwrap_or(0.0),
@@ -153,20 +159,22 @@ pub fn parse_career(path: &Path) -> Result<CareerSavegame, AppError> {
     let mut traffic_enabled = true;
 
     let mut current_tag = String::new();
+    let mut text = String::new();
     let mut in_settings = false;
     let mut in_statistics = false;
 
     loop {
         match reader.read_event() {
             Ok(Event::Start(ref e)) => {
-                let tag_name = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                text.clear();
+                let tag_name = e.name().as_ref().to_string();
                 match tag_name.as_str() {
                     "settings" => in_settings = true,
                     "statistics" => {
                         in_statistics = true;
                         for attr in e.attributes().flatten() {
-                            let key = String::from_utf8_lossy(attr.key.as_ref()).to_string();
-                            let val = String::from_utf8_lossy(&attr.value).to_string();
+                            let key = attr.key.as_ref().to_string();
+                            let val = attr.value.to_string();
                             match key.as_str() {
                                 "money" => money = val.parse().unwrap_or(0.0),
                                 "playTime" => play_time = val.parse().unwrap_or(0.0),
@@ -182,8 +190,51 @@ pub fn parse_career(path: &Path) -> Result<CareerSavegame, AppError> {
                     current_tag = tag_name;
                 }
             }
+            Ok(Event::Text(ref e)) => text.push_str(e),
+            Ok(Event::GeneralRef(ref r)) => text.push_str(&resolve_ref(r)),
             Ok(Event::End(ref e)) => {
-                let tag_name = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let text = std::mem::take(&mut text);
+                // An empty element yields no text: keep the field's default.
+                if !text.is_empty() {
+                    if in_settings {
+                        match current_tag.as_str() {
+                            "savegameName" => savegame_name = text,
+                            "creationDate" => creation_date = text,
+                            "mapId" => map_id = text,
+                            "mapTitle" => map_title = text,
+                            "saveDateFormatted" => save_date = text,
+                            "economicDifficulty" => {
+                                economic_difficulty = match text.trim() {
+                                    "1" => "EASY".to_string(),
+                                    "2" => "NORMAL".to_string(),
+                                    "3" => "HARD".to_string(),
+                                    other => other.to_string(),
+                                };
+                            }
+                            "growthMode" => growth_mode = text.trim().parse().unwrap_or(1),
+                            "plannedDaysPerPeriod" => {
+                                planned_days_per_period = text.trim().parse().unwrap_or(1)
+                            }
+                            "plowingRequiredEnabled" => {
+                                plowing_required = text.trim() == "true"
+                            }
+                            "stonesEnabled" => stones_enabled = text.trim() == "true",
+                            "weedsEnabled" => weeds_enabled = text.trim() == "true",
+                            "limeRequired" => lime_required = text.trim() == "true",
+                            "snowEnabled" | "isSnowEnabled" => snow_enabled = text.trim() == "true",
+                            "fuelUsage" => fuel_usage = text.trim().parse().unwrap_or(1),
+                            "trafficEnabled" => traffic_enabled = text.trim() == "true",
+                            _ => {}
+                        }
+                    } else if in_statistics {
+                        match current_tag.as_str() {
+                            "money" => money = text.trim().parse().unwrap_or(0.0),
+                            "playTime" => play_time = text.trim().parse().unwrap_or(0.0),
+                            _ => {}
+                        }
+                    }
+                }
+                let tag_name = e.name().as_ref().to_string();
                 if tag_name == "settings" {
                     in_settings = false;
                 } else if tag_name == "statistics" {
@@ -191,52 +242,12 @@ pub fn parse_career(path: &Path) -> Result<CareerSavegame, AppError> {
                 }
                 current_tag.clear();
             }
-            Ok(Event::Text(ref e)) => {
-                let text = e.unescape().unwrap_or_default().to_string();
-                if in_settings {
-                    match current_tag.as_str() {
-                        "savegameName" => savegame_name = text,
-                        "creationDate" => creation_date = text,
-                        "mapId" => map_id = text,
-                        "mapTitle" => map_title = text,
-                        "saveDateFormatted" => save_date = text,
-                        "economicDifficulty" => {
-                            economic_difficulty = match text.trim() {
-                                "1" => "EASY".to_string(),
-                                "2" => "NORMAL".to_string(),
-                                "3" => "HARD".to_string(),
-                                other => other.to_string(),
-                            };
-                        }
-                        "growthMode" => growth_mode = text.trim().parse().unwrap_or(1),
-                        "plannedDaysPerPeriod" => {
-                            planned_days_per_period = text.trim().parse().unwrap_or(1)
-                        }
-                        "plowingRequiredEnabled" => {
-                            plowing_required = text.trim() == "true"
-                        }
-                        "stonesEnabled" => stones_enabled = text.trim() == "true",
-                        "weedsEnabled" => weeds_enabled = text.trim() == "true",
-                        "limeRequired" => lime_required = text.trim() == "true",
-                        "snowEnabled" | "isSnowEnabled" => snow_enabled = text.trim() == "true",
-                        "fuelUsage" => fuel_usage = text.trim().parse().unwrap_or(1),
-                        "trafficEnabled" => traffic_enabled = text.trim() == "true",
-                        _ => {}
-                    }
-                } else if in_statistics {
-                    match current_tag.as_str() {
-                        "money" => money = text.trim().parse().unwrap_or(0.0),
-                        "playTime" => play_time = text.trim().parse().unwrap_or(0.0),
-                        _ => {}
-                    }
-                }
-            }
             Ok(Event::Empty(ref e)) => {
-                let tag_name = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag_name = e.name().as_ref().to_string();
                 if tag_name == "statistics" {
                     for attr in e.attributes().flatten() {
-                        let key = String::from_utf8_lossy(attr.key.as_ref()).to_string();
-                        let val = String::from_utf8_lossy(&attr.value).to_string();
+                        let key = attr.key.as_ref().to_string();
+                        let val = attr.value.to_string();
                         match key.as_str() {
                             "money" => money = val.parse().unwrap_or(0.0),
                             "playTime" => play_time = val.parse().unwrap_or(0.0),

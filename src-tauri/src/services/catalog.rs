@@ -6,6 +6,7 @@ use quick_xml::events::Event;
 use quick_xml::Reader;
 
 use crate::models::catalog::{CatalogVehicle, VehicleSource};
+use crate::parsers::text::resolve_ref;
 
 /// Scan base game vehicles directory and mod zips to build a vehicle catalog.
 pub fn scan_vehicle_catalog(game_path: &Path, mods_dir: &Path) -> Vec<CatalogVehicle> {
@@ -166,6 +167,7 @@ fn parse_store_data(xml_content: &str) -> Option<StoreData> {
 
     let mut in_store_data = false;
     let mut current_tag = String::new();
+    let mut text = String::new();
     let mut name = None;
     let mut brand = None;
     let mut category = None;
@@ -175,35 +177,32 @@ fn parse_store_data(xml_content: &str) -> Option<StoreData> {
     loop {
         match reader.read_event_into(&mut buf) {
             Ok(Event::Start(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                text.clear();
+                let tag = e.name().as_ref().to_string();
                 if tag == "storeData" {
                     in_store_data = true;
                 } else if in_store_data {
                     current_tag = tag;
                 }
             }
-            Ok(Event::Text(ref text)) => {
-                if in_store_data && !current_tag.is_empty() {
-                    if let Ok(value) = text.unescape() {
-                        let trimmed = value.trim().to_string();
-                        if !trimmed.is_empty() {
-                            match current_tag.as_str() {
-                                "name" => name = Some(clean_localized_name(&trimmed)),
-                                "brand" => brand = Some(trimmed),
-                                "category" => category = Some(trimmed),
-                                "price" => price = trimmed.parse::<u32>().ok(),
-                                _ => {}
-                            }
-                        }
-                    }
-                }
-            }
+            Ok(Event::Text(ref e)) => text.push_str(e),
+            Ok(Event::GeneralRef(ref r)) => text.push_str(&resolve_ref(r)),
             Ok(Event::End(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
                 if tag == "storeData" {
                     break;
                 }
                 if in_store_data {
+                    let trimmed = std::mem::take(&mut text).trim().to_string();
+                    if !trimmed.is_empty() {
+                        match current_tag.as_str() {
+                            "name" => name = Some(clean_localized_name(&trimmed)),
+                            "brand" => brand = Some(trimmed),
+                            "category" => category = Some(trimmed),
+                            "price" => price = trimmed.parse::<u32>().ok(),
+                            _ => {}
+                        }
+                    }
                     current_tag.clear();
                 }
             }

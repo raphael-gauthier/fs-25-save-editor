@@ -10,8 +10,8 @@ use crate::models::vehicle::vehicle_display_name;
 fn attr_str(e: &quick_xml::events::BytesStart, key: &str) -> String {
     e.attributes()
         .flatten()
-        .find(|a| a.key.as_ref() == key.as_bytes())
-        .map(|a| String::from_utf8_lossy(&a.value).to_string())
+        .find(|a| a.key.as_ref() == key)
+        .map(|a| a.value.to_string())
         .unwrap_or_default()
 }
 
@@ -40,7 +40,7 @@ pub fn parse_sales(path: &Path) -> Result<Vec<SaleItem>, AppError> {
     loop {
         match reader.read_event() {
             Ok(Event::Start(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
                 match tag.as_str() {
                     "item" => {
                         let xml_filename = attr_str(e, "xmlFilename");
@@ -65,7 +65,7 @@ pub fn parse_sales(path: &Path) -> Result<Vec<SaleItem>, AppError> {
                 }
             }
             Ok(Event::Empty(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
                 if tag == "item" {
                     // Self-closing <item .../> (no boughtConfigurations)
                     let xml_filename = attr_str(e, "xmlFilename");
@@ -94,7 +94,7 @@ pub fn parse_sales(path: &Path) -> Result<Vec<SaleItem>, AppError> {
                 }
             }
             Ok(Event::End(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
                 match tag.as_str() {
                     "item" => {
                         if let Some(item) = current_item.take() {

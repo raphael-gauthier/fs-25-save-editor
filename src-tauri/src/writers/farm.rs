@@ -24,24 +24,20 @@ pub fn write_farm_finances(
     loop {
         match reader.read_event() {
             Ok(Event::Start(ref e)) => {
-                let tag = String::from_utf8_lossy(e.name().as_ref()).to_string();
+                let tag = e.name().as_ref().to_string();
                 if tag == "farm" {
                     let current_id: u8 = e
                         .attributes()
                         .flatten()
-                        .find(|a| a.key.as_ref() == b"farmId")
-                        .map(|a| {
-                            String::from_utf8_lossy(&a.value)
-                                .parse()
-                                .unwrap_or(0)
-                        })
+                        .find(|a| a.key.as_ref() == "farmId")
+                        .map(|a| a.value.parse().unwrap_or(0))
                         .unwrap_or(0);
 
                     if current_id == farm_id {
                         let mut elem = BytesStart::new("farm");
                         for attr in e.attributes().flatten() {
                             let key =
-                                String::from_utf8_lossy(attr.key.as_ref()).to_string();
+                                attr.key.as_ref().to_string();
                             match key.as_str() {
                                 "money" if money.is_some() => {
                                     elem.push_attribute((
@@ -58,7 +54,7 @@ pub fn write_farm_finances(
                                 _ => {
                                     elem.push_attribute((
                                         key.as_str(),
-                                        String::from_utf8_lossy(&attr.value).as_ref(),
+                                        attr.value.as_ref(),
                                     ));
                                 }
                             }
