@@ -46,6 +46,7 @@ import {
   Ellipsis,
   X,
 } from "@lucide/vue";
+import WithTooltip from "@/components/WithTooltip.vue";
 
 const { t } = useI18n();
 const store = useFieldStore();
@@ -530,16 +531,17 @@ function toggleSelectAll() {
               </template>
             </DropdownMenuContent>
           </DropdownMenu>
-          <Button
-            variant="ghost"
-            size="icon"
-            class="size-9"
-            :aria-label="t('common.deselectAll')"
-            :title="t('common.deselectAll')"
-            @click="store.deselectAll()"
-          >
-            <X class="size-4" />
-          </Button>
+          <WithTooltip :label="t('common.deselectAll')" side="top">
+            <Button
+              variant="ghost"
+              size="icon"
+              class="size-9"
+              :aria-label="t('common.deselectAll')"
+              @click="store.deselectAll()"
+            >
+              <X class="size-4" />
+            </Button>
+          </WithTooltip>
         </motion.div>
       </AnimatePresence>
     </section>

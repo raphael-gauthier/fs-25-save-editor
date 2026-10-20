@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Minus, Plus, Trash2, Wand2, Warehouse, Package } from "@lucide/vue";
+import WithTooltip from "@/components/WithTooltip.vue";
 
 const { t } = useI18n();
 const store = useBuildingStore();
@@ -353,16 +354,17 @@ const spring = { type: "spring", stiffness: 480, damping: 40 } as const;
                 >
                   {{ t("storage.fill") }}
                 </Button>
-                <Button
-                  size="icon"
-                  variant="ghost"
-                  class="size-9"
-                  :aria-label="t('storageUi.emptyProduct', { product: fillTypeLabel(stock.fillType) })"
-                  :title="t('storage.empty')"
-                  @click="setLevel(focused.p, focused.storage, stock.fillType, 0)"
-                >
-                  <Trash2 class="size-4" />
-                </Button>
+                <WithTooltip :label="t('storage.empty')">
+                  <Button
+                    size="icon"
+                    variant="ghost"
+                    class="size-9"
+                    :aria-label="t('storageUi.emptyProduct', { product: fillTypeLabel(stock.fillType) })"
+                    @click="setLevel(focused.p, focused.storage, stock.fillType, 0)"
+                  >
+                    <Trash2 class="size-4" />
+                  </Button>
+                </WithTooltip>
               </div>
               <p v-if="focused.storage.stocks.every((s) => s.amount <= 0)" class="text-sm text-muted-foreground">
                 {{ t("storage.emptySilo") }}

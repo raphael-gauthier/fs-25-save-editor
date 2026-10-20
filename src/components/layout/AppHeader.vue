@@ -27,6 +27,7 @@ import { useUnsavedChanges } from "@/composables/useUnsavedChanges";
 import type { SaveResult } from "@/lib/types";
 import WindowTitleBar from "./WindowTitleBar.vue";
 import CommandPalette from "./CommandPalette.vue";
+import WithTooltip from "@/components/WithTooltip.vue";
 
 const { t } = useI18n();
 const route = useRoute();
@@ -227,17 +228,18 @@ async function handleReload() {
 <template>
   <WindowTitleBar>
     <template #leading>
-      <router-link
-        to="/"
-        class="inline-flex size-6 shrink-0 items-center justify-center rounded-[7px] bg-primary text-primary-foreground"
-        :aria-label="t('common.savegames')"
-        :title="t('common.savegames')"
-      >
-        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M12 21V9" /><path d="M12 9c0-3 2-5 5-5 0 3-2 5-5 5Z" /><path d="M12 9c0-3-2-5-5-5 0 3 2 5 5 5Z" />
-          <path d="M12 15c0-3 2-5 5-5 0 3-2 5-5 5Z" /><path d="M12 15c0-3-2-5-5-5 0 3 2 5 5 5Z" />
-        </svg>
-      </router-link>
+      <WithTooltip :label="t('common.savegames')">
+        <router-link
+          to="/"
+          class="inline-flex size-6 shrink-0 items-center justify-center rounded-[7px] bg-primary text-primary-foreground"
+          :aria-label="t('common.savegames')"
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M12 21V9" /><path d="M12 9c0-3 2-5 5-5 0 3-2 5-5 5Z" /><path d="M12 9c0-3-2-5-5-5 0 3 2 5 5 5Z" />
+            <path d="M12 15c0-3 2-5 5-5 0 3-2 5-5 5Z" /><path d="M12 15c0-3-2-5-5-5 0 3 2 5 5 5Z" />
+          </svg>
+        </router-link>
+      </WithTooltip>
     </template>
 
     <nav
@@ -276,18 +278,19 @@ async function handleReload() {
         <span class="size-[7px] rounded-[2px] bg-current" aria-hidden="true" />
         {{ t("dirtyTracking.pendingCount", { count: changeCount }, changeCount) }}
       </Badge>
-      <Button
-        v-if="isDirty"
-        variant="ghost"
-        size="icon"
-        class="size-9"
-        :disabled="isReloading"
-        :aria-label="t('dirtyTracking.reloadFromDisk')"
-        :title="t('dirtyTracking.reloadFromDisk')"
-        @click="handleReload"
-      >
-        <RotateCcw class="size-4" :class="{ 'animate-spin': isReloading }" />
-      </Button>
+      <WithTooltip :label="t('dirtyTracking.reloadFromDisk')">
+        <Button
+          v-if="isDirty"
+          variant="ghost"
+          size="icon"
+          class="size-9"
+          :disabled="isReloading"
+          :aria-label="t('dirtyTracking.reloadFromDisk')"
+          @click="handleReload"
+        >
+          <RotateCcw class="size-4" :class="{ 'animate-spin': isReloading }" />
+        </Button>
+      </WithTooltip>
       <Button v-if="isDirty" variant="ghost" size="sm" class="h-9" @click="handleDiscard">
         {{ t("dirtyTracking.discardChanges") }}
       </Button>

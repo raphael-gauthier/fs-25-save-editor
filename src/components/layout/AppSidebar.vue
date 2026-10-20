@@ -10,6 +10,7 @@ import { useFinanceStore } from "@/stores/finance";
 import { useVehicleStore } from "@/stores/vehicle";
 import { useSavegameStore } from "@/stores/savegame";
 import { formatMoney } from "@/lib/utils";
+import WithTooltip from "@/components/WithTooltip.vue";
 
 const { t } = useI18n();
 const route = useRoute();
@@ -52,12 +53,49 @@ const spring = { type: "spring", stiffness: 520, damping: 42, mass: 0.9 } as con
         >
           {{ t(group.titleKey) }}
         </span>
-        <router-link
+        <WithTooltip
           v-for="item in group.items"
           :key="item.route"
+          :label="t(item.labelKey)"
+          side="right"
+          :disabled="!collapsed"
+        >
+          <router-link
+            :to="item.route"
+            :aria-current="isActive(item.route) ? 'page' : undefined"
+            class="relative flex h-9 items-center gap-2.5 rounded-[9px] px-2.5 text-sm transition-colors hover:bg-hover"
+            :class="isActive(item.route) ? 'font-semibold text-primary-text' : 'font-medium text-foreground'"
+          >
+            <motion.span
+              v-if="isActive(item.route)"
+              layout-id="sidebar-active"
+              class="absolute inset-0 rounded-[9px] bg-primary-soft"
+              :transition="spring"
+            />
+            <component :is="item.icon" class="relative size-[17px] shrink-0" aria-hidden="true" />
+            <span class="relative flex-1 truncate" :class="{ 'sr-only': collapsed }">{{ t(item.labelKey) }}</span>
+            <span
+              v-if="counts[item.route] && !collapsed"
+              class="relative text-xs font-normal text-muted-foreground tabular"
+            >
+              {{ counts[item.route] }}
+            </span>
+          </router-link>
+        </WithTooltip>
+      </div>
+    </div>
+
+    <div class="flex flex-col gap-px border-t pt-2">
+      <WithTooltip
+        v-for="item in utilNav"
+        :key="item.route"
+        :label="t(item.labelKey)"
+        side="right"
+        :disabled="!collapsed"
+      >
+        <router-link
           :to="item.route"
           :aria-current="isActive(item.route) ? 'page' : undefined"
-          :title="collapsed ? t(item.labelKey) : undefined"
           class="relative flex h-9 items-center gap-2.5 rounded-[9px] px-2.5 text-sm transition-colors hover:bg-hover"
           :class="isActive(item.route) ? 'font-semibold text-primary-text' : 'font-medium text-foreground'"
         >
@@ -69,35 +107,8 @@ const spring = { type: "spring", stiffness: 520, damping: 42, mass: 0.9 } as con
           />
           <component :is="item.icon" class="relative size-[17px] shrink-0" aria-hidden="true" />
           <span class="relative flex-1 truncate" :class="{ 'sr-only': collapsed }">{{ t(item.labelKey) }}</span>
-          <span
-            v-if="counts[item.route] && !collapsed"
-            class="relative text-xs font-normal text-muted-foreground tabular"
-          >
-            {{ counts[item.route] }}
-          </span>
         </router-link>
-      </div>
-    </div>
-
-    <div class="flex flex-col gap-px border-t pt-2">
-      <router-link
-        v-for="item in utilNav"
-        :key="item.route"
-        :to="item.route"
-        :aria-current="isActive(item.route) ? 'page' : undefined"
-        :title="collapsed ? t(item.labelKey) : undefined"
-        class="relative flex h-9 items-center gap-2.5 rounded-[9px] px-2.5 text-sm transition-colors hover:bg-hover"
-        :class="isActive(item.route) ? 'font-semibold text-primary-text' : 'font-medium text-foreground'"
-      >
-        <motion.span
-          v-if="isActive(item.route)"
-          layout-id="sidebar-active"
-          class="absolute inset-0 rounded-[9px] bg-primary-soft"
-          :transition="spring"
-        />
-        <component :is="item.icon" class="relative size-[17px] shrink-0" aria-hidden="true" />
-        <span class="relative flex-1 truncate" :class="{ 'sr-only': collapsed }">{{ t(item.labelKey) }}</span>
-      </router-link>
+      </WithTooltip>
     </div>
 
     <div class="flex items-center gap-2.5 rounded-xl bg-hover p-2">
@@ -112,17 +123,18 @@ const spring = { type: "spring", stiffness: 520, damping: 42, mass: 0.9 } as con
         <span class="truncate text-sm font-semibold">{{ farmName }}</span>
         <span class="truncate text-[13px] text-muted-foreground tabular">{{ formatMoney(finance.money) }}</span>
       </span>
-      <button
-        type="button"
-        class="inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-hover hover:text-foreground"
-        :aria-label="collapsed ? t('sidebar.expand') : t('sidebar.collapse')"
-        :title="collapsed ? t('sidebar.expand') : t('sidebar.collapse')"
-        :aria-expanded="!collapsed"
-        @click="collapsed = !collapsed"
-      >
-        <PanelLeftOpen v-if="collapsed" class="size-4" aria-hidden="true" />
-        <PanelLeftClose v-else class="size-4" aria-hidden="true" />
-      </button>
+      <WithTooltip :label="collapsed ? t('sidebar.expand') : t('sidebar.collapse')" side="right">
+        <button
+          type="button"
+          class="inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-hover hover:text-foreground"
+          :aria-label="collapsed ? t('sidebar.expand') : t('sidebar.collapse')"
+          :aria-expanded="!collapsed"
+          @click="collapsed = !collapsed"
+        >
+          <PanelLeftOpen v-if="collapsed" class="size-4" aria-hidden="true" />
+          <PanelLeftClose v-else class="size-4" aria-hidden="true" />
+        </button>
+      </WithTooltip>
     </div>
   </motion.nav>
 </template>

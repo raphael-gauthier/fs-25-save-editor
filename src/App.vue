@@ -3,6 +3,7 @@ import { onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
 import { MotionConfig } from "motion-v";
 import { Toaster } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { useSettingsStore } from "@/stores/settings";
 import { useUnsavedChanges } from "@/composables/useUnsavedChanges";
 import { useUpdateChecker } from "@/composables/useUpdateChecker";
@@ -50,7 +51,9 @@ onUnmounted(() => {
 <template>
   <div class="app-wall" aria-hidden="true" />
   <MotionConfig reduced-motion="user">
-    <router-view />
+    <TooltipProvider :delay-duration="400">
+      <router-view />
+    </TooltipProvider>
   </MotionConfig>
   <DisclaimerDialog />
   <ConfirmDiscardDialog />

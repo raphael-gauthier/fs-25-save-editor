@@ -3,6 +3,7 @@ import { useI18n } from "vue-i18n";
 import { Moon, Sun } from "@lucide/vue";
 import { useSettingsStore } from "@/stores/settings";
 import WindowControls from "./WindowControls.vue";
+import WithTooltip from "@/components/WithTooltip.vue";
 
 const { t } = useI18n();
 const settings = useSettingsStore();
@@ -44,16 +45,17 @@ function toggleTheme() {
 
     <div data-tauri-drag-region class="ml-auto flex h-full items-center gap-1.5">
       <slot name="actions" />
-      <button
-        type="button"
-        class="inline-flex size-9 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-hover"
-        :aria-label="t('window.toggleTheme')"
-        :title="t('window.toggleTheme')"
-        @click="toggleTheme"
-      >
-        <Sun class="size-4 dark:hidden" aria-hidden="true" />
-        <Moon class="hidden size-4 dark:block" aria-hidden="true" />
-      </button>
+      <WithTooltip :label="t('window.toggleTheme')">
+        <button
+          type="button"
+          class="inline-flex size-9 items-center justify-center rounded-lg text-foreground transition-colors hover:bg-hover"
+          :aria-label="t('window.toggleTheme')"
+          @click="toggleTheme"
+        >
+          <Sun class="size-4 dark:hidden" aria-hidden="true" />
+          <Moon class="hidden size-4 dark:block" aria-hidden="true" />
+        </button>
+      </WithTooltip>
       <WindowControls />
     </div>
   </header>

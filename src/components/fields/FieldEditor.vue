@@ -23,6 +23,7 @@ import {
 } from "@/components/ui/select";
 import { Sparkles, Tractor, Shovel, Wheat, ChevronUp, ChevronDown, Undo2 } from "@lucide/vue";
 import { fruitColor } from "@/lib/fruitColors";
+import WithTooltip from "@/components/WithTooltip.vue";
 
 interface Props {
   field: Field | null;
@@ -355,12 +356,16 @@ function formatFruitName(name: string): string {
         </p>
       </div>
       <div class="flex shrink-0 gap-0.5">
-        <Button variant="ghost" size="icon" class="size-9" :aria-label="t('fieldUi.prev')" :title="t('fieldUi.prev')" @click="emit('prev')">
-          <ChevronUp class="size-4" />
-        </Button>
-        <Button variant="ghost" size="icon" class="size-9" :aria-label="t('fieldUi.next')" :title="t('fieldUi.next')" @click="emit('next')">
-          <ChevronDown class="size-4" />
-        </Button>
+        <WithTooltip :label="t('fieldUi.prev')">
+          <Button variant="ghost" size="icon" class="size-9" :aria-label="t('fieldUi.prev')" @click="emit('prev')">
+            <ChevronUp class="size-4" />
+          </Button>
+        </WithTooltip>
+        <WithTooltip :label="t('fieldUi.next')">
+          <Button variant="ghost" size="icon" class="size-9" :aria-label="t('fieldUi.next')" @click="emit('next')">
+            <ChevronDown class="size-4" />
+          </Button>
+        </WithTooltip>
       </div>
     </div>
 

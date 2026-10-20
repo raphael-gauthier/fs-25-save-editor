@@ -15,6 +15,7 @@ import { Badge } from "@/components/ui/badge";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Info, Lock, Search, X } from "@lucide/vue";
+import WithTooltip from "@/components/WithTooltip.vue";
 
 type OwnerFilter = "all" | "free" | "mine" | "others";
 
@@ -410,16 +411,17 @@ const spring = { type: "spring", stiffness: 480, damping: 40 } as const;
           >
             {{ t("farmlandUi.confirm") }}
           </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            class="size-10"
-            :aria-label="t('common.deselectAll')"
-            :title="t('common.deselectAll')"
-            @click="selected = new Set()"
-          >
-            <X class="size-4" />
-          </Button>
+          <WithTooltip :label="t('common.deselectAll')" side="top">
+            <Button
+              variant="ghost"
+              size="icon"
+              class="size-10"
+              :aria-label="t('common.deselectAll')"
+              @click="selected = new Set()"
+            >
+              <X class="size-4" />
+            </Button>
+          </WithTooltip>
         </div>
         <p v-if="selectedIds.length > 0" class="text-xs text-muted-foreground">{{ t("farmlandUi.note") }}</p>
       </section>
