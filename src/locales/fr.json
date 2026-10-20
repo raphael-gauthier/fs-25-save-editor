@@ -951,5 +951,20 @@
     "note": "L'argent et la propriété changent ensemble ; enregistrez pour l'écrire dans la sauvegarde.",
     "landAfter": "Vos terres après l'opération · {ha} ha",
     "landAfterAria": "Vos terres après l'opération : {ha} ha sur {count} parcelles"
+  },
+  "storageUi": {
+    "list": "Stockages",
+    "details": "Détails du stockage",
+    "silo": "Silo",
+    "filled": "rempli",
+    "content": "Contenu",
+    "capacity": "Capacité",
+    "free": "Place libre",
+    "products": "Produits",
+    "stored": "Objets rangés",
+    "gauge": "{used} sur {capacity}",
+    "fillProduct": "Remplir : {product}",
+    "emptyProduct": "Vider : {product}",
+    "bunkerNote": "Les silos couloirs ne sont pas modifiables : leur ensilage fait partie du relief du terrain."
   }
 }

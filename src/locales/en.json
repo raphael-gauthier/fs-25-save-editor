@@ -951,5 +951,20 @@
     "note": "Money and ownership change together; save to write it to the savegame.",
     "landAfter": "Your land after the operation · {ha} ha",
     "landAfterAria": "Your land after the operation: {ha} ha over {count} parcels"
+  },
+  "storageUi": {
+    "list": "Storages",
+    "details": "Storage details",
+    "silo": "Silo",
+    "filled": "full",
+    "content": "Content",
+    "capacity": "Capacity",
+    "free": "Free space",
+    "products": "Products",
+    "stored": "Stored objects",
+    "gauge": "{used} of {capacity}",
+    "fillProduct": "Fill: {product}",
+    "emptyProduct": "Empty: {product}",
+    "bunkerNote": "Bunker silos can't be edited: their silage is part of the terrain height map."
   }
 }

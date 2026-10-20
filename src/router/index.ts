@@ -59,6 +59,7 @@ const router = createRouter({
           path: "storage",
           name: "storage",
           component: () => import("@/views/StorageView.vue"),
+          meta: { split: true },
         },
         {
           path: "world",
