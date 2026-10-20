@@ -6,12 +6,6 @@
 > This tool writes directly into your Farming Simulator 25 savegame files. **The author cannot be held responsible for any savegame that is altered, corrupted or lost**, nor for any other consequence of using this software. It is provided "as is", without warranty of any kind (see the [license](LICENSE)).
 >
 > **It is up to you to back up your savegames** before editing them. The editor makes a backup before each save, but keep your own copies of the saves you care about.
->
-> **AVERTISSEMENT — UTILISATION À VOS RISQUES ET PÉRILS**
->
-> Cet outil modifie directement les fichiers de vos sauvegardes Farming Simulator 25. **L'auteur ne peut en aucun cas être tenu responsable d'une sauvegarde altérée, corrompue ou perdue**, ni de toute autre conséquence de l'utilisation de ce logiciel, fourni « en l'état », sans aucune garantie.
->
-> **Il appartient à chacun de sauvegarder ses parties** avant de les modifier. L'éditeur crée une copie de sécurité avant chaque enregistrement, mais gardez vos propres copies des sauvegardes auxquelles vous tenez.
 
 A desktop editor for **Farming Simulator 25** savegames. Change your money, vehicles, fields, crops, farmlands, silos, buildings, missions, weather and game rules, with a backup taken before every save.
 
