@@ -2,7 +2,7 @@ import { ref, watch } from "vue";
 
 export type ThemeMode = "light" | "dark" | "system";
 
-const theme = ref<ThemeMode>("system");
+const theme = ref<ThemeMode>("dark");
 let mediaQuery: MediaQueryList | null = null;
 let mediaListener: ((e: MediaQueryListEvent) => void) | null = null;
 
