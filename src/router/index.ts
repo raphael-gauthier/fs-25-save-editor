@@ -42,6 +42,7 @@ const router = createRouter({
           path: "fields",
           name: "fields",
           component: () => import("@/views/FieldListView.vue"),
+          meta: { split: true },
         },
         {
           path: "farmlands",

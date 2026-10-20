@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { onMounted } from "vue";
-import { useRouter } from "vue-router";
+import { useRoute, useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { AnimatePresence, motion } from "motion-v";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
@@ -36,6 +36,7 @@ const economyStore = useEconomyStore();
 const gameSettingsStore = useGameSettingsStore();
 const settings = useSettingsStore();
 const router = useRouter();
+const route = useRoute();
 
 onMounted(async () => {
   if (!store.currentPath) {
@@ -85,9 +86,11 @@ onMounted(async () => {
     <AppHeader />
     <div class="flex min-h-0 flex-1 gap-2.5 px-2.5 pb-2.5">
       <AppSidebar />
+      <!-- Split views scroll each pane themselves: the panel must not -->
       <main
         id="content"
-        class="glass-strong min-w-0 flex-1 overflow-y-auto rounded-2xl"
+        class="glass-strong min-w-0 flex-1 rounded-2xl"
+        :class="route.meta.split ? 'overflow-hidden' : 'overflow-y-auto'"
       >
         <!-- Loading state -->
         <div v-if="store.isLoading" class="space-y-4 p-6">
@@ -123,7 +126,7 @@ onMounted(async () => {
             <AnimatePresence mode="wait" :initial="false">
               <motion.div
                 :key="viewRoute.path"
-                class="p-6"
+                :class="viewRoute.meta.split ? 'h-full' : 'p-6'"
                 :initial="{ opacity: 0, y: 10, filter: 'blur(4px)' }"
                 :animate="{ opacity: 1, y: 0, filter: 'blur(0px)' }"
                 :exit="{ opacity: 0, y: -6, filter: 'blur(2px)' }"

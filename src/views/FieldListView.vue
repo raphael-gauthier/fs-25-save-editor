@@ -283,9 +283,12 @@ function toggleSelectAll() {
 </script>
 
 <template>
-  <div class="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(340px,420px)]">
+  <div class="grid h-full lg:grid-cols-[minmax(0,1fr)_minmax(340px,420px)]">
     <!-- List -->
-    <section aria-labelledby="fields-title" class="relative flex min-w-0 flex-col gap-4">
+    <section
+      aria-labelledby="fields-title"
+      class="relative flex min-h-0 min-w-0 flex-col gap-4 overflow-y-auto p-6 pb-0"
+    >
       <div class="flex flex-wrap items-baseline justify-between gap-2">
         <h2 id="fields-title" class="text-2xl font-semibold tracking-tight">{{ t("field.title") }}</h2>
         <span class="text-[13px] text-muted-foreground">
@@ -546,7 +549,7 @@ function toggleSelectAll() {
     <!-- Inspector -->
     <aside
       :aria-label="t('fieldUi.details')"
-      class="self-start rounded-2xl border bg-hover p-5 lg:sticky lg:top-6 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto"
+      class="min-h-0 overflow-y-auto border-t bg-hover p-5 lg:border-l lg:border-t-0"
     >
       <AnimatePresence mode="wait" :initial="false">
         <motion.div
