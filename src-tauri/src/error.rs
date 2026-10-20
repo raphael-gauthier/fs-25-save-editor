@@ -20,9 +20,6 @@ pub enum AppError {
 
     #[error("Density map error: {message}")]
     DensityMapError { message: String },
-
-    #[error("{0}")]
-    Generic(String),
 }
 
 impl Serialize for AppError {
@@ -72,13 +69,6 @@ impl Serialize for AppError {
             }
             AppError::DensityMapError { message } => {
                 state.serialize_field("code", "errors.densityMapError")?;
-                state.serialize_field(
-                    "params",
-                    &std::collections::HashMap::from([("message", message.as_str())]),
-                )?;
-            }
-            AppError::Generic(message) => {
-                state.serialize_field("code", "errors.unknown")?;
                 state.serialize_field(
                     "params",
                     &std::collections::HashMap::from([("message", message.as_str())]),

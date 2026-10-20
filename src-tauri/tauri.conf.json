@@ -31,8 +31,20 @@
       }
     }
   },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDk3OUFCQjYxQTFEQkQ1OUIKUldTYjFkdWhZYnVhbDFDNnFkd2Z5NXFpcnBsU2V3YlRkcHVRTzV4ZnBGMGV0TjZuWFVick4xVVQK",
+      "endpoints": [
+        "https://github.com/raphael-gauthier/fs-25-save-editor/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
+    }
+  },
   "bundle": {
     "active": true,
+    "createUpdaterArtifacts": true,
     "targets": "all",
     "icon": [
       "icons/32x32.png",

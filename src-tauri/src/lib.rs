@@ -30,6 +30,11 @@ pub fn run() {
                 VehicleImageService::new(cache_dir).expect("failed to create image service");
             app.manage(service);
             app.manage(CatalogState::new());
+            #[cfg(desktop)]
+            {
+                app.handle().plugin(tauri_plugin_updater::Builder::new().build())?;
+                app.handle().plugin(tauri_plugin_process::init())?;
+            }
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
@@ -52,7 +57,6 @@ pub fn run() {
             commands::density::load_map_fruit_types,
             commands::density::load_farmlands_info,
             commands::density::load_storage_capacities,
-            commands::update::check_for_updates,
             commands::window::apply_window_material,
         ])
         .run(tauri::generate_context!())

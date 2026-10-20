@@ -704,8 +704,10 @@
   "update": {
     "title": "Mise à jour disponible",
     "description": "La version {version} est disponible. Voici les nouveautés :",
-    "download": "Télécharger",
-    "later": "Plus tard"
+    "later": "Plus tard",
+    "install": "Installer et redémarrer",
+    "installing": "Téléchargement et installation de la mise à jour…",
+    "failed": "La mise à jour a échoué"
   },
   "errors": {
     "unexpected": "Une erreur inattendue est survenue",

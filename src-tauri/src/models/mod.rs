@@ -14,7 +14,6 @@ pub mod husbandry;
 pub mod mission;
 pub mod placeable;
 pub mod sale;
-pub mod update;
 pub mod vehicle;
 
 use serde::{Deserialize, Serialize};

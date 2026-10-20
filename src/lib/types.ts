@@ -706,14 +706,6 @@ export interface SaleAdditionPayload {
   timeLeft: number;
 }
 
-/** Update information from GitHub Releases */
-export interface UpdateInfo {
-  version: string;
-  name: string;
-  body: string;
-  release_url: string;
-  published_at: string | null;
-}
 
 export interface VehicleChangePayload {
   uniqueId: string;

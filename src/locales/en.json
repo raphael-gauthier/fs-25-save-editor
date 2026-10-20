@@ -704,8 +704,10 @@
   "update": {
     "title": "Update available",
     "description": "Version {version} is available. Here's what's new:",
-    "download": "Download",
-    "later": "Later"
+    "later": "Later",
+    "install": "Install and restart",
+    "installing": "Downloading and installing the update…",
+    "failed": "The update failed"
   },
   "errors": {
     "unexpected": "An unexpected error occurred",
