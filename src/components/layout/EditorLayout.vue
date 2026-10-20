@@ -2,7 +2,7 @@
 import { onMounted } from "vue";
 import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
-import { SidebarProvider, SidebarInset } from "@/components/ui/sidebar";
+import { AnimatePresence, motion } from "motion-v";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -81,20 +81,23 @@ onMounted(async () => {
 </script>
 
 <template>
-  <SidebarProvider>
-    <AppSidebar />
-    <SidebarInset>
-      <AppHeader />
-      <main class="min-w-0 flex-1 overflow-y-auto p-6">
+  <div class="flex h-full flex-col">
+    <AppHeader />
+    <div class="flex min-h-0 flex-1 gap-2.5 px-2.5 pb-2.5">
+      <AppSidebar />
+      <main
+        id="content"
+        class="glass-strong min-w-0 flex-1 overflow-y-auto rounded-2xl"
+      >
         <!-- Loading state -->
-        <div v-if="store.isLoading" class="space-y-4">
+        <div v-if="store.isLoading" class="space-y-4 p-6">
           <Skeleton class="h-8 w-64" />
           <Skeleton class="h-32 w-full" />
           <Skeleton class="h-32 w-full" />
         </div>
 
         <!-- Error state -->
-        <div v-else-if="store.error" class="max-w-lg space-y-4">
+        <div v-else-if="store.error" class="max-w-lg space-y-4 p-6">
           <Alert variant="destructive">
             <AlertCircle class="size-4" />
             <AlertTitle>{{ t("savegame.loadingError") }}</AlertTitle>
@@ -106,12 +109,8 @@ onMounted(async () => {
           </Button>
         </div>
 
-        <!-- Warnings -->
         <template v-else>
-          <Alert
-            v-if="store.warnings.length > 0"
-            class="mb-4"
-          >
+          <Alert v-if="store.warnings.length > 0" class="m-6 mb-0 w-auto">
             <AlertCircle class="size-4" />
             <AlertTitle>{{ t("savegame.warnings") }}</AlertTitle>
             <AlertDescription>
@@ -120,9 +119,22 @@ onMounted(async () => {
               </ul>
             </AlertDescription>
           </Alert>
-          <router-view />
+          <router-view v-slot="{ Component, route: viewRoute }">
+            <AnimatePresence mode="wait" :initial="false">
+              <motion.div
+                :key="viewRoute.path"
+                class="p-6"
+                :initial="{ opacity: 0, y: 10, filter: 'blur(4px)' }"
+                :animate="{ opacity: 1, y: 0, filter: 'blur(0px)' }"
+                :exit="{ opacity: 0, y: -6, filter: 'blur(2px)' }"
+                :transition="{ duration: 0.28, ease: [0.32, 0.72, 0, 1] }"
+              >
+                <component :is="Component" />
+              </motion.div>
+            </AnimatePresence>
+          </router-view>
         </template>
       </main>
-    </SidebarInset>
-  </SidebarProvider>
+    </div>
+  </div>
 </template>

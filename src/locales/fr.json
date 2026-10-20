@@ -38,7 +38,14 @@
     "settings": "Paramètres",
     "farmlands": "Parcelles",
     "storage": "Stockage",
-    "game": "Partie"
+    "game": "Partie",
+    "navigation": "Sections",
+    "groupFarm": "Ferme",
+    "groupLand": "Terres",
+    "groupOperation": "Exploitation",
+    "groupWorld": "Monde",
+    "collapse": "Réduire la navigation",
+    "expand": "Déplier la navigation"
   },
   "savegame": {
     "selectSubtitle": "Sélectionnez une sauvegarde pour commencer l'édition",

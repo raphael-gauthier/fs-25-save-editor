@@ -38,7 +38,14 @@
     "settings": "Settings",
     "farmlands": "Farmlands",
     "storage": "Storage",
-    "game": "Game"
+    "game": "Game",
+    "navigation": "Sections",
+    "groupFarm": "Farm",
+    "groupLand": "Land",
+    "groupOperation": "Operation",
+    "groupWorld": "World",
+    "collapse": "Collapse navigation",
+    "expand": "Expand navigation"
   },
   "savegame": {
     "selectSubtitle": "Select a savegame to start editing",
