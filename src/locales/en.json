@@ -933,5 +933,23 @@
     "ok": "fine",
     "toDo": "needs work",
     "pick": "Pick a field in the list."
+  },
+  "farmlandUi": {
+    "noField": "No field",
+    "checkAll": "Check every parcel shown",
+    "check": "Check parcel {id}",
+    "list": "Parcel list",
+    "details": "Parcel and operation",
+    "operation": "Operation",
+    "hint": "Check free parcels to buy them, or yours to sell them.",
+    "buyLine": "Buy parcel {id}",
+    "sellLine": "Sell parcel {id}",
+    "ignored": "{count} parcel of another farm skipped | {count} parcel of another farm skipped | {count} parcels of other farms skipped",
+    "moneyAfter": "Money after",
+    "missing": "{amount} short",
+    "confirm": "Confirm",
+    "note": "Money and ownership change together; save to write it to the savegame.",
+    "landAfter": "Your land after the operation · {ha} ha",
+    "landAfterAria": "Your land after the operation: {ha} ha over {count} parcels"
   }
 }

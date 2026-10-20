@@ -933,5 +933,23 @@
     "ok": "correct",
     "toDo": "à traiter",
     "pick": "Choisissez un champ dans la liste."
+  },
+  "farmlandUi": {
+    "noField": "Sans champ",
+    "checkAll": "Cocher toutes les parcelles affichées",
+    "check": "Cocher la parcelle {id}",
+    "list": "Liste des parcelles",
+    "details": "Parcelle et opération",
+    "operation": "Opération",
+    "hint": "Cochez des parcelles libres pour les acheter, ou les vôtres pour les vendre.",
+    "buyLine": "Acheter la parcelle {id}",
+    "sellLine": "Vendre la parcelle {id}",
+    "ignored": "{count} parcelle d'une autre ferme ignorée | {count} parcelle d'une autre ferme ignorée | {count} parcelles d'autres fermes ignorées",
+    "moneyAfter": "Argent après",
+    "missing": "Il manque {amount}",
+    "confirm": "Valider l'opération",
+    "note": "L'argent et la propriété changent ensemble ; enregistrez pour l'écrire dans la sauvegarde.",
+    "landAfter": "Vos terres après l'opération · {ha} ha",
+    "landAfterAria": "Vos terres après l'opération : {ha} ha sur {count} parcelles"
   }
 }
