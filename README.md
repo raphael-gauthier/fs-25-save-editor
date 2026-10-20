@@ -1,264 +1,226 @@
 # FS25 Save Editor
 
-A desktop application for editing Farming Simulator 25 savegames. Modify finances, vehicles, fields, buildings, sales, missions, collectibles, and world settings. Create and restore backups to keep your saves safe. Available in French and English with light and dark themes.
+A desktop editor for **Farming Simulator 25** savegames. Change your money, vehicles, fields, crops, farmlands, silos, buildings, missions, weather and game rules, with a backup taken before every save.
+
+It reads the same data the game does — including the binary density maps that hold the real state of every field — and writes back only what you changed. Available in French and English.
+
+> **Not affiliated with GIANTS Software.** Farming Simulator is a trademark of GIANTS Software GmbH. Always keep the game closed while you edit a savegame, and keep backups of saves you care about.
+
+## Highlights
+
+- **Native-feeling desktop app** — frameless window with Windows 11 Mica, glass panels, dark theme by default (light and system themes available), smooth motion that respects your system's "reduce motion" setting.
+- **List + details layout** — fields, farmlands and storage show a list with the selected item's details always open beside it; no dialogs to open and close.
+- **Command palette** — <kbd>Ctrl</kbd>+<kbd>K</kbd> anywhere to jump to a section, a field or a vehicle, save, undo, or switch theme.
+- **Accurate fields** — crops, growth stages and soil state come from the game's density maps, verified against real saves.
+- **Safe by design** — every save first backs the savegame up; unsaved changes are tracked per section and guarded on navigation and window close.
+- **Accessible** — keyboard navigation everywhere, visible focus, 4.5:1 text contrast, and fallbacks for reduced transparency and high contrast.
 
 ## Features
 
-### Savegame Management
-- Automatic detection of FS25 savegames on your system
-- Load, edit, and save changes back to XML savegame files
-- Unsaved changes detection with navigation guards and close protection
+### Savegames and safety
+- Detects your FS25 savegames automatically (or open any folder)
+- Launcher with each save's map, money, play time and difficulty
+- Automatic backup before every save; restore, delete or prune backups (keeps the number you choose)
+- Unsaved changes counter in the title bar, discard or reload from disk at any time
 
-### Finance Editor
-- Edit farm money, loan amount, and financial statistics
-- View and modify daily financial history
+### Finances
+- Money and loan, farm statistics and daily financial history
 
-### Vehicle Manager
-- Browse all vehicles with filtering and sorting
-- Edit individual vehicle properties (fill levels, wear, condition)
-- Batch actions on multiple vehicles
+### Vehicles and used market
+- Browse, filter and batch-edit vehicles (fill levels, wear, damage, condition), with images from the game files
+- Used market: edit listings, or add any vehicle from the game catalog (base game, DLCs and mods)
 
-### Used Market / Sales
-- View catalog price and discount percentage for each listed vehicle
-- Add vehicles from the game catalog (base game, DLCs, mods) with configurable price, discount, wear, and condition
-- Edit sale price, condition, and time remaining
-- Quick actions: reset to new, bargain price, extend sale
+### Fields and crops
+- Real crop distribution, growth stage and soil state per field from the density maps (GDM/GRLE)
+- Set any crop of the map at any of its growth stages — stages are read per crop from the game's foliage files
+- One-click fixes next to each soil value: lime, fertilizer, plowing, weeds, stones
+- Soil work: plow, cultivate, roll, mulch stubble
+- Batch actions on checked fields, per-field undo, arrow-key navigation
+- Edits stay inside the field's own polygon from the map
+- Works with base-game maps and modded maps (zip archives)
 
-### Fields & Crops
-- **Accurate field data** from binary density maps (GDM/GRLE), not just AI summaries from fields.xml
-- View real crop distribution, growth state, and treatment levels per field
-- Edit density maps directly: set crop type + growth, max lime/spray/plow, clear weeds/stones
-- Batch actions on multiple fields (max growth, remove weeds, max lime, etc.)
-- Density data cached locally for instant display on subsequent loads
-- Field ownership editing (transfer land between farms)
-- Supports built-in maps (MapUS, MapEU, MapAS) and modded maps (from zip archives)
-- Fruit type resolution from 4 sources: base XML, map XML, game log, and known fallback list
+### Farmlands
+- Buy and sell parcels at the exact price the game charges (area × price per hectare × parcel factor)
+- Combined operations: sell and buy several parcels at once, with the money left afterwards
+- Parcels with buildings on them can't be sold, just like in the game
 
-### World & Environment
-- Modify weather settings, current season, and time of day
+### Storage
+- Silos and silo extensions: set, fill or empty each product, add any product the building accepts — capacities come from each building's own files, mods included
+- Bale and pallet storage: add, copy or remove objects, finish fermentation of wrapped silage
 
-### Buildings
-- Browse and manage farm buildings and structures
+### Buildings, animals and world
+- Buildings: manage your placeables and restore pre-placed map buildings you demolished
+- Husbandries: animals per building
+- World and weather: time of day and weather forecast
+- Economy: market prices and great demands
 
-### Missions & Collectibles
-- View and edit available missions
-- Track and manage collectibles
+### Missions and game rules
+- Missions and contracts, including their deadlines
+- Collectibles
+- Game settings stored in the savegame: savegame name, economic difficulty, fuel usage, traffic, plowing/lime/weeds/stones, crop destruction, snow, vehicle dirt, helpers' purchases, time scale, autosave interval
 
-### Backup System
-- Create savegame backups before editing
-- Restore or delete backups at any time
+### App
+- French and English, dark / light / system theme, advanced mode for the raw XML values
+- Checks GitHub Releases for a newer version at startup (can be turned off)
 
-### Automatic Update Check
-- Checks for new versions on GitHub Releases at startup (opt-out in settings)
-- Manual check button in settings
-- Update dialog with changelog and download link
+## Requirements
 
-### Settings
-- Language: French / English
-- Theme: Light / Dark / System
-- Advanced mode for power users
+- **Windows 10 or 11** (Mica needs Windows 11; Windows 10 gets a plain background)
+- **Farming Simulator 25** installed: the editor reads the game files for field data, crop stages, farmland prices, storage capacities and vehicle images. Point it to the game folder in Settings if it isn't detected.
+
+macOS and Linux builds are produced too but have not been tested yet.
 
 ## Installation
 
-### Download
+Download the latest installer from the [Releases](https://github.com/raphael-gauthier/fs-25-save-editor/releases) page and run it.
 
-Download the latest release from the [Releases](https://github.com/raphael-gauthier/fs-25-save-editor/releases) page.
+## Usage
 
-Available for **Windows**, **macOS**, and **Linux**.
+1. Close Farming Simulator 25.
+2. Open the editor and pick a savegame.
+3. Make your changes; the title bar counts what is pending.
+4. Press <kbd>Ctrl</kbd>+<kbd>S</kbd> (a backup is taken first).
+5. Start the game and load the save.
 
-### Build from Source
+### Keyboard shortcuts
 
-#### Prerequisites
+| Shortcut | Action |
+|---|---|
+| <kbd>Ctrl</kbd>+<kbd>K</kbd> | Command palette |
+| <kbd>Ctrl</kbd>+<kbd>S</kbd> | Save changes |
+| <kbd>Ctrl</kbd>+<kbd>Z</kbd> | Discard all pending changes (asks first) |
+| <kbd>↑</kbd> / <kbd>↓</kbd> | Move through lists (fields, saves, palette) |
 
-- [Node.js](https://nodejs.org/) (LTS)
-- [pnpm](https://pnpm.io/)
+## Build from source
+
+### Prerequisites
+
+- [Node.js](https://nodejs.org/) (LTS) and [pnpm](https://pnpm.io/)
 - [Rust](https://www.rust-lang.org/tools/install)
 - [Tauri v2 prerequisites](https://v2.tauri.app/start/prerequisites/)
 
-#### Steps
+### Steps
 
 ```bash
-# Clone the repository
-git clone https://github.com/your-username/fs-25-save-editor.git
+git clone https://github.com/raphael-gauthier/fs-25-save-editor.git
 cd fs-25-save-editor
-
-# Install frontend dependencies
 pnpm install
-
-# Run in development mode
-pnpm tauri:dev
-
-# Build for production
-pnpm tauri:build
+pnpm tauri:dev      # run in development mode
+pnpm tauri:build    # build installers
 ```
 
-The production build output will be in `src-tauri/target/release/bundle/`.
+Installers are written to `src-tauri/target/release/bundle/`.
+
+## Development
+
+```bash
+pnpm tauri:dev      # app with hot reload (frontend + backend)
+pnpm dev            # frontend only, Vite on port 1420
+pnpm lint           # TypeScript type check (vue-tsc)
+pnpm build          # type check + production frontend build
+pnpm test:rust      # Rust tests
+```
+
+Some Rust tests run against a real savegame and are ignored by default. They always work on a temporary copy:
+
+```bash
+cd src-tauri
+FS25_SAVE="<savegame folder>" FS25_GAME="<game install folder>" cargo test -- --ignored
+# add FS25_MAP=<mod map id> for a modded map
+```
 
 ## Releasing
 
-Releases are automated via GitHub Actions. When a version tag is pushed, the CI builds the app for all platforms and creates a GitHub Release draft with the installers attached.
+Releases are built by GitHub Actions when a version tag is pushed.
 
-### How to release a new version
-
-1. Update the version in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`:
+1. Bump the version in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`, and commit it.
+2. Tag and push:
    ```bash
-   # package.json         → "version": "x.y.z"
-   # src-tauri/tauri.conf.json → "version": "x.y.z"
-   # src-tauri/Cargo.toml      → version = "x.y.z"
-   ```
-
-2. Commit the version bump:
-   ```bash
-   git add package.json src-tauri/tauri.conf.json src-tauri/Cargo.toml
-   git commit -m "chore: bump version to x.y.z"
-   ```
-
-3. Create and push a tag:
-   ```bash
-   git tag vx.y.z
+   git tag vX.Y.Z
    git push origin main --follow-tags
    ```
-
-4. The [Release workflow](.github/workflows/release.yml) runs automatically and:
-   - Builds the app on **Windows**, **macOS** (ARM + Intel) and **Linux**
-   - Creates a **draft Release** on GitHub with all installers attached
-
-5. Go to the [Releases](https://github.com/raphael-gauthier/fs-25-save-editor/releases) page, review the draft, edit the release notes if needed, then click **Publish release**
-
-### Release artifacts
+3. The [Release workflow](.github/workflows/release.yml) builds Windows, macOS (Apple Silicon and Intel) and Linux, and creates a **draft release** with the installers attached.
+4. Review the draft on the [Releases](https://github.com/raphael-gauthier/fs-25-save-editor/releases) page, then publish it. The app's update check only sees published releases.
 
 | Platform | Files |
 |---|---|
-| Windows | `.msi` (MSI installer) + `.exe` (NSIS installer) |
-| macOS (Apple Silicon) | `.dmg` |
-| macOS (Intel) | `.dmg` |
-| Linux | `.deb` + `.AppImage` |
+| Windows | `.msi` and `.exe` (NSIS) installers |
+| macOS (Apple Silicon / Intel) | `.dmg` |
+| Linux | `.deb` and `.AppImage` |
 
-## Tech Stack
+## Tech stack
 
 | Layer | Technology |
-|-------|------------|
-| Framework | [Tauri v2](https://v2.tauri.app/) |
-| Frontend | [Vue 3](https://vuejs.org/) (Composition API, `<script setup>`) + TypeScript |
-| State Management | [Pinia](https://pinia.vuejs.org/) |
-| Routing | [Vue Router](https://router.vuejs.org/) |
-| UI Components | [shadcn-vue](https://www.shadcn-vue.com/) (new-york style) |
-| Styling | [Tailwind CSS 4](https://tailwindcss.com/) |
-| Icons | [Lucide](https://lucide.dev/) |
-| Notifications | [Sonner](https://vue-sonner.vercel.app/) |
-| i18n | [vue-i18n](https://vue-i18n.intlify.dev/) |
-| Backend | [Rust](https://www.rust-lang.org/) |
-| XML Parsing | [quick-xml](https://docs.rs/quick-xml/) |
-| Serialization | [serde](https://serde.rs/) |
-| Error Handling | [thiserror](https://docs.rs/thiserror/) |
+|---|---|
+| Desktop framework | [Tauri v2](https://v2.tauri.app/), [window-vibrancy](https://github.com/tauri-apps/window-vibrancy) for Mica |
+| Frontend | [Vue 3](https://vuejs.org/) (`<script setup>`) + TypeScript, [Pinia](https://pinia.vuejs.org/), [Vue Router](https://router.vuejs.org/), [vue-i18n](https://vue-i18n.intlify.dev/) |
+| UI | [shadcn-vue](https://www.shadcn-vue.com/) + [Tailwind CSS 4](https://tailwindcss.com/), [Lucide](https://lucide.dev/) icons, [Sonner](https://vue-sonner.vercel.app/) toasts |
+| Motion and type | [Motion for Vue](https://motion.dev/docs/vue), [Geist](https://vercel.com/font) fonts |
+| Backend | [Rust](https://www.rust-lang.org/), [quick-xml](https://docs.rs/quick-xml/), [serde](https://serde.rs/), [thiserror](https://docs.rs/thiserror/) |
 
 ## Architecture
 
 ```
 fs-25-save-editor/
-├── src/                          # Vue 3 frontend
-│   ├── views/                    # Page-level components (12 views)
+├── src/                      # Vue 3 frontend
+│   ├── views/                # One view per editor section, plus the launcher
 │   ├── components/
-│   │   ├── ui/                   # shadcn-vue base components
-│   │   └── layout/               # AppHeader, AppSidebar, EditorLayout
-│   ├── stores/                   # Pinia stores by domain
-│   ├── composables/              # Vue composables (theme, tauri, unsaved changes)
-│   ├── locales/                  # i18n translations (fr.json, en.json)
-│   ├── lib/                      # Types, constants, utilities
-│   ├── plugins/                  # Vue plugins (i18n)
-│   └── router/                   # Vue Router configuration
-├── src-tauri/                    # Rust backend
-│   └── src/
-│       ├── commands/             # Tauri command handlers
-│       ├── models/               # Data structures
-│       ├── parsers/              # XML → struct parsing
-│       ├── writers/              # struct → XML writing
-│       ├── services/             # Business logic (catalog scanner, density map aggregation)
-│       ├── validators/           # Data validation
-│       ├── backup/               # Backup manager
-│       └── error.rs              # Error types
-└── docs/                         # Project documentation
-    ├── functional-specs/         # Functional specifications
-    └── technical-specs/          # Technical architecture
+│   │   ├── layout/           # Window title bar and buttons, sidebar, editor layout, command palette
+│   │   ├── fields/ …         # Section components (field inspector, building, mission editors…)
+│   │   └── ui/               # shadcn-vue base components
+│   ├── stores/               # Pinia store per domain, each tracking its own changes
+│   ├── composables/          # Theme, window (Mica), Tauri calls, unsaved changes, updates
+│   ├── lib/                  # Types mirroring Rust, constants, helpers, navigation
+│   └── locales/              # fr.json, en.json
+├── src-tauri/src/            # Rust backend
+│   ├── commands/             # Tauri commands
+│   ├── parsers/              # XML and binary (GDM/GRLE) readers, map and game file readers
+│   ├── writers/              # Changes written back to XML
+│   ├── services/             # Density maps, farmland prices, storage capacities, vehicle catalog
+│   ├── validators/           # Value checks (game settings…)
+│   ├── backup/               # Backup manager
+│   └── models/               # Data structures
+└── docs/                     # Specs and sanitized reference savegame files
 ```
 
-### How It Works
+### How it works
 
-1. The Rust backend scans standard FS25 save directories and lists available savegames
-2. When a savegame is loaded, XML files are parsed into typed Rust structs and sent to the frontend
-3. Each domain (finance, vehicles, fields, etc.) has its own Pinia store that tracks original values and changes
-4. On save, only modified data is sent back to Rust, which writes the changes to the XML files
-5. Backups are managed entirely by the Rust backend (copy/restore/delete)
+1. The backend lists the savegames in the FS25 profile folder.
+2. Loading a savegame parses its XML files into typed Rust structs sent to the frontend; field data is read from the density maps in the background (and cached for instant display next time).
+3. Each section has a Pinia store that keeps the original values and tracks changes.
+4. Saving backs the savegame up, sends only the changes to Rust, writes the XML files, then the density map edits (all layers are staged before any file is replaced).
 
-### Density Maps (Fields)
+### Field data
 
-Field data in FS25 is stored in two layers:
-- **XML files** (`fields.xml`) — AI/mission system summaries (often inaccurate)
-- **Binary density maps** (`.gdm`, `.grle`) — actual in-game pixel-level field state
+The game keeps fields in two places: `fields.xml` holds summaries for AI and missions, while the binary density maps (`.gdm`, `.grle`) hold the real per-pixel state. The editor reads and writes the density maps:
 
-The editor reads binary density maps for accurate field display and writes modifications back to them. Density data is cached locally via `@tauri-apps/plugin-store` for instant display on subsequent loads, with background refresh.
+- **GDM** (chunked, palette-compressed): fruits, ground, weeds, stones
+- **GRLE** (run-length encoded): lime, plow, spray, roller, stubble and farmland info layers
 
-**Supported binary formats:**
-- **GRLE** (RLE-compressed): info layers (lime, plow, spray, roller, stubble shred, farmlands)
-- **GDM** (chunk-based palette compression): density maps (fruits, ground, weeds, stones)
+A fruit pixel stores its type index, a growth state and a haulm bit. The type index follows the order of the fruit foliage layers in the map's i3d, followed by the types the game appends at load (from `log.txt`). Growth states are numbered per crop from its foliage file, so "ready to harvest" differs from crop to crop. A field belongs to the farmland under its center and edits are clipped to the field polygon from the map.
 
-**Fruit type resolution** uses 4 sources in order:
-1. `maps_fruitTypes.xml` — 25 base types (indices 1-25)
-2. Map's own XML (e.g., `mapUS.xml`) — map-specific types like MEADOW
-3. Game log (`log.txt`) — DLC types like ONION
-4. Known fallback list — base game crops that may not appear in the log (GREENBEAN, PEA, SPINACH)
+### Tauri commands
 
-### Tauri Commands
-
-| Command | Description |
-|---------|-------------|
-| `list_savegames` | Scan and list available FS25 savegames |
-| `load_savegame` | Parse and load a savegame |
-| `save_changes` | Write modifications back to XML files |
-| `get_vehicle_catalog` | Scan game files for the vehicle catalog (base game, DLCs, mods) |
-| `list_backups` | List existing backups |
-| `create_backup` | Create a backup of the current savegame |
-| `restore_backup` | Restore a savegame from a backup |
-| `delete_backup` | Delete an existing backup |
-| `load_field_density_data` | Load accurate field data from binary density maps (GDM/GRLE) |
-| `save_density_edits` | Write density map modifications back to binary files |
-| `check_for_updates` | Check GitHub Releases for a newer version |
-
-## Development
-
-```bash
-# Start dev server (frontend + backend hot reload)
-pnpm tauri:dev
-
-# Frontend only (Vite dev server on port 1420)
-pnpm dev
-
-# Type checking
-pnpm lint
-
-# Run Rust tests
-pnpm test:rust
-
-# Production build
-pnpm tauri:build
-```
+| Command | Purpose |
+|---|---|
+| `list_savegames`, `load_savegame`, `save_changes` | List, load and save savegames |
+| `list_backups`, `create_backup`, `restore_backup`, `delete_backup`, `prune_backups`, `open_backups_folder` | Backups |
+| `load_field_density_data`, `save_density_edits`, `load_map_fruit_types` | Field density maps and the map's crops |
+| `load_farmlands_info` | Farmland areas and prices |
+| `load_storage_capacities` | Silo and object storage capacities and accepted products |
+| `get_vehicle_catalog`, `detect_game_path`, `get_vehicle_images_batch`, `clear_image_cache`, `get_image_cache_size` | Game catalog and vehicle images |
+| `check_for_updates` | Newer release on GitHub |
+| `apply_window_material` | Windows 11 Mica behind the window |
 
 ## Contributing
 
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
+Contributions are welcome: fork the repository, create a branch, and open a pull request. The project uses [Conventional Commits](https://www.conventionalcommits.org/).
 
 ## License
 
-This project is licensed under the [MIT License](LICENSE).
+[MIT](LICENSE)
 
 ## Acknowledgments
 
 - [Farming Simulator 25](https://www.farming-simulator.com/) by GIANTS Software
-- [Tauri](https://tauri.app/) for the desktop framework
-- [shadcn-vue](https://www.shadcn-vue.com/) for the UI component library
+- [Tauri](https://tauri.app/), [shadcn-vue](https://www.shadcn-vue.com/) and [Motion](https://motion.dev/)
