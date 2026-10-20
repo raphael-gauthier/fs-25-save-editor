@@ -949,8 +949,9 @@
     "missing": "{amount} short",
     "confirm": "Confirm",
     "note": "Money and ownership change together; save to write it to the savegame.",
-    "landAfter": "Your land after the operation · {ha} ha",
-    "landAfterAria": "Your land after the operation: {ha} ha over {count} parcels"
+    "landAfter": "Your land after the operation",
+    "landAfterAria": "Your land after the operation: {ha} ha over {count} parcels",
+    "parcels": "{count} parcel | {count} parcel | {count} parcels"
   },
   "storageUi": {
     "list": "Storages",

@@ -16,7 +16,7 @@ import { Info, Lock, Search, X } from "@lucide/vue";
 
 type OwnerFilter = "all" | "free" | "mine" | "others";
 
-const { t } = useI18n();
+const { t, locale } = useI18n();
 const store = useFieldStore();
 const finance = useFinanceStore();
 const trade = useFarmlandTrade();
@@ -149,6 +149,17 @@ const landAfter = computed(() =>
     .map((info) => ({ id: info.id, ha: info.areaHa, bought: toBuy.value.includes(info.id) })),
 );
 const landAfterHa = computed(() => landAfter.value.reduce((sum, l) => sum + l.ha, 0));
+const landBeforeHa = computed(() =>
+  listed.value
+    .filter((info) => trade.ownerOf(info.id) === PLAYER_FARM_ID)
+    .reduce((sum, info) => sum + info.areaHa, 0),
+);
+const landDelta = computed(() => landAfterHa.value - landBeforeHa.value);
+
+/** Hectares the way the user's language writes them (23,08 in French). */
+function ha(value: number): string {
+  return new Intl.NumberFormat(locale.value, { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(value);
+}
 
 const spring = { type: "spring", stiffness: 480, damping: 40 } as const;
 </script>
@@ -245,7 +256,7 @@ const spring = { type: "spring", stiffness: 480, damping: 40 } as const;
                   {{ fieldLabel(info.id) }}
                 </span>
                 <span class="truncate text-[13px] text-muted-foreground">
-                  {{ info.areaHa.toFixed(2) }} ha ·
+                  {{ ha(info.areaHa) }} ha ·
                   <span :class="ownerChanged(info.id) ? 'font-semibold text-ready' : ''">{{ ownerLabel(info.id) }}</span>
                 </span>
               </span>
@@ -289,7 +300,7 @@ const spring = { type: "spring", stiffness: 480, damping: 40 } as const;
           <dl class="grid grid-cols-2 gap-2">
             <div class="rounded-xl bg-card px-3.5 py-3">
               <dt class="text-xs text-muted-foreground">{{ t("farmland.area") }}</dt>
-              <dd class="text-xl font-semibold tabular">{{ focused.areaHa.toFixed(2) }} ha</dd>
+              <dd class="text-xl font-semibold tabular">{{ ha(focused.areaHa) }} ha</dd>
             </div>
             <div class="rounded-xl bg-card px-3.5 py-3">
               <dt class="text-xs text-muted-foreground">{{ t("farmland.price") }}</dt>
@@ -323,20 +334,36 @@ const spring = { type: "spring", stiffness: 480, damping: 40 } as const;
       <section aria-labelledby="operation-title" class="glass-strong flex flex-col gap-3 rounded-2xl p-4">
         <h3 id="operation-title" class="font-semibold">{{ t("farmlandUi.operation") }}</h3>
 
-        <div class="flex flex-col gap-1.5">
-          <span class="text-xs text-muted-foreground">{{ t("farmlandUi.landAfter", { ha: landAfterHa.toFixed(2) }) }}</span>
-          <div role="img" :aria-label="t('farmlandUi.landAfterAria', { ha: landAfterHa.toFixed(2), count: landAfter.length })" class="flex h-7 gap-[3px]">
+        <div class="flex flex-col gap-2">
+          <span class="text-xs text-muted-foreground">{{ t("farmlandUi.landAfter") }}</span>
+          <div class="flex flex-wrap items-baseline gap-x-2 gap-y-1">
+            <span class="whitespace-nowrap text-lg font-semibold tracking-tight tabular">{{ ha(landAfterHa) }} ha</span>
+            <span class="whitespace-nowrap text-[13px] text-muted-foreground">
+              {{ t("farmlandUi.parcels", { count: landAfter.length }, landAfter.length) }}
+            </span>
+            <span
+              v-if="Math.abs(landDelta) >= 0.005"
+              class="ml-auto whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-semibold tabular"
+              :class="landDelta > 0 ? 'bg-primary-soft text-primary-text' : 'bg-ready-soft text-ready'"
+            >
+              {{ landDelta > 0 ? "+" : "−" }}{{ ha(Math.abs(landDelta)) }} ha
+            </span>
+          </div>
+          <div
+            role="img"
+            :aria-label="t('farmlandUi.landAfterAria', { ha: ha(landAfterHa), count: landAfter.length })"
+            class="flex h-2.5 gap-[2px] overflow-hidden rounded-full"
+          >
             <motion.span
               v-for="land in landAfter"
               :key="land.id"
               layout
-              class="flex min-w-0 items-center overflow-hidden whitespace-nowrap rounded-md px-1.5 text-[11px] font-semibold"
-              :class="land.bought ? 'bg-primary text-primary-foreground' : 'bg-primary-soft text-primary-text'"
+              class="h-full min-w-[3px]"
+              :class="land.bought ? 'bg-primary' : 'bg-primary/45'"
               :style="{ flex: `${Math.round(land.ha * 100)} 1 0` }"
+              :title="`${t('farmland.id')} ${land.id} · ${ha(land.ha)} ha`"
               :transition="spring"
-            >
-              {{ land.id }}
-            </motion.span>
+            />
           </div>
         </div>
 
@@ -372,7 +399,7 @@ const spring = { type: "spring", stiffness: 480, damping: 40 } as const;
         >
           {{ operationBlock }}
         </p>
-        <div class="flex gap-2">
+        <div v-if="selectedIds.length > 0" class="flex gap-2">
           <Button
             class="h-10 flex-1"
             :disabled="(toBuy.length === 0 && toSell.length === 0) || !!operationBlock"
@@ -381,7 +408,6 @@ const spring = { type: "spring", stiffness: 480, damping: 40 } as const;
             {{ t("farmlandUi.confirm") }}
           </Button>
           <Button
-            v-if="selectedIds.length > 0"
             variant="ghost"
             size="icon"
             class="size-10"
@@ -392,7 +418,7 @@ const spring = { type: "spring", stiffness: 480, damping: 40 } as const;
             <X class="size-4" />
           </Button>
         </div>
-        <p class="text-xs text-muted-foreground">{{ t("farmlandUi.note") }}</p>
+        <p v-if="selectedIds.length > 0" class="text-xs text-muted-foreground">{{ t("farmlandUi.note") }}</p>
       </section>
     </aside>
   </div>

@@ -949,8 +949,9 @@
     "missing": "Il manque {amount}",
     "confirm": "Valider l'opération",
     "note": "L'argent et la propriété changent ensemble ; enregistrez pour l'écrire dans la sauvegarde.",
-    "landAfter": "Vos terres après l'opération · {ha} ha",
-    "landAfterAria": "Vos terres après l'opération : {ha} ha sur {count} parcelles"
+    "landAfter": "Vos terres après l'opération",
+    "landAfterAria": "Vos terres après l'opération : {ha} ha sur {count} parcelles",
+    "parcels": "{count} parcelle | {count} parcelle | {count} parcelles"
   },
   "storageUi": {
     "list": "Stockages",
