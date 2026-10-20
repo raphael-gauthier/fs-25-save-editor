@@ -4,19 +4,8 @@ import { useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { useEventListener } from "@vueuse/core";
 import { toast } from "vue-sonner";
-import { SidebarTrigger } from "@/components/ui/sidebar";
-import { Separator } from "@/components/ui/separator";
-import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
-import { Save, Loader2, RotateCcw, Undo2 } from "@lucide/vue";
+import { ChevronRight, Loader2, RotateCcw } from "@lucide/vue";
 import { useSavegameStore } from "@/stores/savegame";
 import { useFinanceStore } from "@/stores/finance";
 import { useVehicleStore } from "@/stores/vehicle";
@@ -33,6 +22,7 @@ import { useBackupStore } from "@/stores/backup";
 import { useTauri, translateError } from "@/composables/useTauri";
 import { useUnsavedChanges } from "@/composables/useUnsavedChanges";
 import type { SaveResult } from "@/lib/types";
+import WindowTitleBar from "./WindowTitleBar.vue";
 
 const { t } = useI18n();
 const route = useRoute();
@@ -75,7 +65,11 @@ const breadcrumbKeyMap: Record<string, string> = {
   vehicles: "sidebar.vehicles",
   "vehicle-detail": "sidebar.vehicles",
   sales: "sidebar.sales",
+  "sale-add": "sidebar.sales",
   fields: "sidebar.fields",
+  farmlands: "sidebar.farmlands",
+  storage: "sidebar.storage",
+  game: "sidebar.game",
   world: "sidebar.world",
   buildings: "sidebar.buildings",
   animals: "sidebar.animals",
@@ -85,6 +79,10 @@ const breadcrumbKeyMap: Record<string, string> = {
   settings: "sidebar.settings",
   backups: "sidebar.backups",
 };
+
+const savegameLabel = computed(
+  () => savegameStore.currentSavegame?.career.mapTitle || t("common.savegames"),
+);
 
 const breadcrumbs = computed(() => {
   const crumbs: { label: string; to?: string }[] = [];
@@ -219,64 +217,66 @@ async function handleReload() {
 </script>
 
 <template>
-  <header class="flex h-14 items-center gap-2 border-b px-4">
-    <SidebarTrigger class="-ml-1" />
-    <Separator orientation="vertical" class="mr-2 !h-4" />
+  <WindowTitleBar>
+    <template #leading>
+      <router-link
+        to="/"
+        class="inline-flex size-6 shrink-0 items-center justify-center rounded-[7px] bg-primary text-primary-foreground"
+        :aria-label="t('common.savegames')"
+        :title="t('common.savegames')"
+      >
+        <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 21V9" /><path d="M12 9c0-3 2-5 5-5 0 3-2 5-5 5Z" /><path d="M12 9c0-3-2-5-5-5 0 3 2 5 5 5Z" />
+          <path d="M12 15c0-3 2-5 5-5 0 3-2 5-5 5Z" /><path d="M12 15c0-3-2-5-5-5 0 3 2 5 5 5Z" />
+        </svg>
+      </router-link>
+    </template>
 
-    <Breadcrumb>
-      <BreadcrumbList>
-        <BreadcrumbItem>
-          <BreadcrumbLink as-child>
-            <router-link to="/">{{ t("common.savegames") }}</router-link>
-          </BreadcrumbLink>
-        </BreadcrumbItem>
-        <template v-for="(crumb, i) in breadcrumbs" :key="i">
-          <BreadcrumbSeparator />
-          <BreadcrumbItem>
-            <BreadcrumbLink v-if="crumb.to" as-child>
-              <router-link :to="crumb.to">{{ crumb.label }}</router-link>
-            </BreadcrumbLink>
-            <BreadcrumbPage v-else>{{ crumb.label }}</BreadcrumbPage>
-          </BreadcrumbItem>
-        </template>
-      </BreadcrumbList>
-    </Breadcrumb>
+    <nav
+      :aria-label="t('window.breadcrumb')"
+      data-tauri-drag-region
+      class="flex min-w-0 items-center gap-1.5 text-[13px]"
+    >
+      <router-link to="/" class="truncate text-muted-foreground hover:text-foreground">
+        {{ savegameLabel }}
+      </router-link>
+      <template v-for="(crumb, i) in breadcrumbs" :key="i">
+        <ChevronRight class="size-3.5 shrink-0 text-muted-foreground" aria-hidden="true" />
+        <span aria-current="page" class="truncate font-semibold">{{ crumb.label }}</span>
+      </template>
+    </nav>
 
-    <div class="ml-auto flex items-center gap-2">
+    <slot />
+
+    <template #actions>
+      <span
+        v-if="isDirty"
+        role="status"
+        class="inline-flex items-center gap-1.5 rounded-full bg-ready-soft px-2.5 py-1 text-[13px] font-semibold text-ready"
+      >
+        <span class="size-[7px] rounded-[2px] bg-current" aria-hidden="true" />
+        {{ t("dirtyTracking.pendingCount", { count: changeCount }, changeCount) }}
+      </span>
       <Button
         v-if="isDirty"
         variant="ghost"
-        size="sm"
+        size="icon"
+        class="size-9"
         :disabled="isReloading"
+        :aria-label="t('dirtyTracking.reloadFromDisk')"
+        :title="t('dirtyTracking.reloadFromDisk')"
         @click="handleReload"
       >
-        <RotateCcw class="mr-2 size-4" :class="{ 'animate-spin': isReloading }" />
-        {{ t("dirtyTracking.reloadFromDisk") }}
+        <RotateCcw class="size-4" :class="{ 'animate-spin': isReloading }" />
       </Button>
-
-      <Button
-        v-if="isDirty"
-        variant="ghost"
-        size="sm"
-        @click="handleDiscard"
-      >
-        <Undo2 class="mr-2 size-4" />
+      <Button v-if="isDirty" variant="ghost" size="sm" class="h-9" @click="handleDiscard">
         {{ t("dirtyTracking.discardChanges") }}
       </Button>
-
-      <Button
-        variant="outline"
-        size="sm"
-        :disabled="!isDirty || isSaving"
-        @click="handleSave"
-      >
-        <Loader2 v-if="isSaving" class="mr-2 size-4 animate-spin" />
-        <Save v-else class="mr-2 size-4" />
+      <Button size="sm" class="h-9 gap-2" :disabled="!isDirty || isSaving" @click="handleSave">
+        <Loader2 v-if="isSaving" class="size-4 animate-spin" />
         {{ t("common.save") }}
-        <Badge v-if="changeCount > 0" variant="secondary" class="ml-2">
-          {{ changeCount }}
-        </Badge>
+        <kbd class="rounded bg-primary-foreground/20 px-1.5 text-[11px] font-medium">Ctrl S</kbd>
       </Button>
-    </div>
-  </header>
+    </template>
+  </WindowTitleBar>
 </template>

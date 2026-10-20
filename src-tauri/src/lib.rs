@@ -53,6 +53,7 @@ pub fn run() {
             commands::density::load_farmlands_info,
             commands::density::load_storage_capacities,
             commands::update::check_for_updates,
+            commands::window::apply_window_material,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

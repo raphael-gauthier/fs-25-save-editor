@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { onMounted, onUnmounted } from "vue";
 import { useRouter } from "vue-router";
+import { MotionConfig } from "motion-v";
 import { Toaster } from "@/components/ui/sonner";
 import { useSettingsStore } from "@/stores/settings";
 import { useUnsavedChanges } from "@/composables/useUnsavedChanges";
@@ -47,7 +48,10 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <router-view />
+  <div class="app-wall" aria-hidden="true" />
+  <MotionConfig reduced-motion="user">
+    <router-view />
+  </MotionConfig>
   <DisclaimerDialog />
   <ConfirmDiscardDialog />
   <UpdateDialog />

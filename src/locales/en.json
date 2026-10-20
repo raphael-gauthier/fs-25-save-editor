@@ -719,7 +719,8 @@
     "discardAction": "Discard changes",
     "reloadFromDisk": "Reload",
     "discardChanges": "Discard",
-    "originalValue": "Original value: {value}"
+    "originalValue": "Original value: {value}",
+    "pendingCount": "{count} change | {count} change | {count} changes"
   },
   "disclaimer": {
     "title": "Important Warning",
@@ -874,5 +875,13 @@
       "buy": "Buy",
       "station": "Map station ({value})"
     }
+  },
+  "window": {
+    "minimize": "Minimize",
+    "maximize": "Maximize",
+    "restore": "Restore",
+    "close": "Close",
+    "toggleTheme": "Switch theme",
+    "breadcrumb": "Breadcrumb"
   }
 }

@@ -24,6 +24,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import logo from "@/assets/logo.png";
+import WindowTitleBar from "@/components/layout/WindowTitleBar.vue";
 import {
   FolderOpen,
   AlertCircle,
@@ -97,7 +98,9 @@ function formatDifficulty(code: string): string {
 </script>
 
 <template>
-  <main class="flex min-h-screen flex-col items-center px-4 py-12">
+  <div class="flex h-full flex-col">
+  <WindowTitleBar />
+  <main class="flex min-h-0 flex-1 flex-col items-center overflow-y-auto px-4 py-12">
     <div class="w-full max-w-5xl space-y-8">
       <!-- Header -->
       <div class="text-center space-y-3">
@@ -248,4 +251,5 @@ function formatDifficulty(code: string): string {
       </div>
     </div>
   </main>
+  </div>
 </template>

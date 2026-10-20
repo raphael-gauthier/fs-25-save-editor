@@ -719,7 +719,8 @@
     "discardAction": "Abandonner les changements",
     "reloadFromDisk": "Recharger",
     "discardChanges": "Annuler",
-    "originalValue": "Valeur originale : {value}"
+    "originalValue": "Valeur originale : {value}",
+    "pendingCount": "{count} modification | {count} modification | {count} modifications"
   },
   "disclaimer": {
     "title": "Avertissement important",
@@ -874,5 +875,13 @@
       "buy": "Acheter",
       "station": "Station de la carte ({value})"
     }
+  },
+  "window": {
+    "minimize": "Réduire",
+    "maximize": "Agrandir",
+    "restore": "Restaurer",
+    "close": "Fermer",
+    "toggleTheme": "Changer de thème",
+    "breadcrumb": "Fil d'Ariane"
   }
 }
