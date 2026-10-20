@@ -38,3 +38,13 @@ docs/savegames/*.gmss
 docs/savegames/*.cache
 docs/savegames/*.dat
 docs/savegames/*.png
+# ...except the layers the Rust tests read (~11.5 MB, map pixels only)
+!docs/savegames/densityMap_fruits.gdm
+!docs/savegames/densityMap_ground.gdm
+!docs/savegames/densityMap_weed.gdm
+!docs/savegames/densityMap_stones.gdm
+!docs/savegames/infoLayer_limeLevel.grle
+!docs/savegames/infoLayer_plowLevel.grle
+!docs/savegames/infoLayer_sprayLevel.grle
+!docs/savegames/infoLayer_rollerLevel.grle
+!docs/savegames/infoLayer_stubbleShredLevel.grle
