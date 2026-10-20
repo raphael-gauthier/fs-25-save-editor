@@ -29,9 +29,6 @@ importers:
       '@tauri-apps/plugin-store':
         specifier: ^2.5.0
         version: 2.5.0
-      '@vue/devtools-api':
-        specifier: ^8.2.1
-        version: 8.2.1
       '@vueuse/core':
         specifier: ^15.0.0
         version: 15.0.0(vue@3.5.43(typescript@6.0.3))
