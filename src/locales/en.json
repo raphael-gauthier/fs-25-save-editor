@@ -966,5 +966,14 @@
     "fillProduct": "Fill: {product}",
     "emptyProduct": "Empty: {product}",
     "bunkerNote": "Bunker silos can't be edited: their silage is part of the terrain height map."
+  },
+  "launcher": {
+    "title": "Saves",
+    "slot": "Slot {n}",
+    "savedOn": "saved on {date}",
+    "open": "Open save",
+    "difficulty": "Economic difficulty",
+    "backupNote": "A backup is made before every save.",
+    "search": "Search"
   }
 }

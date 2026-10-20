@@ -966,5 +966,14 @@
     "fillProduct": "Remplir : {product}",
     "emptyProduct": "Vider : {product}",
     "bunkerNote": "Les silos couloirs ne sont pas modifiables : leur ensilage fait partie du relief du terrain."
+  },
+  "launcher": {
+    "title": "Parties",
+    "slot": "Emplacement {n}",
+    "savedOn": "enregistrée le {date}",
+    "open": "Ouvrir la partie",
+    "difficulty": "Difficulté économique",
+    "backupNote": "Une sauvegarde de sécurité est créée avant chaque enregistrement.",
+    "search": "Rechercher"
   }
 }
