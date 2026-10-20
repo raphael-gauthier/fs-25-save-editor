@@ -38,7 +38,14 @@
     "settings": "Paramètres",
     "farmlands": "Parcelles",
     "storage": "Stockage",
-    "game": "Partie"
+    "game": "Partie",
+    "navigation": "Sections",
+    "groupFarm": "Ferme",
+    "groupLand": "Terres",
+    "groupOperation": "Exploitation",
+    "groupWorld": "Monde",
+    "collapse": "Réduire la navigation",
+    "expand": "Déplier la navigation"
   },
   "savegame": {
     "selectSubtitle": "Sélectionnez une sauvegarde pour commencer l'édition",
@@ -719,7 +726,8 @@
     "discardAction": "Abandonner les changements",
     "reloadFromDisk": "Recharger",
     "discardChanges": "Annuler",
-    "originalValue": "Valeur originale : {value}"
+    "originalValue": "Valeur originale : {value}",
+    "pendingCount": "{count} modification | {count} modification | {count} modifications"
   },
   "disclaimer": {
     "title": "Avertissement important",
@@ -874,5 +882,99 @@
       "buy": "Acheter",
       "station": "Station de la carte ({value})"
     }
+  },
+  "window": {
+    "minimize": "Réduire",
+    "maximize": "Agrandir",
+    "restore": "Restaurer",
+    "close": "Fermer",
+    "toggleTheme": "Changer de thème",
+    "breadcrumb": "Fil d'Ariane"
+  },
+  "palette": {
+    "title": "Palette de commandes",
+    "description": "Rechercher une action, une page, un champ ou un véhicule",
+    "placeholder": "Rechercher ou lancer une action",
+    "results": "Résultats",
+    "empty": "Aucun résultat pour « {query} »",
+    "navigate": "naviguer",
+    "open": "ouvrir",
+    "anywhere": "depuis n'importe où",
+    "field": "Champ {id}",
+    "lightTheme": "Passer en thème clair",
+    "darkTheme": "Passer en thème sombre",
+    "advancedOn": "Activer le mode avancé",
+    "advancedOff": "Désactiver le mode avancé",
+    "otherSave": "Changer de partie",
+    "group": {
+      "actions": "Actions",
+      "pages": "Aller à",
+      "fields": "Champs",
+      "vehicles": "Véhicules"
+    },
+    "keyEsc": "Échap",
+    "keyEnter": "Entrée"
+  },
+  "fieldUi": {
+    "summary": "{count} sur la carte · {mine} à vous",
+    "all": "Tous",
+    "mine": "À vous",
+    "checkAll": "Cocher tous les champs affichés",
+    "check": "Cocher le champ {id}",
+    "list": "Liste des champs",
+    "modified": "Modifié",
+    "more": "Plus",
+    "details": "Détails du champ",
+    "prev": "Champ précédent",
+    "next": "Champ suivant",
+    "pendingTitle": "Modifications en attente",
+    "changeCrop": "Changer la culture",
+    "soil": "Sol",
+    "ok": "correct",
+    "toDo": "à traiter",
+    "pick": "Choisissez un champ dans la liste."
+  },
+  "farmlandUi": {
+    "noField": "Sans champ",
+    "checkAll": "Cocher toutes les parcelles affichées",
+    "check": "Cocher la parcelle {id}",
+    "list": "Liste des parcelles",
+    "details": "Parcelle et opération",
+    "operation": "Opération",
+    "hint": "Cochez des parcelles libres pour les acheter, ou les vôtres pour les vendre.",
+    "buyLine": "Acheter la parcelle {id}",
+    "sellLine": "Vendre la parcelle {id}",
+    "ignored": "{count} parcelle d'une autre ferme ignorée | {count} parcelle d'une autre ferme ignorée | {count} parcelles d'autres fermes ignorées",
+    "moneyAfter": "Argent après",
+    "missing": "Il manque {amount}",
+    "confirm": "Valider l'opération",
+    "note": "L'argent et la propriété changent ensemble ; enregistrez pour l'écrire dans la sauvegarde.",
+    "landAfter": "Vos terres après l'opération",
+    "landAfterAria": "Vos terres après l'opération : {ha} ha sur {count} parcelles",
+    "parcels": "{count} parcelle | {count} parcelle | {count} parcelles"
+  },
+  "storageUi": {
+    "list": "Stockages",
+    "details": "Détails du stockage",
+    "silo": "Silo",
+    "filled": "rempli",
+    "content": "Contenu",
+    "capacity": "Capacité",
+    "free": "Place libre",
+    "products": "Produits",
+    "stored": "Objets rangés",
+    "gauge": "{used} sur {capacity}",
+    "fillProduct": "Remplir : {product}",
+    "emptyProduct": "Vider : {product}",
+    "bunkerNote": "Les silos couloirs ne sont pas modifiables : leur ensilage fait partie du relief du terrain."
+  },
+  "launcher": {
+    "title": "Parties",
+    "slot": "Emplacement {n}",
+    "savedOn": "enregistrée le {date}",
+    "open": "Ouvrir la partie",
+    "difficulty": "Difficulté économique",
+    "backupNote": "Une sauvegarde de sécurité est créée avant chaque enregistrement.",
+    "search": "Rechercher"
   }
 }

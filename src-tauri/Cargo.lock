@@ -1169,6 +1169,7 @@ dependencies = [
  "tauri-plugin-opener",
  "tauri-plugin-store",
  "thiserror 2.0.21",
+ "window-vibrancy",
  "zip",
 ]
 

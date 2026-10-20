@@ -38,7 +38,14 @@
     "settings": "Settings",
     "farmlands": "Farmlands",
     "storage": "Storage",
-    "game": "Game"
+    "game": "Game",
+    "navigation": "Sections",
+    "groupFarm": "Farm",
+    "groupLand": "Land",
+    "groupOperation": "Operation",
+    "groupWorld": "World",
+    "collapse": "Collapse navigation",
+    "expand": "Expand navigation"
   },
   "savegame": {
     "selectSubtitle": "Select a savegame to start editing",
@@ -719,7 +726,8 @@
     "discardAction": "Discard changes",
     "reloadFromDisk": "Reload",
     "discardChanges": "Discard",
-    "originalValue": "Original value: {value}"
+    "originalValue": "Original value: {value}",
+    "pendingCount": "{count} change | {count} change | {count} changes"
   },
   "disclaimer": {
     "title": "Important Warning",
@@ -874,5 +882,99 @@
       "buy": "Buy",
       "station": "Map station ({value})"
     }
+  },
+  "window": {
+    "minimize": "Minimize",
+    "maximize": "Maximize",
+    "restore": "Restore",
+    "close": "Close",
+    "toggleTheme": "Switch theme",
+    "breadcrumb": "Breadcrumb"
+  },
+  "palette": {
+    "title": "Command palette",
+    "description": "Search for an action, page, field or vehicle",
+    "placeholder": "Search or run an action",
+    "results": "Results",
+    "empty": "No results for “{query}”",
+    "navigate": "navigate",
+    "open": "open",
+    "anywhere": "from anywhere",
+    "field": "Field {id}",
+    "lightTheme": "Switch to light theme",
+    "darkTheme": "Switch to dark theme",
+    "advancedOn": "Turn on advanced mode",
+    "advancedOff": "Turn off advanced mode",
+    "otherSave": "Switch save",
+    "group": {
+      "actions": "Actions",
+      "pages": "Go to",
+      "fields": "Fields",
+      "vehicles": "Vehicles"
+    },
+    "keyEsc": "Esc",
+    "keyEnter": "Enter"
+  },
+  "fieldUi": {
+    "summary": "{count} on the map · {mine} yours",
+    "all": "All",
+    "mine": "Yours",
+    "checkAll": "Check every field shown",
+    "check": "Check field {id}",
+    "list": "Field list",
+    "modified": "Modified",
+    "more": "More",
+    "details": "Field details",
+    "prev": "Previous field",
+    "next": "Next field",
+    "pendingTitle": "Pending changes",
+    "changeCrop": "Change the crop",
+    "soil": "Soil",
+    "ok": "fine",
+    "toDo": "needs work",
+    "pick": "Pick a field in the list."
+  },
+  "farmlandUi": {
+    "noField": "No field",
+    "checkAll": "Check every parcel shown",
+    "check": "Check parcel {id}",
+    "list": "Parcel list",
+    "details": "Parcel and operation",
+    "operation": "Operation",
+    "hint": "Check free parcels to buy them, or yours to sell them.",
+    "buyLine": "Buy parcel {id}",
+    "sellLine": "Sell parcel {id}",
+    "ignored": "{count} parcel of another farm skipped | {count} parcel of another farm skipped | {count} parcels of other farms skipped",
+    "moneyAfter": "Money after",
+    "missing": "{amount} short",
+    "confirm": "Confirm",
+    "note": "Money and ownership change together; save to write it to the savegame.",
+    "landAfter": "Your land after the operation",
+    "landAfterAria": "Your land after the operation: {ha} ha over {count} parcels",
+    "parcels": "{count} parcel | {count} parcel | {count} parcels"
+  },
+  "storageUi": {
+    "list": "Storages",
+    "details": "Storage details",
+    "silo": "Silo",
+    "filled": "full",
+    "content": "Content",
+    "capacity": "Capacity",
+    "free": "Free space",
+    "products": "Products",
+    "stored": "Stored objects",
+    "gauge": "{used} of {capacity}",
+    "fillProduct": "Fill: {product}",
+    "emptyProduct": "Empty: {product}",
+    "bunkerNote": "Bunker silos can't be edited: their silage is part of the terrain height map."
+  },
+  "launcher": {
+    "title": "Saves",
+    "slot": "Slot {n}",
+    "savedOn": "saved on {date}",
+    "open": "Open save",
+    "difficulty": "Economic difficulty",
+    "backupNote": "A backup is made before every save.",
+    "search": "Search"
   }
 }

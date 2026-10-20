@@ -1,13 +1,18 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@import "@fontsource-variable/geist";
+@import "@fontsource-variable/geist-mono";
 
 @custom-variant dark (&:is(.dark *));
 
 @theme inline {
+  --font-sans: "Geist Variable", "Segoe UI Variable", system-ui, sans-serif;
+  --font-mono: "Geist Mono Variable", ui-monospace, monospace;
   --radius-sm: calc(var(--radius) - 4px);
   --radius-md: calc(var(--radius) - 2px);
   --radius-lg: var(--radius);
   --radius-xl: calc(var(--radius) + 4px);
+  --radius-2xl: calc(var(--radius) + 8px);
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -16,6 +21,8 @@
   --color-popover-foreground: var(--popover-foreground);
   --color-primary: var(--primary);
   --color-primary-foreground: var(--primary-foreground);
+  --color-primary-soft: var(--primary-soft);
+  --color-primary-text: var(--primary-text);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
   --color-muted: var(--muted);
@@ -23,6 +30,13 @@
   --color-accent: var(--accent);
   --color-accent-foreground: var(--accent-foreground);
   --color-destructive: var(--destructive);
+  --color-destructive-soft: var(--destructive-soft);
+  --color-ready: var(--ready);
+  --color-ready-soft: var(--ready-soft);
+  --color-glass: var(--glass);
+  --color-glass-strong: var(--glass-strong);
+  --color-edge: var(--edge);
+  --color-hover: var(--hover);
   --color-border: var(--border);
   --color-input: var(--input);
   --color-ring: var(--ring);
@@ -39,82 +53,244 @@
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-ring: var(--sidebar-ring);
+  --ease-spring: cubic-bezier(0.32, 0.72, 0, 1);
 }
 
+/*
+ * "Verre natif": translucent panels over the window material. On Windows 11
+ * the window is transparent and Mica shows through (html.has-mica); elsewhere
+ * the page paints its own soft wallpaper. Every text color keeps 4.5:1 on the
+ * panels it sits on.
+ */
 :root {
-  --radius: 0.625rem;
-  --background: oklch(1 0 0);
-  --foreground: oklch(0.145 0 0);
-  --card: oklch(1 0 0);
-  --card-foreground: oklch(0.145 0 0);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.145 0 0);
-  --primary: oklch(0.205 0 0);
-  --primary-foreground: oklch(0.985 0 0);
-  --secondary: oklch(0.97 0 0);
-  --secondary-foreground: oklch(0.205 0 0);
-  --muted: oklch(0.97 0 0);
-  --muted-foreground: oklch(0.556 0 0);
-  --accent: oklch(0.97 0 0);
-  --accent-foreground: oklch(0.205 0 0);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.922 0 0);
-  --input: oklch(0.922 0 0);
-  --ring: oklch(0.708 0 0);
-  --chart-1: oklch(0.646 0.222 41.116);
-  --chart-2: oklch(0.6 0.118 184.704);
-  --chart-3: oklch(0.398 0.07 227.392);
-  --chart-4: oklch(0.828 0.189 84.429);
-  --chart-5: oklch(0.769 0.188 70.08);
-  --sidebar: oklch(0.985 0 0);
-  --sidebar-foreground: oklch(0.145 0 0);
-  --sidebar-primary: oklch(0.205 0 0);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.97 0 0);
-  --sidebar-accent-foreground: oklch(0.205 0 0);
-  --sidebar-border: oklch(0.922 0 0);
-  --sidebar-ring: oklch(0.708 0 0);
+  --radius: 0.75rem;
+  --wall: #e3e7e0;
+  --wall-a: #bbd5b1;
+  --wall-b: #f2d8a4;
+  --wall-c: #bacde4;
+  --glass: rgb(255 255 255 / 0.62);
+  --glass-strong: rgb(255 255 255 / 0.84);
+  --edge: rgb(255 255 255 / 0.78);
+  --hover: rgb(21 24 28 / 0.05);
+  --scrollbar: rgb(21 24 28 / 0.18);
+  --scrollbar-hover: rgb(21 24 28 / 0.38);
+  --shadow-panel: 0 1px 2px rgb(15 20 25 / 0.06), 0 18px 50px -18px rgb(15 20 25 / 0.3);
+  --background: #f4f5f2;
+  --foreground: #15181c;
+  --card: rgb(255 255 255 / 0.7);
+  --card-foreground: #15181c;
+  --popover: rgb(255 255 255 / 0.96);
+  --popover-foreground: #15181c;
+  --primary: #12804a;
+  --primary-foreground: #ffffff;
+  --primary-soft: rgb(18 128 74 / 0.13);
+  --primary-text: #0b6b3c;
+  --secondary: rgb(21 24 28 / 0.06);
+  --secondary-foreground: #15181c;
+  --muted: rgb(21 24 28 / 0.05);
+  --muted-foreground: #4d535b;
+  --accent: rgb(21 24 28 / 0.06);
+  --accent-foreground: #15181c;
+  --destructive: #ba3328;
+  --destructive-soft: rgb(186 51 40 / 0.11);
+  --ready: #8a4e00;
+  --ready-soft: rgb(214 140 20 / 0.16);
+  --border: rgb(21 24 28 / 0.1);
+  --input: rgb(21 24 28 / 0.16);
+  --ring: #12804a;
+  --chart-1: #12804a;
+  --chart-2: #2b63e0;
+  --chart-3: #c9922e;
+  --chart-4: #a8461f;
+  --chart-5: #6d4ae0;
+  --sidebar: transparent;
+  --sidebar-foreground: #15181c;
+  --sidebar-primary: #12804a;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: rgb(18 128 74 / 0.13);
+  --sidebar-accent-foreground: #0b6b3c;
+  --sidebar-border: rgb(21 24 28 / 0.1);
+  --sidebar-ring: #12804a;
 }
 
 .dark {
-  --background: oklch(0.145 0 0);
-  --foreground: oklch(0.985 0 0);
-  --card: oklch(0.205 0 0);
-  --card-foreground: oklch(0.985 0 0);
-  --popover: oklch(0.205 0 0);
-  --popover-foreground: oklch(0.985 0 0);
-  --primary: oklch(0.922 0 0);
-  --primary-foreground: oklch(0.205 0 0);
-  --secondary: oklch(0.269 0 0);
-  --secondary-foreground: oklch(0.985 0 0);
-  --muted: oklch(0.269 0 0);
-  --muted-foreground: oklch(0.708 0 0);
-  --accent: oklch(0.269 0 0);
-  --accent-foreground: oklch(0.985 0 0);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(1 0 0 / 10%);
-  --input: oklch(1 0 0 / 15%);
-  --ring: oklch(0.556 0 0);
-  --chart-1: oklch(0.488 0.243 264.376);
-  --chart-2: oklch(0.696 0.17 162.48);
-  --chart-3: oklch(0.769 0.188 70.08);
-  --chart-4: oklch(0.627 0.265 303.9);
-  --chart-5: oklch(0.645 0.246 16.439);
-  --sidebar: oklch(0.205 0 0);
-  --sidebar-foreground: oklch(0.985 0 0);
-  --sidebar-primary: oklch(0.488 0.243 264.376);
-  --sidebar-primary-foreground: oklch(0.985 0 0);
-  --sidebar-accent: oklch(0.269 0 0);
-  --sidebar-accent-foreground: oklch(0.985 0 0);
-  --sidebar-border: oklch(1 0 0 / 10%);
-  --sidebar-ring: oklch(0.556 0 0);
+  --wall: #0b0d10;
+  --wall-a: #1e4a2d;
+  --wall-b: #4a3816;
+  --wall-c: #1b3354;
+  --glass: rgb(28 31 36 / 0.58);
+  --glass-strong: rgb(30 33 38 / 0.86);
+  --edge: rgb(255 255 255 / 0.08);
+  --hover: rgb(255 255 255 / 0.06);
+  --scrollbar: rgb(255 255 255 / 0.16);
+  --scrollbar-hover: rgb(255 255 255 / 0.34);
+  --shadow-panel: 0 1px 2px rgb(0 0 0 / 0.4), 0 24px 60px -20px rgb(0 0 0 / 0.75);
+  --background: #111317;
+  --foreground: #edeff2;
+  --card: rgb(255 255 255 / 0.045);
+  --card-foreground: #edeff2;
+  --popover: rgb(32 35 41 / 0.97);
+  --popover-foreground: #edeff2;
+  --primary: #5bd08a;
+  --primary-foreground: #06210f;
+  --primary-soft: rgb(91 208 138 / 0.16);
+  --primary-text: #7fe0a5;
+  --secondary: rgb(255 255 255 / 0.08);
+  --secondary-foreground: #edeff2;
+  --muted: rgb(255 255 255 / 0.06);
+  --muted-foreground: #a2a9b2;
+  --accent: rgb(255 255 255 / 0.08);
+  --accent-foreground: #edeff2;
+  --destructive: #ff8a7a;
+  --destructive-soft: rgb(255 138 122 / 0.13);
+  --ready: #f2b14e;
+  --ready-soft: rgb(242 177 78 / 0.14);
+  --border: rgb(255 255 255 / 0.09);
+  --input: rgb(255 255 255 / 0.14);
+  --ring: #5bd08a;
+  --chart-1: #5bd08a;
+  --chart-2: #7ea8ff;
+  --chart-3: #f2b14e;
+  --chart-4: #ee8a5e;
+  --chart-5: #b4a0ff;
+  --sidebar: transparent;
+  --sidebar-foreground: #edeff2;
+  --sidebar-primary: #5bd08a;
+  --sidebar-primary-foreground: #06210f;
+  --sidebar-accent: rgb(91 208 138 / 0.16);
+  --sidebar-accent-foreground: #7fe0a5;
+  --sidebar-border: rgb(255 255 255 / 0.09);
+  --sidebar-ring: #5bd08a;
 }
 
 @layer base {
   * {
     @apply border-border outline-ring/50;
   }
+  html,
+  body,
+  #app {
+    height: 100%;
+  }
   body {
-    @apply bg-background text-foreground;
+    @apply text-foreground font-sans antialiased;
+    font-size: 14px;
+    background: var(--wall);
+    overflow: hidden;
+  }
+  /* Mica paints the window: let it show through */
+  html.has-mica body {
+    background: transparent;
+  }
+  :focus-visible {
+    outline: 2px solid var(--ring);
+    outline-offset: 2px;
+  }
+
+  /* Thin rounded scrollbars that float over the glass and firm up on hover */
+  ::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+  }
+  ::-webkit-scrollbar-track,
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background-color: var(--scrollbar);
+    background-clip: padding-box;
+    border: 3.5px solid transparent;
+    border-radius: 999px;
+    min-height: 40px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: var(--scrollbar-hover);
+    border-width: 2.5px;
+  }
+  ::-webkit-scrollbar-thumb:active {
+    background-color: var(--primary);
+  }
+  ::-webkit-scrollbar-button {
+    display: none;
+  }
+}
+
+@layer components {
+  /* Soft wallpaper when the OS gives no window material */
+  .app-wall {
+    position: fixed;
+    inset: -12%;
+    z-index: -1;
+    pointer-events: none;
+    background:
+      radial-gradient(38% 46% at 14% 20%, var(--wall-a), transparent 72%),
+      radial-gradient(34% 42% at 86% 14%, var(--wall-b), transparent 72%),
+      radial-gradient(44% 52% at 68% 96%, var(--wall-c), transparent 72%),
+      var(--wall);
+    animation: wall-drift 40s ease-in-out infinite;
+  }
+  html.has-mica .app-wall {
+    display: none;
+  }
+  .glass {
+    background: var(--glass);
+    -webkit-backdrop-filter: blur(30px) saturate(160%);
+    backdrop-filter: blur(30px) saturate(160%);
+    border: 1px solid var(--edge);
+  }
+  .glass-strong {
+    background: var(--glass-strong);
+    -webkit-backdrop-filter: blur(40px) saturate(170%);
+    backdrop-filter: blur(40px) saturate(170%);
+    border: 1px solid var(--edge);
+    box-shadow: var(--shadow-panel);
+  }
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+@keyframes wall-drift {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  50% {
+    transform: translate(2%, -2%) scale(1.05);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media (prefers-reduced-transparency: reduce) {
+  .glass,
+  .glass-strong {
+    background: var(--background) !important;
+    -webkit-backdrop-filter: none !important;
+    backdrop-filter: none !important;
+  }
+  html.has-mica body {
+    background: var(--wall);
+  }
+}
+
+@media (prefers-contrast: more) {
+  :root {
+    --border: rgb(0 0 0 / 0.5);
+    --edge: rgb(0 0 0 / 0.5);
+    --muted-foreground: #2e3339;
+  }
+  .dark {
+    --border: rgb(255 255 255 / 0.55);
+    --edge: rgb(255 255 255 / 0.55);
+    --muted-foreground: #d0d5db;
   }
 }

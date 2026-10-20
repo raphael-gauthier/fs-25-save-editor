@@ -36,3 +36,6 @@ image_dds = { version = "0.7", default-features = false, features = ["ddsfile", 
 zip = { version = "9", default-features = false, features = ["deflate"] }
 reqwest = { version = "0.13", features = ["json", "rustls"], default-features = false }
 
+
+[target.'cfg(windows)'.dependencies]
+window-vibrancy = "0.8"

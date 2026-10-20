@@ -1,19 +1,17 @@
 import { ref, watch } from "vue";
+import { applyWindowMaterial } from "@/composables/useWindow";
 
 export type ThemeMode = "light" | "dark" | "system";
 
-const theme = ref<ThemeMode>("system");
+const theme = ref<ThemeMode>("dark");
 let mediaQuery: MediaQueryList | null = null;
 let mediaListener: ((e: MediaQueryListEvent) => void) | null = null;
 
 function applyTheme(mode: ThemeMode) {
-  const html = document.documentElement;
-  if (mode === "system") {
-    const prefersDark = window.matchMedia("(prefers-color-scheme: dark)").matches;
-    html.classList.toggle("dark", prefersDark);
-  } else {
-    html.classList.toggle("dark", mode === "dark");
-  }
+  const dark =
+    mode === "system" ? window.matchMedia("(prefers-color-scheme: dark)").matches : mode === "dark";
+  document.documentElement.classList.toggle("dark", dark);
+  applyWindowMaterial(dark);
 }
 
 function setupMediaListener() {

@@ -9,13 +9,7 @@ import { cropEdit, soilWorkEdit, type SoilWork } from "@/lib/fieldWork";
 import { formatMoney } from "@/lib/utils";
 import { useFarmlandTrade, PLAYER_FARM_ID } from "@/composables/useFarmlandTrade";
 import { FRUIT_TYPES, GROUND_TYPES, HARVEST_READY_STATES, MAX_GROWTH_STATE } from "@/lib/constants";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-} from "@/components/ui/sheet";
+import { AnimatePresence, motion } from "motion-v";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Slider } from "@/components/ui/slider";
@@ -27,16 +21,17 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Sprout, Sparkles, Bug, Gem, Droplets, FlaskConical, Tractor, Shovel, Wheat } from "@lucide/vue";
+import { Sparkles, Tractor, Shovel, Wheat, ChevronUp, ChevronDown, Undo2 } from "@lucide/vue";
+import { fruitColor } from "@/lib/fruitColors";
 
 interface Props {
   field: Field | null;
-  open: boolean;
 }
 
 const props = defineProps<Props>();
 const emit = defineEmits<{
-  "update:open": [value: boolean];
+  prev: [];
+  next: [];
 }>();
 
 const { t } = useI18n();
@@ -243,6 +238,90 @@ const pendingItems = computed<string[]>(() => {
   return items;
 });
 
+/** The crop the field shows: the density map's, else the XML's. */
+const currentFruit = computed<string | null>(() => {
+  if (!props.field) return null;
+  if (density.value) return density.value.dominantFruit;
+  return props.field.fruitType !== "UNKNOWN" ? props.field.fruitType : null;
+});
+
+const header = computed(() => {
+  const fruit = currentFruit.value;
+  if (!props.field || !fruit) return { crop: t("field.none"), stage: "", ready: false };
+  const mapFruit = store.getMapFruitType(fruit);
+  const dominant = density.value?.fruitDistribution[0];
+  const state = dominant ? Math.round(dominant.avgGrowth) : props.field.growthState;
+  const { key, params } = growthStageLabel(mapFruit, state);
+  return { crop: formatFruitName(fruit), stage: t(key, params), ready: key === "growthStage.ready" };
+});
+
+interface SoilTile {
+  key: string;
+  label: string;
+  value: number;
+  ok: boolean;
+  action?: { label: string; run: () => void };
+}
+
+/** Soil state from the density maps, each with the fix it offers. */
+const soilTiles = computed<SoilTile[]>(() => {
+  const d = density.value;
+  if (!d) return [];
+  return [
+    {
+      key: "lime",
+      label: t("field.limeLevel"),
+      value: 100 - d.limeStatus.pctAtZero,
+      ok: d.limeStatus.pctAtZero <= 50,
+      action: d.limeStatus.pctAtZero > 0 ? { label: t("field.maxLime"), run: handleDensityMaxLime } : undefined,
+    },
+    {
+      key: "spray",
+      label: t("field.sprayLevel"),
+      value: 100 - d.sprayStatus.pctAtZero,
+      ok: d.sprayStatus.pctAtZero <= 50,
+      action: d.sprayStatus.pctAtZero > 0 ? { label: t("field.maxFertilizer"), run: handleDensityMaxSpray } : undefined,
+    },
+    {
+      key: "plow",
+      label: t("field.plowLevel"),
+      value: 100 - d.plowStatus.pctAtZero,
+      ok: d.plowStatus.pctAtZero <= 50,
+      action: d.plowStatus.pctAtZero > 0 ? { label: t("field.maxPlow"), run: handleDensityMaxPlow } : undefined,
+    },
+    {
+      key: "weeds",
+      label: t("field.weedState"),
+      value: d.weedCoverage,
+      ok: d.weedCoverage <= 30,
+      action: d.weedCoverage > 0 ? { label: t("field.removeWeeds"), run: handleDensityClearWeeds } : undefined,
+    },
+    {
+      key: "stones",
+      label: t("field.stoneLevel"),
+      value: d.stoneCoverage,
+      ok: d.stoneCoverage <= 30,
+      action: d.stoneCoverage > 0 ? { label: t("field.removeStones"), run: handleDensityClearStones } : undefined,
+    },
+  ];
+});
+
+type LevelKey =
+  | "weedState" | "stoneLevel" | "sprayLevel" | "limeLevel"
+  | "plowLevel" | "rollerLevel" | "stubbleShredLevel" | "waterLevel";
+
+/** XML treatment levels (advanced mode) with the game's maximum for each. */
+const xmlLevels: { key: LevelKey; labelKey: string; max: number }[] = [
+  { key: "weedState", labelKey: "field.weedState", max: 9 },
+  { key: "stoneLevel", labelKey: "field.stoneLevel", max: 5 },
+  { key: "sprayLevel", labelKey: "field.sprayLevel", max: 2 },
+  { key: "limeLevel", labelKey: "field.limeLevel", max: 3 },
+  { key: "plowLevel", labelKey: "field.plowLevel", max: 1 },
+  { key: "rollerLevel", labelKey: "field.rollerLevel", max: 1 },
+  { key: "stubbleShredLevel", labelKey: "field.stubbleShredLevel", max: 1 },
+  { key: "waterLevel", labelKey: "field.waterLevel", max: 3 },
+];
+
 function formatFruitName(name: string): string {
   const unknownMatch = name.match(/^UNKNOWN_(\d+)$/);
   if (unknownMatch) {
@@ -253,433 +332,366 @@ function formatFruitName(name: string): string {
 </script>
 
 <template>
-  <Sheet :open="open" @update:open="emit('update:open', $event)">
-    <SheetContent class="overflow-y-auto sm:max-w-md">
-      <template v-if="field">
-        <SheetHeader>
-          <SheetTitle class="flex items-center gap-2">
-            <Sprout class="size-5" />
-            {{ t("field.title") }} #{{ field.id }}
-          </SheetTitle>
-          <SheetDescription>
-            <template v-if="density?.dominantFruit">{{ formatFruitName(density.dominantFruit) }}</template>
-            <template v-else>{{ field.fruitType !== "UNKNOWN" ? t(`fillTypes.${field.fruitType}`, field.fruitType) : t("field.none") }}</template>
-          </SheetDescription>
-        </SheetHeader>
-
-        <div class="mt-6 space-y-6">
-          <!-- Density map data (actual field state with edit actions) -->
-          <template v-if="density">
-            <p class="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              {{ t("field.densityTitle") }}
-            </p>
-
-            <!-- Pending edit indicator -->
-            <div v-if="hasPendingDensityEdit" class="rounded-md bg-amber-500/10 px-3 py-2 text-xs text-amber-600 dark:text-amber-400">
-              {{ t("field.densityEditPending") }}
-              <ul v-if="pendingItems.length > 0" class="mt-1 list-inside list-disc">
-                <li v-for="item in pendingItems" :key="item">{{ item }}</li>
-              </ul>
-            </div>
-
-            <!-- Crop distribution -->
-            <div class="space-y-2">
-              <Label>{{ t("field.fruitDistribution") }}</Label>
-              <div v-if="density.fruitDistribution.length > 0" class="space-y-1.5">
-                <div
-                  v-for="fc in density.fruitDistribution"
-                  :key="fc.fruitType"
-                  class="flex items-center gap-2"
-                >
-                  <span class="w-24 truncate text-sm">{{ formatFruitName(fc.fruitType) }}</span>
-                  <div class="h-2 flex-1 rounded-full bg-muted">
-                    <div class="h-2 rounded-full bg-green-500" :style="{ width: fc.percentage + '%' }" />
-                  </div>
-                  <span class="w-28 truncate text-xs text-muted-foreground">
-                    {{ stageLabel(store.getMapFruitType(fc.fruitType), Math.round(fc.avgGrowth)) }}
-                  </span>
-                  <span class="w-12 text-right font-mono text-xs text-muted-foreground">{{ fc.percentage.toFixed(0) }}%</span>
-                </div>
-              </div>
-              <p v-else class="text-sm text-muted-foreground">{{ t("field.none") }}</p>
-            </div>
-
-            <!-- Treatment levels with edit buttons -->
-            <div class="grid grid-cols-2 gap-3 text-sm">
-              <div class="flex items-center justify-between rounded-md bg-muted/50 px-3 py-2">
-                <span>{{ t("field.limeLevel") }}</span>
-                <span :class="density.limeStatus.pctAtZero > 50 ? 'font-medium text-red-500' : 'text-green-600 dark:text-green-400'">
-                  {{ (100 - density.limeStatus.pctAtZero).toFixed(0) }}%
-                </span>
-              </div>
-              <div class="flex items-center justify-between rounded-md bg-muted/50 px-3 py-2">
-                <span>{{ t("field.sprayLevel") }}</span>
-                <span :class="density.sprayStatus.pctAtZero > 50 ? 'font-medium text-red-500' : 'text-green-600 dark:text-green-400'">
-                  {{ (100 - density.sprayStatus.pctAtZero).toFixed(0) }}%
-                </span>
-              </div>
-              <div class="flex items-center justify-between rounded-md bg-muted/50 px-3 py-2">
-                <span>{{ t("field.plowLevel") }}</span>
-                <span :class="density.plowStatus.pctAtZero > 50 ? 'font-medium text-red-500' : 'text-green-600 dark:text-green-400'">
-                  {{ (100 - density.plowStatus.pctAtZero).toFixed(0) }}%
-                </span>
-              </div>
-              <div class="flex items-center justify-between rounded-md bg-muted/50 px-3 py-2">
-                <span>{{ t("field.weedState") }}</span>
-                <span :class="density.weedCoverage > 30 ? 'font-medium text-red-500' : 'text-green-600 dark:text-green-400'">
-                  {{ density.weedCoverage.toFixed(0) }}%
-                </span>
-              </div>
-            </div>
-
-            <!-- Density edit quick actions -->
-            <div class="space-y-2">
-              <Label>{{ t("field.densityActions") }}</Label>
-              <div class="flex flex-wrap gap-2">
-                <Button v-if="density.dominantFruit" variant="outline" size="sm" @click="handleDensityMaxGrowth">
-                  <Sparkles class="size-4" />
-                  {{ t("field.maxGrowth") }}
-                </Button>
-                <Button v-if="density.limeStatus.pctAtZero > 0" variant="outline" size="sm" @click="handleDensityMaxLime">
-                  <Droplets class="size-4" />
-                  {{ t("field.maxLime") }}
-                </Button>
-                <Button v-if="density.sprayStatus.pctAtZero > 0" variant="outline" size="sm" @click="handleDensityMaxSpray">
-                  <FlaskConical class="size-4" />
-                  {{ t("field.maxFertilizer") }}
-                </Button>
-                <Button v-if="density.plowStatus.pctAtZero > 0" variant="outline" size="sm" @click="handleDensityMaxPlow">
-                  <Tractor class="size-4" />
-                  {{ t("field.maxPlow") }}
-                </Button>
-                <Button v-if="density.weedCoverage > 0" variant="outline" size="sm" @click="handleDensityClearWeeds">
-                  <Bug class="size-4" />
-                  {{ t("field.removeWeeds") }}
-                </Button>
-                <Button v-if="density.stoneCoverage > 0" variant="outline" size="sm" @click="handleDensityClearStones">
-                  <Gem class="size-4" />
-                  {{ t("field.removeStones") }}
-                </Button>
-              </div>
-            </div>
-
-            <!-- Crop picker: fruit and growth stage from the map's own crops -->
-            <div v-if="store.mapFruitTypes.length > 0" class="space-y-2">
-              <Label>{{ t("field.cropTitle") }}</Label>
-              <div class="grid grid-cols-2 gap-2">
-                <Select :model-value="cropChoice" @update:model-value="handleCropChoice">
-                  <SelectTrigger :aria-label="t('field.cropFruit')">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="NONE">{{ t("field.noCrop") }}</SelectItem>
-                    <SelectItem v-for="fruit in sortedFruitTypes" :key="fruit.name" :value="fruit.name">
-                      {{ formatFruitName(fruit.name) }}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select :model-value="String(stageChoice)" :disabled="!chosenFruit" @update:model-value="handleStageChoice">
-                  <SelectTrigger :aria-label="t('field.cropStage')">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem
-                      v-for="(_, i) in chosenFruit?.states ?? []"
-                      :key="i"
-                      :value="String(i + 1)"
-                    >
-                      {{ i + 1 }} · {{ stageLabel(chosenFruit, i + 1) }}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <Button variant="outline" size="sm" @click="handleApplyCrop">
-                <Wheat class="size-4" />
-                {{ t("field.applyCrop") }}
-              </Button>
-            </div>
-
-            <!-- Soil work presets -->
-            <div class="space-y-2">
-              <Label>{{ t("field.soilTitle") }}</Label>
-              <div class="flex flex-wrap gap-2">
-                <Button variant="outline" size="sm" @click="handleSoilWork('plow')">
-                  <Tractor class="size-4" />
-                  {{ t("field.soilPlow") }}
-                </Button>
-                <Button variant="outline" size="sm" @click="handleSoilWork('cultivate')">
-                  <Shovel class="size-4" />
-                  {{ t("field.soilCultivate") }}
-                </Button>
-                <Button v-if="density.rollerStatus.pctAtZero < 100" variant="outline" size="sm" @click="handleSoilWork('roll')">
-                  <Tractor class="size-4" />
-                  {{ t("field.soilRoll") }}
-                </Button>
-                <Button v-if="density.stubbleShredStatus.pctAtMax < 100" variant="outline" size="sm" @click="handleSoilWork('mulch')">
-                  <Shovel class="size-4" />
-                  {{ t("field.soilMulch") }}
-                </Button>
-              </div>
-            </div>
-
-            <template v-if="settings.advancedMode">
-              <Separator />
-              <p class="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-                {{ t("field.xmlEditTitle") }}
-              </p>
-            </template>
+  <section
+    v-if="field"
+    :aria-labelledby="`field-title-${field.id}`"
+    class="flex flex-col gap-5"
+  >
+    <!-- Header -->
+    <div class="flex items-start gap-3.5">
+      <span
+        class="size-12 shrink-0 rounded-[13px] transition-colors duration-300"
+        :style="{ background: fruitColor(currentFruit) }"
+        aria-hidden="true"
+      />
+      <div class="flex min-w-0 flex-1 flex-col gap-0.5">
+        <h3 :id="`field-title-${field.id}`" class="text-2xl font-semibold tracking-tight">
+          {{ t("farmland.fieldNumber", { id: field.id }) }}
+        </h3>
+        <p class="truncate text-muted-foreground">
+          {{ header.crop }}<template v-if="header.stage"> ·
+            <span class="font-semibold" :class="header.ready ? 'text-ready' : 'text-primary-text'">{{ header.stage }}</span>
           </template>
+        </p>
+      </div>
+      <div class="flex shrink-0 gap-0.5">
+        <Button variant="ghost" size="icon" class="size-9" :aria-label="t('fieldUi.prev')" :title="t('fieldUi.prev')" @click="emit('prev')">
+          <ChevronUp class="size-4" />
+        </Button>
+        <Button variant="ghost" size="icon" class="size-9" :aria-label="t('fieldUi.next')" :title="t('fieldUi.next')" @click="emit('next')">
+          <ChevronDown class="size-4" />
+        </Button>
+      </div>
+    </div>
 
-          <!-- XML fields: show always when no density, or behind advanced mode when density exists -->
-          <template v-if="!density || settings.advancedMode">
-          <!-- Fruit type -->
-          <div class="space-y-2" :class="fieldModifiedClass('fruitType')">
-            <Label>{{ t("field.fruitType") }}</Label>
-            <Select :model-value="field.fruitType" @update:model-value="handleFruitTypeChange">
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem v-for="fruit in fruitOptions" :key="fruit" :value="fruit">
-                  {{ t(`fillTypes.${fruit}`, fruit) }}
-                </SelectItem>
-              </SelectContent>
-            </Select>
+    <!-- Pending edits -->
+    <AnimatePresence>
+      <motion.div
+        v-if="hasPendingDensityEdit"
+        :initial="{ opacity: 0, scale: 0.96, height: 0 }"
+        :animate="{ opacity: 1, scale: 1, height: 'auto' }"
+        :exit="{ opacity: 0, scale: 0.96, height: 0 }"
+        :transition="{ type: 'spring', stiffness: 420, damping: 36 }"
+        class="overflow-hidden"
+      >
+        <div class="flex items-start gap-3 rounded-xl bg-ready-soft px-3.5 py-3 text-ready">
+          <div class="min-w-0 flex-1">
+            <p class="text-sm font-semibold">{{ t("fieldUi.pendingTitle") }}</p>
+            <ul v-if="pendingItems.length > 0" class="mt-1 space-y-0.5 text-[13px]">
+              <li v-for="item in pendingItems" :key="item">{{ item }}</li>
+            </ul>
           </div>
-
-          <!-- Planned fruit -->
-          <div class="space-y-2" :class="fieldModifiedClass('plannedFruit')">
-            <Label>{{ t("field.plannedFruit") }}</Label>
-            <Select :model-value="field.plannedFruit" @update:model-value="handlePlannedFruitChange">
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem v-for="fruit in fruitOptions" :key="fruit" :value="fruit">
-                  {{ t(`fillTypes.${fruit}`, fruit) }}
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <!-- Growth state -->
-          <div class="space-y-2" :class="fieldModifiedClass('growthState')">
-            <div class="flex items-center justify-between text-sm">
-              <Label>{{ t("field.growthState") }}</Label>
-              <span class="font-mono text-muted-foreground">
-                {{ field.growthState }} / {{ readyState ?? MAX_GROWTH_STATE }}
-              </span>
-            </div>
-            <Slider
-              :model-value="[field.growthState]"
-              :max="MAX_GROWTH_STATE"
-              :min="0"
-              :step="1"
-              @update:model-value="handleGrowthChange"
-            />
-            <Button variant="outline" size="sm" :disabled="readyState === undefined" @click="handleMaxGrowth">
-              <Sparkles class="size-4" />
-              {{ t("field.maxGrowth") }}
-            </Button>
-          </div>
-
-          <!-- Ground type -->
-          <div class="space-y-2" :class="fieldModifiedClass('groundType')">
-            <Label>{{ t("field.groundType") }}</Label>
-            <Select :model-value="field.groundType" @update:model-value="handleGroundTypeChange">
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem v-for="gt in GROUND_TYPES" :key="gt" :value="gt">
-                  {{ t(`groundTypes.${gt}`, gt) }}
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          </template>
-
-          <!-- Farmland owner (always visible, not from density maps) -->
-          <div v-if="farmland" class="space-y-2">
-            <Label>{{ t("field.farmlandOwner") }}</Label>
-            <div v-if="farmlandInfo" class="flex flex-wrap items-center justify-between gap-2 text-sm">
-              <span class="font-mono text-muted-foreground">
-                {{ farmlandInfo.areaHa.toFixed(2) }} ha · {{ formatMoney(farmlandInfo.price) }}
-              </span>
-              <Button
-                v-if="farmland.farmId === 0"
-                size="sm"
-                variant="outline"
-                :disabled="!!trade.buyBlock([farmland.id])"
-                :title="trade.buyBlock([farmland.id]) ? t(`farmland.block.${trade.buyBlock([farmland.id])}`) : ''"
-                @click="trade.buy([farmland.id])"
-              >
-                {{ t("farmland.buy") }}
-              </Button>
-              <Button
-                v-else-if="farmland.farmId === PLAYER_FARM_ID"
-                size="sm"
-                variant="outline"
-                :disabled="!!trade.sellBlock([farmland.id])"
-                :title="trade.sellBlock([farmland.id]) ? t(`farmland.block.${trade.sellBlock([farmland.id])}`) : ''"
-                @click="trade.sell([farmland.id])"
-              >
-                {{ t("farmland.sell") }}
-              </Button>
-            </div>
-            <p v-if="farmlandInfo && settings.advancedMode" class="text-xs text-muted-foreground">
-              {{ t("field.freeTransfer") }}
-            </p>
-            <Select
-              v-if="!farmlandInfo || settings.advancedMode"
-              :model-value="String(farmland.farmId)"
-              @update:model-value="handleOwnerChange"
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="0">{{ t("field.free") }}</SelectItem>
-                <SelectItem value="1">{{ t("field.myFarm") }}</SelectItem>
-                <SelectItem v-if="settings.advancedMode" v-for="i in [2,3,4,5,6]" :key="i" :value="String(i)">
-                  {{ t("field.farm", { id: i }) }}
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-
-          <!-- Advanced: Treatment levels -->
-          <template v-if="settings.advancedMode">
-            <Separator />
-            <p class="text-xs font-medium uppercase tracking-wide text-muted-foreground">
-              {{ t("field.treatments") }}
-            </p>
-
-            <div class="space-y-4">
-              <!-- Weed state -->
-              <div class="space-y-2" :class="fieldModifiedClass('weedState')">
-                <div class="flex items-center justify-between text-sm">
-                  <Label>{{ t("field.weedState") }}</Label>
-                  <span class="font-mono text-muted-foreground">{{ field.weedState }}</span>
-                </div>
-                <Slider
-                  :model-value="[field.weedState]"
-                  :max="9"
-                  :min="0"
-                  :step="1"
-                  @update:model-value="handleSliderChange('weedState', $event)"
-                />
-              </div>
-
-              <!-- Stone level -->
-              <div class="space-y-2" :class="fieldModifiedClass('stoneLevel')">
-                <div class="flex items-center justify-between text-sm">
-                  <Label>{{ t("field.stoneLevel") }}</Label>
-                  <span class="font-mono text-muted-foreground">{{ field.stoneLevel }}</span>
-                </div>
-                <Slider
-                  :model-value="[field.stoneLevel]"
-                  :max="5"
-                  :min="0"
-                  :step="1"
-                  @update:model-value="handleSliderChange('stoneLevel', $event)"
-                />
-              </div>
-
-              <!-- Spray level -->
-              <div class="space-y-2" :class="fieldModifiedClass('sprayLevel')">
-                <div class="flex items-center justify-between text-sm">
-                  <Label>{{ t("field.sprayLevel") }}</Label>
-                  <span class="font-mono text-muted-foreground">{{ field.sprayLevel }}</span>
-                </div>
-                <Slider
-                  :model-value="[field.sprayLevel]"
-                  :max="2"
-                  :min="0"
-                  :step="1"
-                  @update:model-value="handleSliderChange('sprayLevel', $event)"
-                />
-              </div>
-
-              <!-- Lime level -->
-              <div class="space-y-2" :class="fieldModifiedClass('limeLevel')">
-                <div class="flex items-center justify-between text-sm">
-                  <Label>{{ t("field.limeLevel") }}</Label>
-                  <span class="font-mono text-muted-foreground">{{ field.limeLevel }}</span>
-                </div>
-                <Slider
-                  :model-value="[field.limeLevel]"
-                  :max="3"
-                  :min="0"
-                  :step="1"
-                  @update:model-value="handleSliderChange('limeLevel', $event)"
-                />
-              </div>
-
-              <!-- Plow level -->
-              <div class="space-y-2" :class="fieldModifiedClass('plowLevel')">
-                <div class="flex items-center justify-between text-sm">
-                  <Label>{{ t("field.plowLevel") }}</Label>
-                  <span class="font-mono text-muted-foreground">{{ field.plowLevel }}</span>
-                </div>
-                <Slider
-                  :model-value="[field.plowLevel]"
-                  :max="1"
-                  :min="0"
-                  :step="1"
-                  @update:model-value="handleSliderChange('plowLevel', $event)"
-                />
-              </div>
-
-              <!-- Roller level -->
-              <div class="space-y-2" :class="fieldModifiedClass('rollerLevel')">
-                <div class="flex items-center justify-between text-sm">
-                  <Label>{{ t("field.rollerLevel") }}</Label>
-                  <span class="font-mono text-muted-foreground">{{ field.rollerLevel }}</span>
-                </div>
-                <Slider
-                  :model-value="[field.rollerLevel]"
-                  :max="1"
-                  :min="0"
-                  :step="1"
-                  @update:model-value="handleSliderChange('rollerLevel', $event)"
-                />
-              </div>
-
-              <!-- Stubble shred level -->
-              <div class="space-y-2" :class="fieldModifiedClass('stubbleShredLevel')">
-                <div class="flex items-center justify-between text-sm">
-                  <Label>{{ t("field.stubbleShredLevel") }}</Label>
-                  <span class="font-mono text-muted-foreground">{{ field.stubbleShredLevel }}</span>
-                </div>
-                <Slider
-                  :model-value="[field.stubbleShredLevel]"
-                  :max="1"
-                  :min="0"
-                  :step="1"
-                  @update:model-value="handleSliderChange('stubbleShredLevel', $event)"
-                />
-              </div>
-
-              <!-- Water level -->
-              <div class="space-y-2" :class="fieldModifiedClass('waterLevel')">
-                <div class="flex items-center justify-between text-sm">
-                  <Label>{{ t("field.waterLevel") }}</Label>
-                  <span class="font-mono text-muted-foreground">{{ field.waterLevel }}</span>
-                </div>
-                <Slider
-                  :model-value="[field.waterLevel]"
-                  :max="3"
-                  :min="0"
-                  :step="1"
-                  @update:model-value="handleSliderChange('waterLevel', $event)"
-                />
-              </div>
-            </div>
-          </template>
+          <Button
+            variant="outline"
+            size="sm"
+            class="h-8 shrink-0 border-current bg-transparent text-current hover:bg-ready-soft hover:text-current"
+            @click="store.discardFieldEdits(field.id)"
+          >
+            <Undo2 class="size-3.5" />
+            {{ t("dirtyTracking.discardChanges") }}
+          </Button>
         </div>
+      </motion.div>
+    </AnimatePresence>
+
+    <!-- Density map data (actual field state with edit actions) -->
+    <template v-if="density">
+      <!-- Crop distribution -->
+      <div class="space-y-2.5">
+        <div class="flex items-center justify-between gap-2">
+          <h4 class="text-[13px] font-semibold text-muted-foreground">{{ t("field.fruitDistribution") }}</h4>
+          <Button
+            v-if="density.dominantFruit && !header.ready"
+            size="sm"
+            class="h-8"
+            @click="handleDensityMaxGrowth"
+          >
+            <Sparkles class="size-4" />
+            {{ t("field.maxGrowth") }}
+          </Button>
+        </div>
+        <ul v-if="density.fruitDistribution.length > 0" class="space-y-2">
+          <li
+            v-for="fc in density.fruitDistribution"
+            :key="fc.fruitType"
+            class="flex items-center gap-2.5 text-sm"
+          >
+            <span class="size-2.5 shrink-0 rounded-[3px]" :style="{ background: fruitColor(fc.fruitType) }" aria-hidden="true" />
+            <span class="w-24 truncate font-medium">{{ formatFruitName(fc.fruitType) }}</span>
+            <span class="h-1.5 flex-1 overflow-hidden rounded-full bg-border" aria-hidden="true">
+              <motion.span
+                class="block h-full rounded-full"
+                :style="{ background: fruitColor(fc.fruitType) }"
+                :initial="{ width: 0 }"
+                :animate="{ width: fc.percentage + '%' }"
+                :transition="{ type: 'spring', stiffness: 160, damping: 26 }"
+              />
+            </span>
+            <span class="w-28 truncate text-xs text-muted-foreground">
+              {{ stageLabel(store.getMapFruitType(fc.fruitType), Math.round(fc.avgGrowth)) }}
+            </span>
+            <span class="w-10 text-right text-xs text-muted-foreground tabular">{{ fc.percentage.toFixed(0) }}%</span>
+          </li>
+        </ul>
+        <p v-else class="text-sm text-muted-foreground">{{ t("field.none") }}</p>
+      </div>
+
+      <!-- Crop picker: fruit and growth stage from the map's own crops -->
+      <div v-if="store.mapFruitTypes.length > 0" class="space-y-2.5">
+        <h4 class="text-[13px] font-semibold text-muted-foreground">{{ t("fieldUi.changeCrop") }}</h4>
+        <Select :model-value="cropChoice" @update:model-value="handleCropChoice">
+          <SelectTrigger class="w-full" :aria-label="t('field.cropFruit')">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="NONE">{{ t("field.noCrop") }}</SelectItem>
+            <SelectItem v-for="fruit in sortedFruitTypes" :key="fruit.name" :value="fruit.name">
+              {{ formatFruitName(fruit.name) }}
+            </SelectItem>
+          </SelectContent>
+        </Select>
+        <div
+          v-if="chosenFruit"
+          role="radiogroup"
+          :aria-label="t('field.cropStage')"
+          class="flex flex-wrap gap-1.5"
+        >
+          <button
+            v-for="(_, i) in chosenFruit.states"
+            :key="i"
+            type="button"
+            role="radio"
+            :aria-checked="stageChoice === i + 1"
+            class="relative h-8 rounded-lg border px-2.5 text-[13px] transition-colors"
+            :class="stageChoice === i + 1 ? 'border-transparent font-semibold text-primary-text' : 'hover:bg-hover'"
+            @click="handleStageChoice(i + 1)"
+          >
+            <motion.span
+              v-if="stageChoice === i + 1"
+              layout-id="field-stage-choice"
+              class="absolute inset-0 rounded-lg bg-primary-soft ring-1 ring-primary/40"
+              :transition="{ type: 'spring', stiffness: 520, damping: 40 }"
+            />
+            <span class="relative">{{ i + 1 }} · {{ stageLabel(chosenFruit, i + 1) }}</span>
+          </button>
+        </div>
+        <Button variant="outline" size="sm" class="h-9" @click="handleApplyCrop">
+          <Wheat class="size-4" />
+          {{ t("field.applyCrop") }}
+        </Button>
+      </div>
+
+      <!-- Soil state, each with its fix -->
+      <div class="space-y-2.5">
+        <h4 class="text-[13px] font-semibold text-muted-foreground">{{ t("fieldUi.soil") }}</h4>
+        <ul class="grid grid-cols-[repeat(auto-fill,minmax(min(100%,150px),1fr))] gap-1.5">
+          <li
+            v-for="tile in soilTiles"
+            :key="tile.key"
+            class="flex min-h-12 flex-wrap items-center gap-x-2.5 gap-y-1 rounded-xl bg-card py-1.5 pl-3 pr-1.5"
+          >
+            <span
+              class="size-[9px] shrink-0"
+              :class="tile.ok ? 'rounded-full bg-primary' : 'rounded-[2px] bg-destructive'"
+              aria-hidden="true"
+            />
+            <span class="flex min-w-[96px] flex-1 flex-col leading-tight">
+              <span class="text-sm font-medium">{{ tile.label }}</span>
+              <span class="text-xs tabular" :class="tile.ok ? 'text-muted-foreground' : 'text-destructive'">
+                {{ tile.value.toFixed(0) }}%
+                <span class="sr-only">{{ tile.ok ? t("fieldUi.ok") : t("fieldUi.toDo") }}</span>
+              </span>
+            </span>
+            <button
+              v-if="tile.action"
+              type="button"
+              class="ml-auto h-8 shrink-0 rounded-lg bg-primary-soft px-2.5 text-[13px] font-semibold text-primary-text transition-colors hover:bg-primary hover:text-primary-foreground"
+              @click="tile.action.run"
+            >
+              {{ tile.action.label }}
+            </button>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Soil work presets -->
+      <div class="space-y-2.5">
+        <h4 class="text-[13px] font-semibold text-muted-foreground">{{ t("field.soilTitle") }}</h4>
+        <div class="flex flex-wrap gap-1.5">
+          <Button variant="outline" size="sm" @click="handleSoilWork('plow')">
+            <Tractor class="size-4" />
+            {{ t("field.soilPlow") }}
+          </Button>
+          <Button variant="outline" size="sm" @click="handleSoilWork('cultivate')">
+            <Shovel class="size-4" />
+            {{ t("field.soilCultivate") }}
+          </Button>
+          <Button v-if="density.rollerStatus.pctAtZero < 100" variant="outline" size="sm" @click="handleSoilWork('roll')">
+            <Tractor class="size-4" />
+            {{ t("field.soilRoll") }}
+          </Button>
+          <Button v-if="density.stubbleShredStatus.pctAtMax < 100" variant="outline" size="sm" @click="handleSoilWork('mulch')">
+            <Shovel class="size-4" />
+            {{ t("field.soilMulch") }}
+          </Button>
+        </div>
+      </div>
+
+      <template v-if="settings.advancedMode">
+        <Separator />
+        <h4 class="text-[13px] font-semibold text-muted-foreground">{{ t("field.xmlEditTitle") }}</h4>
       </template>
-    </SheetContent>
-  </Sheet>
+    </template>
+
+    <!-- XML fields: always without density, behind advanced mode with it -->
+    <template v-if="!density || settings.advancedMode">
+      <div class="space-y-2" :class="fieldModifiedClass('fruitType')">
+        <Label>{{ t("field.fruitType") }}</Label>
+        <Select :model-value="field.fruitType" @update:model-value="handleFruitTypeChange">
+          <SelectTrigger class="w-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem v-for="fruit in fruitOptions" :key="fruit" :value="fruit">
+              {{ t(`fillTypes.${fruit}`, fruit) }}
+            </SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div class="space-y-2" :class="fieldModifiedClass('plannedFruit')">
+        <Label>{{ t("field.plannedFruit") }}</Label>
+        <Select :model-value="field.plannedFruit" @update:model-value="handlePlannedFruitChange">
+          <SelectTrigger class="w-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem v-for="fruit in fruitOptions" :key="fruit" :value="fruit">
+              {{ t(`fillTypes.${fruit}`, fruit) }}
+            </SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div class="space-y-2" :class="fieldModifiedClass('growthState')">
+        <div class="flex items-center justify-between text-sm">
+          <Label>{{ t("field.growthState") }}</Label>
+          <span class="text-muted-foreground tabular">
+            {{ field.growthState }} / {{ readyState ?? MAX_GROWTH_STATE }}
+          </span>
+        </div>
+        <Slider
+          :model-value="[field.growthState]"
+          :max="MAX_GROWTH_STATE"
+          :min="0"
+          :step="1"
+          @update:model-value="handleGrowthChange"
+        />
+        <Button variant="outline" size="sm" :disabled="readyState === undefined" @click="handleMaxGrowth">
+          <Sparkles class="size-4" />
+          {{ t("field.maxGrowth") }}
+        </Button>
+      </div>
+
+      <div class="space-y-2" :class="fieldModifiedClass('groundType')">
+        <Label>{{ t("field.groundType") }}</Label>
+        <Select :model-value="field.groundType" @update:model-value="handleGroundTypeChange">
+          <SelectTrigger class="w-full">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem v-for="gt in GROUND_TYPES" :key="gt" :value="gt">
+              {{ t(`groundTypes.${gt}`, gt) }}
+            </SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+    </template>
+
+    <!-- Advanced: treatment levels -->
+    <template v-if="settings.advancedMode">
+      <Separator />
+      <h4 class="text-[13px] font-semibold text-muted-foreground">{{ t("field.treatments") }}</h4>
+      <div class="space-y-4">
+        <div
+          v-for="lvl in xmlLevels"
+          :key="lvl.key"
+          class="space-y-2"
+          :class="fieldModifiedClass(lvl.key)"
+        >
+          <div class="flex items-center justify-between text-sm">
+            <Label>{{ t(lvl.labelKey) }}</Label>
+            <span class="text-muted-foreground tabular">{{ field[lvl.key] }}</span>
+          </div>
+          <Slider
+            :model-value="[field[lvl.key] as number]"
+            :max="lvl.max"
+            :min="0"
+            :step="1"
+            @update:model-value="handleSliderChange(lvl.key, $event)"
+          />
+        </div>
+      </div>
+    </template>
+
+    <!-- Farmland: area, price, buy or sell -->
+    <div v-if="farmland" class="mt-auto space-y-2.5 border-t pt-4">
+      <div class="flex flex-wrap items-center gap-3">
+        <div class="flex min-w-0 flex-1 flex-col leading-tight">
+          <span class="font-semibold">
+            {{ t("farmland.id") }} {{ farmland.id }}<template v-if="farmlandInfo"> · {{ farmlandInfo.areaHa.toFixed(2) }} ha</template>
+          </span>
+          <span class="text-[13px] text-muted-foreground">
+            {{ farmland.farmId === PLAYER_FARM_ID ? t("field.myFarm") : farmland.farmId === 0 ? t("field.free") : t("field.farm", { id: farmland.farmId }) }}<template v-if="farmlandInfo"> · {{ formatMoney(farmlandInfo.price) }}</template>
+          </span>
+        </div>
+        <template v-if="farmlandInfo">
+          <Button
+            v-if="farmland.farmId === 0"
+            size="sm"
+            :disabled="!!trade.buyBlock([farmland.id])"
+            :title="trade.buyBlock([farmland.id]) ? t(`farmland.block.${trade.buyBlock([farmland.id])}`) : ''"
+            @click="trade.buy([farmland.id])"
+          >
+            {{ t("farmland.buy") }}
+          </Button>
+          <Button
+            v-else-if="farmland.farmId === PLAYER_FARM_ID"
+            size="sm"
+            variant="outline"
+            :disabled="!!trade.sellBlock([farmland.id])"
+            :title="trade.sellBlock([farmland.id]) ? t(`farmland.block.${trade.sellBlock([farmland.id])}`) : ''"
+            @click="trade.sell([farmland.id])"
+          >
+            {{ t("farmland.sell") }}
+          </Button>
+        </template>
+      </div>
+      <p v-if="farmlandInfo && settings.advancedMode" class="text-xs text-muted-foreground">
+        {{ t("field.freeTransfer") }}
+      </p>
+      <Select
+        v-if="!farmlandInfo || settings.advancedMode"
+        :model-value="String(farmland.farmId)"
+        @update:model-value="handleOwnerChange"
+      >
+        <SelectTrigger class="w-full" :aria-label="t('field.farmlandOwner')">
+          <SelectValue />
+        </SelectTrigger>
+        <SelectContent>
+          <SelectItem value="0">{{ t("field.free") }}</SelectItem>
+          <SelectItem value="1">{{ t("field.myFarm") }}</SelectItem>
+          <template v-if="settings.advancedMode">
+            <SelectItem v-for="i in [2, 3, 4, 5, 6]" :key="i" :value="String(i)">
+              {{ t("field.farm", { id: i }) }}
+            </SelectItem>
+          </template>
+        </SelectContent>
+      </Select>
+    </div>
+  </section>
+
+  <div v-else class="flex h-full items-center justify-center p-8 text-center text-muted-foreground">
+    {{ t("fieldUi.pick") }}
+  </div>
 </template>

@@ -12,12 +12,15 @@
   "app": {
     "windows": [
       {
+        "label": "main",
         "title": "FS25 Save Editor",
         "width": 1280,
         "height": 800,
         "minWidth": 1024,
         "minHeight": 768,
-        "center": true
+        "center": true,
+        "decorations": false,
+        "transparent": true
       }
     ],
     "security": {

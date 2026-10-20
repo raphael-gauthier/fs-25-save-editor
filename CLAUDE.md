@@ -88,7 +88,7 @@ pnpm test:rust        # Rust tests (cargo test in src-tauri)
 ## Architecture
 
 **Frontend:** Vue 3 (Composition API, `<script setup>`) + TypeScript + Pinia + Vue Router + vue-i18n
-**UI:** shadcn-vue (new-york style) + Tailwind CSS 4 + Lucide icons + Sonner toasts
+**UI:** shadcn-vue (new-york style) + Tailwind CSS 4 + Lucide icons + Sonner toasts + motion-v (Motion for Vue) + Geist fonts
 **Backend:** Tauri v2 / Rust — quick-xml for XML, serde for serialization
 **Path alias:** `@/` → `./src/`
 
@@ -96,9 +96,10 @@ pnpm test:rust        # Rust tests (cargo test in src-tauri)
 
 - `src/views/` — Page-level components (12 views)
 - `src/components/ui/` — shadcn-vue base components
-- `src/components/layout/` — AppHeader, AppSidebar, EditorLayout
+- `src/components/layout/` — WindowTitleBar/WindowControls (frameless window chrome), AppHeader (editor title bar), AppSidebar, EditorLayout, CommandPalette (Ctrl K)
+- `src/lib/navigation.ts` — the editor's sections, shared by the sidebar and the palette
 - `src/stores/` — Pinia stores by domain (finance, vehicle, sale, field, building, mission, world, savegame, backup, settings)
-- `src/composables/` — useTheme, useTauri, useUnsavedChanges, useFieldTracking, useUpdateChecker
+- `src/composables/` — useTheme, useWindow (Mica, window buttons), useTauri, useUnsavedChanges, useFieldTracking, useUpdateChecker
 - `src/plugins/i18n.ts` — vue-i18n config (legacy: false)
 - `src/locales/` — fr.json, en.json
 - `src/lib/types.ts` — TypeScript types mirroring Rust structs
@@ -122,7 +123,7 @@ pnpm test:rust        # Rust tests (cargo test in src-tauri)
 
 ### Tauri Commands
 
-`list_savegames`, `load_savegame`, `save_changes`, `list_backups`, `create_backup`, `restore_backup`, `delete_backup`, `prune_backups`, `check_for_updates`, `load_field_density_data`, `save_density_edits`, `load_map_fruit_types`, `load_farmlands_info`, `load_storage_capacities` — invoked via `useTauri` composable wrapping `@tauri-apps/api`.
+`list_savegames`, `load_savegame`, `save_changes`, `list_backups`, `create_backup`, `restore_backup`, `delete_backup`, `prune_backups`, `check_for_updates`, `load_field_density_data`, `save_density_edits`, `load_map_fruit_types`, `load_farmlands_info`, `load_storage_capacities`, `apply_window_material` — invoked via `useTauri` composable wrapping `@tauri-apps/api`.
 
 ## Key Conventions
 
@@ -138,7 +139,10 @@ Each domain store tracks dirty state: `isDirty`, `changeCount`, `getChanges()`, 
 `useUnsavedChanges` composable aggregates dirty state across all stores. Navigation guards in App.vue prevent leaving `/editor` with unsaved changes. Window beforeunload guard prevents accidental closes.
 
 ### Theme
-`useTheme` composable manages light/dark/system by toggling `dark` class on `<html>`. Settings persist via `@tauri-apps/plugin-store`.
+`useTheme` composable manages light/dark/system (dark by default) by toggling `dark` class on `<html>`. Settings persist via `@tauri-apps/plugin-store`.
+
+### Design ("Verre natif")
+The window is frameless and transparent (`tauri.conf.json`); `apply_window_material` puts Windows 11 Mica behind it and the page adds `has-mica` to `<html>` so `body` lets it through, else `.app-wall` paints a soft wallpaper. Panels use the `glass` / `glass-strong` classes over tokens in `main.css` (`--primary-soft`, `--primary-text`, `--ready`, `--hover`...), every text color kept at 4.5:1 and with `prefers-reduced-transparency` / `prefers-contrast` fallbacks. Drag regions need `data-tauri-drag-region` on each empty element. Motion comes from motion-v under `<MotionConfig reduced-motion="user">`: page cross-fades in EditorLayout, `layout-id` for sliding selection markers. List + inspector screens (fields, farmlands, storage) set route `meta.split`: the content panel stops scrolling and each pane scrolls on its own.
 
 ### Settings
 Settings store persists to `settings.json` via Tauri plugin-store. Loaded in `App.vue` onMounted before UI renders. Access advanced mode via `settings.advancedMode` (not a separate composable).

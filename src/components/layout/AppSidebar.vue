@@ -1,174 +1,128 @@
 <script setup lang="ts">
+import { computed } from "vue";
 import { useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
-import {
-  Sidebar,
-  SidebarContent,
-  SidebarFooter,
-  SidebarGroup,
-  SidebarGroupContent,
-  SidebarGroupLabel,
-  SidebarHeader,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-  SidebarRail,
-  SidebarSeparator,
-} from "@/components/ui/sidebar";
-import { Badge } from "@/components/ui/badge";
-import {
-  Banknote,
-  Tractor,
-  ShoppingCart,
-  Wheat,
-  LandPlot,
-  Warehouse,
-  SlidersHorizontal,
-  Cloud,
-  Building2,
-  ClipboardList,
-  Trophy,
-  TrendingUp,
-  Archive,
-  Settings,
-  PiggyBank,
-  type LucideIcon,
-} from "@lucide/vue";
-
-interface NavItem {
-  labelKey: string;
-  icon: LucideIcon;
-  route: string;
-  disabled?: boolean;
-}
+import { useStorage } from "@vueuse/core";
+import { motion } from "motion-v";
+import { PanelLeftClose, PanelLeftOpen } from "@lucide/vue";
+import { NAV_GROUPS, UTIL_NAV, type NavItem } from "@/lib/navigation";
+import { useFinanceStore } from "@/stores/finance";
+import { useVehicleStore } from "@/stores/vehicle";
+import { useSavegameStore } from "@/stores/savegame";
+import { formatMoney } from "@/lib/utils";
 
 const { t } = useI18n();
 const route = useRoute();
+const finance = useFinanceStore();
+const vehicles = useVehicleStore();
+const savegame = useSavegameStore();
 
-const mainNav: NavItem[] = [
-  { labelKey: "sidebar.finance", icon: Banknote, route: "/editor/finance" },
-  { labelKey: "sidebar.vehicles", icon: Tractor, route: "/editor/vehicles" },
-  { labelKey: "sidebar.sales", icon: ShoppingCart, route: "/editor/sales" },
-];
+const collapsed = useStorage("sidebar-collapsed", false);
 
-const phase2Nav: NavItem[] = [
-  { labelKey: "sidebar.fields", icon: Wheat, route: "/editor/fields" },
-  { labelKey: "sidebar.farmlands", icon: LandPlot, route: "/editor/farmlands" },
-  { labelKey: "sidebar.world", icon: Cloud, route: "/editor/world" },
-  { labelKey: "sidebar.game", icon: SlidersHorizontal, route: "/editor/game" },
-  { labelKey: "sidebar.buildings", icon: Building2, route: "/editor/buildings" },
-  { labelKey: "sidebar.storage", icon: Warehouse, route: "/editor/storage" },
-  { labelKey: "sidebar.animals", icon: PiggyBank, route: "/editor/animals" },
-  { labelKey: "sidebar.missions", icon: ClipboardList, route: "/editor/missions" },
-  { labelKey: "sidebar.collectibles", icon: Trophy, route: "/editor/collectibles" },
-  { labelKey: "sidebar.economy", icon: TrendingUp, route: "/editor/economy" },
-];
+/** Item counts shown beside a section's name */
+const counts = computed<Record<string, number | undefined>>(() => ({
+  "/editor/vehicles": vehicles.playerVehicles.length || undefined,
+}));
 
-const utilNav: NavItem[] = [
-  { labelKey: "sidebar.backups", icon: Archive, route: "/editor/backups" },
-  { labelKey: "sidebar.settings", icon: Settings, route: "/editor/settings" },
-];
+const utilNav: NavItem[] = UTIL_NAV;
+
+const farmName = computed(() => savegame.currentSavegame?.career.savegameName ?? "");
 
 function isActive(itemRoute: string): boolean {
   return route.path === itemRoute || route.path.startsWith(itemRoute + "/");
 }
+
+const spring = { type: "spring", stiffness: 520, damping: 42, mass: 0.9 } as const;
 </script>
 
 <template>
-  <Sidebar collapsible="icon">
-    <SidebarHeader>
-      <div class="flex items-center justify-center px-2 py-3">
-        <img
-          src="@/assets/logo.png"
-          :alt="t('common.appName')"
-          class="w-full max-w-[180px] h-auto group-data-[collapsible=icon]:max-w-[32px] dark:drop-shadow-[0_0_0.5px_rgba(255,255,255,0.8)] dark:brightness-110"
+  <motion.nav
+    :aria-label="t('sidebar.navigation')"
+    class="glass flex shrink-0 flex-col gap-3 overflow-hidden rounded-2xl px-2 py-3"
+    :initial="false"
+    :animate="{ width: collapsed ? 60 : 232 }"
+    :transition="spring"
+  >
+    <div class="flex min-h-0 flex-1 flex-col gap-3.5 overflow-y-auto overflow-x-hidden">
+      <div v-for="group in NAV_GROUPS" :key="group.titleKey" class="flex flex-col gap-px">
+        <span
+          class="h-5 truncate px-2.5 text-xs font-semibold text-muted-foreground transition-opacity"
+          :class="collapsed ? 'opacity-0' : 'opacity-100'"
+          :aria-hidden="collapsed"
+        >
+          {{ t(group.titleKey) }}
+        </span>
+        <router-link
+          v-for="item in group.items"
+          :key="item.route"
+          :to="item.route"
+          :aria-current="isActive(item.route) ? 'page' : undefined"
+          :title="collapsed ? t(item.labelKey) : undefined"
+          class="relative flex h-9 items-center gap-2.5 rounded-[9px] px-2.5 text-sm transition-colors hover:bg-hover"
+          :class="isActive(item.route) ? 'font-semibold text-primary-text' : 'font-medium text-foreground'"
+        >
+          <motion.span
+            v-if="isActive(item.route)"
+            layout-id="sidebar-active"
+            class="absolute inset-0 rounded-[9px] bg-primary-soft"
+            :transition="spring"
+          />
+          <component :is="item.icon" class="relative size-[17px] shrink-0" aria-hidden="true" />
+          <span class="relative flex-1 truncate" :class="{ 'sr-only': collapsed }">{{ t(item.labelKey) }}</span>
+          <span
+            v-if="counts[item.route] && !collapsed"
+            class="relative text-xs font-normal text-muted-foreground tabular"
+          >
+            {{ counts[item.route] }}
+          </span>
+        </router-link>
+      </div>
+    </div>
+
+    <div class="flex flex-col gap-px border-t pt-2">
+      <router-link
+        v-for="item in utilNav"
+        :key="item.route"
+        :to="item.route"
+        :aria-current="isActive(item.route) ? 'page' : undefined"
+        :title="collapsed ? t(item.labelKey) : undefined"
+        class="relative flex h-9 items-center gap-2.5 rounded-[9px] px-2.5 text-sm transition-colors hover:bg-hover"
+        :class="isActive(item.route) ? 'font-semibold text-primary-text' : 'font-medium text-foreground'"
+      >
+        <motion.span
+          v-if="isActive(item.route)"
+          layout-id="sidebar-active"
+          class="absolute inset-0 rounded-[9px] bg-primary-soft"
+          :transition="spring"
         />
-      </div>
-    </SidebarHeader>
+        <component :is="item.icon" class="relative size-[17px] shrink-0" aria-hidden="true" />
+        <span class="relative flex-1 truncate" :class="{ 'sr-only': collapsed }">{{ t(item.labelKey) }}</span>
+      </router-link>
+    </div>
 
-    <SidebarContent class="overflow-x-hidden">
-      <SidebarGroup>
-        <SidebarGroupLabel>{{ t("sidebar.editor") }}</SidebarGroupLabel>
-        <SidebarGroupContent>
-          <SidebarMenu>
-            <SidebarMenuItem v-for="item in mainNav" :key="item.route">
-              <SidebarMenuButton
-                as-child
-                :is-active="isActive(item.route)"
-              >
-                <router-link :to="item.route">
-                  <component :is="item.icon" />
-                  <span>{{ t(item.labelKey) }}</span>
-                </router-link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarGroupContent>
-      </SidebarGroup>
-
-      <SidebarSeparator />
-
-      <SidebarGroup>
-        <SidebarGroupLabel>{{ t("sidebar.advanced") }}</SidebarGroupLabel>
-        <SidebarGroupContent>
-          <SidebarMenu>
-            <SidebarMenuItem v-for="item in phase2Nav" :key="item.route">
-              <SidebarMenuButton
-                v-if="!item.disabled"
-                as-child
-                :is-active="isActive(item.route)"
-              >
-                <router-link :to="item.route">
-                  <component :is="item.icon" />
-                  <span>{{ t(item.labelKey) }}</span>
-                </router-link>
-              </SidebarMenuButton>
-              <SidebarMenuButton
-                v-else
-                disabled
-                class="opacity-50"
-              >
-                <component :is="item.icon" />
-                <span>{{ t(item.labelKey) }}</span>
-                <Badge
-                  variant="secondary"
-                  class="ml-auto shrink-0 text-[10px] px-1.5 py-0 group-data-[collapsible=icon]:hidden"
-                >
-                  {{ t("sidebar.comingSoon") }}
-                </Badge>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarGroupContent>
-      </SidebarGroup>
-
-      <SidebarSeparator />
-
-      <SidebarGroup>
-        <SidebarGroupContent>
-          <SidebarMenu>
-            <SidebarMenuItem v-for="item in utilNav" :key="item.route">
-              <SidebarMenuButton
-                as-child
-                :is-active="isActive(item.route)"
-              >
-                <router-link :to="item.route">
-                  <component :is="item.icon" />
-                  <span>{{ t(item.labelKey) }}</span>
-                </router-link>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          </SidebarMenu>
-        </SidebarGroupContent>
-      </SidebarGroup>
-    </SidebarContent>
-
-    <SidebarFooter>
-      <div class="px-2 py-1 text-xs text-muted-foreground group-data-[collapsible=icon]:hidden">
-        v0.1.0
-      </div>
-    </SidebarFooter>
-
-    <SidebarRail />
-  </Sidebar>
+    <div class="flex items-center gap-2.5 rounded-xl bg-hover p-2">
+      <span
+        v-if="!collapsed"
+        class="inline-flex size-8 shrink-0 items-center justify-center rounded-[9px] bg-primary-soft text-sm font-bold text-primary-text"
+        aria-hidden="true"
+      >
+        {{ farmName.charAt(0).toUpperCase() || "F" }}
+      </span>
+      <span v-if="!collapsed" class="flex min-w-0 flex-1 flex-col leading-tight">
+        <span class="truncate text-sm font-semibold">{{ farmName }}</span>
+        <span class="truncate text-[13px] text-muted-foreground tabular">{{ formatMoney(finance.money) }}</span>
+      </span>
+      <button
+        type="button"
+        class="inline-flex size-8 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-hover hover:text-foreground"
+        :aria-label="collapsed ? t('sidebar.expand') : t('sidebar.collapse')"
+        :title="collapsed ? t('sidebar.expand') : t('sidebar.collapse')"
+        :aria-expanded="!collapsed"
+        @click="collapsed = !collapsed"
+      >
+        <PanelLeftOpen v-if="collapsed" class="size-4" aria-hidden="true" />
+        <PanelLeftClose v-else class="size-4" aria-hidden="true" />
+      </button>
+    </div>
+  </motion.nav>
 </template>

@@ -42,11 +42,13 @@ const router = createRouter({
           path: "fields",
           name: "fields",
           component: () => import("@/views/FieldListView.vue"),
+          meta: { split: true },
         },
         {
           path: "farmlands",
           name: "farmlands",
           component: () => import("@/views/FarmlandListView.vue"),
+          meta: { split: true },
         },
         {
           path: "game",
@@ -57,6 +59,7 @@ const router = createRouter({
           path: "storage",
           name: "storage",
           component: () => import("@/views/StorageView.vue"),
+          meta: { split: true },
         },
         {
           path: "world",

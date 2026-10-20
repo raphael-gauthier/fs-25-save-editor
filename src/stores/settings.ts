@@ -8,7 +8,7 @@ const STORE_FILE = "settings.json";
 
 export const useSettingsStore = defineStore("settings", () => {
   const locale = ref<string>("fr");
-  const theme = ref<ThemeMode>("system");
+  const theme = ref<ThemeMode>("dark");
   const advancedMode = ref(false);
   const disclaimerAccepted = ref(false);
   const defaultPath = ref<string>("");
@@ -39,7 +39,7 @@ export const useSettingsStore = defineStore("settings", () => {
         locale.value = sysLang.startsWith("fr") ? "fr" : "en";
       }
 
-      theme.value = savedTheme ?? "system";
+      theme.value = savedTheme ?? "dark";
       advancedMode.value = savedAdvanced ?? false;
       disclaimerAccepted.value = savedDisclaimer ?? false;
       defaultPath.value = savedPath ?? "";
@@ -55,7 +55,7 @@ export const useSettingsStore = defineStore("settings", () => {
       const sysLang = navigator.language.toLowerCase();
       locale.value = sysLang.startsWith("fr") ? "fr" : "en";
       i18n.global.locale.value = locale.value as "fr" | "en";
-      initTheme("system");
+      initTheme("dark");
     } finally {
       settingsLoaded.value = true;
     }
