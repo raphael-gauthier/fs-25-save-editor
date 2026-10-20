@@ -914,5 +914,24 @@
     },
     "keyEsc": "Esc",
     "keyEnter": "Enter"
+  },
+  "fieldUi": {
+    "summary": "{count} on the map · {mine} yours",
+    "all": "All",
+    "mine": "Yours",
+    "checkAll": "Check every field shown",
+    "check": "Check field {id}",
+    "list": "Field list",
+    "modified": "Modified",
+    "more": "More",
+    "details": "Field details",
+    "prev": "Previous field",
+    "next": "Next field",
+    "pendingTitle": "Pending changes",
+    "changeCrop": "Change the crop",
+    "soil": "Soil",
+    "ok": "fine",
+    "toDo": "needs work",
+    "pick": "Pick a field in the list."
   }
 }

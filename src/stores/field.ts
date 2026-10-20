@@ -309,6 +309,15 @@ export const useFieldStore = defineStore("field", () => {
     densityEdits.value = new Map(densityEdits.value);
   }
 
+  /** Drops a field's pending crop and soil edits; its farmland's owner stays. */
+  function discardFieldEdits(fieldId: number) {
+    if (densityEdits.value.delete(fieldId)) {
+      densityEdits.value = new Map(densityEdits.value);
+    }
+    const original = getOriginalFieldById(fieldId);
+    if (original) updateField(fieldId, { ...original });
+  }
+
   function batchDensityEdit(farmlandIds: number[], edit: Partial<DensityEditPayload>) {
     for (const id of farmlandIds) {
       addDensityEdit(id, edit);
@@ -515,6 +524,7 @@ export const useFieldStore = defineStore("field", () => {
     hasDensityEdits,
     densityEditCount,
     addDensityEdit,
+    discardFieldEdits,
     batchDensityEdit,
     getDensityEdits,
     saveDensityEdits,

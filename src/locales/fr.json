@@ -914,5 +914,24 @@
     },
     "keyEsc": "Échap",
     "keyEnter": "Entrée"
+  },
+  "fieldUi": {
+    "summary": "{count} sur la carte · {mine} à vous",
+    "all": "Tous",
+    "mine": "À vous",
+    "checkAll": "Cocher tous les champs affichés",
+    "check": "Cocher le champ {id}",
+    "list": "Liste des champs",
+    "modified": "Modifié",
+    "more": "Plus",
+    "details": "Détails du champ",
+    "prev": "Champ précédent",
+    "next": "Champ suivant",
+    "pendingTitle": "Modifications en attente",
+    "changeCrop": "Changer la culture",
+    "soil": "Sol",
+    "ok": "correct",
+    "toDo": "à traiter",
+    "pick": "Choisissez un champ dans la liste."
   }
 }

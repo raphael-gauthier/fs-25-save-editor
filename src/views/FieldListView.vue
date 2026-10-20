@@ -1,15 +1,18 @@
 <script setup lang="ts">
-import { computed, ref } from "vue";
+import { computed, nextTick, ref, watch } from "vue";
+import { useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
+import { AnimatePresence, motion } from "motion-v";
 import { useFieldStore } from "@/stores/field";
 import { useSettingsStore } from "@/stores/settings";
 import type { Field } from "@/lib/types";
 import { HARVEST_READY_STATES, MAX_GROWTH_STATE } from "@/lib/constants";
+import { growthStageLabel } from "@/lib/utils";
+import { fruitColor } from "@/lib/fruitColors";
 import { soilWorkEdit, type SoilWork } from "@/lib/fieldWork";
 import FieldEditor from "@/components/fields/FieldEditor.vue";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
@@ -20,13 +23,12 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import {
   Sprout,
   Sparkles,
@@ -38,28 +40,79 @@ import {
   Info,
   Tractor,
   Shovel,
+  Search,
+  Ellipsis,
+  X,
 } from "@lucide/vue";
 
 const { t } = useI18n();
 const store = useFieldStore();
 const settings = useSettingsStore();
 
-const editorOpen = ref(false);
-const selectedField = ref<Field | null>(null);
+const route = useRoute();
+const selectedId = ref<number | null>(null);
+
+const selectedField = computed<Field | null>(() =>
+  selectedId.value === null ? null : store.getFieldById(selectedId.value) ?? null,
+);
 
 const farmlandMap = computed(() =>
   new Map(store.farmlands.map((fl) => [fl.id, fl.farmId])),
 );
 
-// Whether we expect density data (game path configured)
-const densityExpected = computed(() => !!settings.gamePath);
+// A field opened from the command palette: clear filters that would hide it
+watch(
+  () => route.query.field,
+  (value) => {
+    const id = Number(value);
+    if (!value || Number.isNaN(id)) return;
+    store.searchQuery = "";
+    store.fruitFilter = null;
+    store.ownerFilter = null;
+    selectedId.value = id;
+    nextTick(() => document.getElementById(`field-row-${id}`)?.scrollIntoView({ block: "center" }));
+  },
+  { immediate: true },
+);
 
-function ownerLabel(fieldId: number): string {
-  const farmId = farmlandMap.value.get(fieldId);
-  if (farmId === undefined || farmId === 0) return t("field.free");
-  if (farmId === 1) return t("field.myFarm");
-  return t("field.farm", { id: farmId });
+// Keep a field selected while the filters change
+watch(
+  () => store.filteredFields,
+  (list) => {
+    if (!list.some((f) => f.id === selectedId.value)) selectedId.value = list[0]?.id ?? null;
+  },
+  { immediate: true },
+);
+
+function step(delta: number, focus = false) {
+  const list = store.filteredFields;
+  if (list.length === 0) return;
+  const i = list.findIndex((f) => f.id === selectedId.value);
+  const next = list[(i + delta + list.length) % list.length];
+  selectedId.value = next.id;
+  nextTick(() => {
+    const row = document.getElementById(`field-row-${next.id}`);
+    row?.scrollIntoView({ block: "nearest" });
+    if (focus) row?.focus();
+  });
 }
+
+function onListKeydown(e: KeyboardEvent) {
+  if (e.key === "ArrowDown" || e.key === "ArrowUp") {
+    e.preventDefault();
+    step(e.key === "ArrowDown" ? 1 : -1, true);
+  }
+}
+
+const ownerSegments = computed<{ value: number | null; label: string }[]>(() => [
+  { value: null, label: t("fieldUi.all") },
+  { value: 1, label: t("fieldUi.mine") },
+  { value: 0, label: t("field.free") },
+]);
+
+const myFieldCount = computed(
+  () => store.fields.filter((f) => farmlandMap.value.get(f.id) === 1).length,
+);
 
 function formatFruitName(name: string): string {
   const unknownMatch = name.match(/^UNKNOWN_(\d+)$/);
@@ -90,13 +143,6 @@ function densityGrowthPercent(fieldId: number): number {
   );
 }
 
-function densityGroundLabel(fieldId: number): string {
-  const d = store.getFieldDensity(fieldId);
-  if (!d || d.groundTypeDistribution.length === 0) return "-";
-  const top = d.groundTypeDistribution[0];
-  return t(`groundTypes.${top.groundType}`, top.groundType);
-}
-
 function treatmentBadge(fieldId: number): { label: string; variant: "default" | "destructive" | "outline" | "secondary" } | null {
   const d = store.getFieldDensity(fieldId);
   if (!d) return null;
@@ -110,20 +156,63 @@ function treatmentBadge(fieldId: number): { label: string; variant: "default" | 
   return { label: issues.join(", "), variant: "destructive" };
 }
 
-function openEditor(field: Field) {
-  selectedField.value = field;
-  editorOpen.value = true;
+interface FieldRow {
+  id: number;
+  crop: string;
+  color: string;
+  stage: string;
+  ready: boolean;
+  pct: number;
+  issues: string | null;
+  mine: boolean;
+  pending: boolean;
 }
+
+/** What each row shows: density data when there is some, else the XML. */
+function fieldRow(field: Field): FieldRow {
+  const d = store.getFieldDensity(field.id);
+  const mine = farmlandMap.value.get(field.id) === 1;
+  const pending = store.densityEdits.has(field.id);
+  if (d) {
+    const dominant = d.fruitDistribution[0];
+    const fruit = d.dominantFruit;
+    const label = fruit && dominant
+      ? growthStageLabel(store.getMapFruitType(fruit), Math.round(dominant.avgGrowth))
+      : null;
+    return {
+      id: field.id,
+      crop: densityFruit(field.id),
+      color: fruitColor(fruit),
+      stage: label ? t(label.key, label.params) : "",
+      ready: label?.key === "growthStage.ready",
+      pct: fruit ? Math.min(densityGrowthPercent(field.id), 100) : 0,
+      issues: treatmentBadge(field.id)?.label ?? null,
+      mine,
+      pending,
+    };
+  }
+  const fruit = field.fruitType !== "UNKNOWN" ? field.fruitType : null;
+  const pct = fruit ? Math.min(growthPercent(field.growthState, HARVEST_READY_STATES[fruit]), 100) : 0;
+  return {
+    id: field.id,
+    crop: fruit ? t(`fillTypes.${fruit}`, fruit) : t("field.none"),
+    color: fruitColor(fruit),
+    stage: fruit ? `${field.growthState}/${HARVEST_READY_STATES[fruit] ?? MAX_GROWTH_STATE}` : "",
+    ready: pct >= 100,
+    pct,
+    issues: null,
+    mine,
+    pending,
+  };
+}
+
+const rows = computed(() => store.filteredFields.map(fieldRow));
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function handleFruitFilter(value: any) {
   store.fruitFilter = value === "__all__" ? null : String(value);
 }
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function handleOwnerFilter(value: any) {
-  store.ownerFilter = value === "__all__" ? null : Number(value);
-}
 
 function handleBatchMaxGrowth() {
   const ids = Array.from(store.selectedFieldIds);
@@ -194,281 +283,282 @@ function toggleSelectAll() {
 </script>
 
 <template>
-  <div class="space-y-6">
-    <!-- Header -->
-    <div class="flex items-center justify-between">
-      <div>
-        <h2 class="text-2xl font-semibold">{{ t("field.title") }}</h2>
-        <p class="text-sm text-muted-foreground">{{ t("field.subtitle") }}</p>
+  <div class="grid gap-5 lg:grid-cols-[minmax(0,1fr)_minmax(340px,420px)]">
+    <!-- List -->
+    <section aria-labelledby="fields-title" class="relative flex min-w-0 flex-col gap-4">
+      <div class="flex flex-wrap items-baseline justify-between gap-2">
+        <h2 id="fields-title" class="text-2xl font-semibold tracking-tight">{{ t("field.title") }}</h2>
+        <span class="text-[13px] text-muted-foreground">
+          {{ t("fieldUi.summary", { count: store.fields.length, mine: myFieldCount }) }}
+        </span>
       </div>
-      <div v-if="store.densityLoading && !store.densityFromCache" class="flex items-center gap-2 text-sm text-muted-foreground">
+
+      <div
+        v-if="store.densityLoading && !store.densityFromCache"
+        role="status"
+        class="flex items-center gap-2 text-sm text-muted-foreground"
+      >
         <Loader2 class="size-4 animate-spin" />
         {{ t("field.densityLoading") }}
       </div>
-    </div>
 
-    <!-- Density data info/error banners -->
-    <Alert v-if="store.densityError && !store.densityFromCache" variant="destructive">
-      <Info class="size-4" />
-      <AlertDescription>{{ t("field.densityError", { details: store.densityError }) }}</AlertDescription>
-    </Alert>
-    <Alert v-if="store.densityFromCache && store.densityLoading">
-      <Loader2 class="size-4 animate-spin" />
-      <AlertDescription>{{ t("field.densityCacheRefreshing") }}</AlertDescription>
-    </Alert>
-    <Alert v-else-if="store.densityFromCache && store.densityError">
-      <Info class="size-4" />
-      <AlertDescription>{{ t("field.densityCacheStale") }}</AlertDescription>
-    </Alert>
-    <Alert v-else-if="!store.hasDensityData && !store.densityLoading && !settings.gamePath">
-      <Info class="size-4" />
-      <AlertDescription>{{ t("field.gamePathRequired") }}</AlertDescription>
-    </Alert>
+      <!-- Density data info/error banners -->
+      <Alert v-if="store.densityError && !store.densityFromCache" variant="destructive">
+        <Info class="size-4" />
+        <AlertDescription>{{ t("field.densityError", { details: store.densityError }) }}</AlertDescription>
+      </Alert>
+      <Alert v-if="store.densityFromCache && store.densityLoading">
+        <Loader2 class="size-4 animate-spin" />
+        <AlertDescription>{{ t("field.densityCacheRefreshing") }}</AlertDescription>
+      </Alert>
+      <Alert v-else-if="store.densityFromCache && store.densityError">
+        <Info class="size-4" />
+        <AlertDescription>{{ t("field.densityCacheStale") }}</AlertDescription>
+      </Alert>
+      <Alert v-else-if="!store.hasDensityData && !store.densityLoading && !settings.gamePath">
+        <Info class="size-4" />
+        <AlertDescription>{{ t("field.gamePathRequired") }}</AlertDescription>
+      </Alert>
 
-    <!-- Filters -->
-    <div class="flex flex-wrap items-center gap-3">
-      <Input
-        v-model="store.searchQuery"
-        :placeholder="t('field.searchPlaceholder')"
-        class="max-w-xs"
-      />
-      <Select
-        :model-value="store.fruitFilter ?? '__all__'"
-        @update:model-value="handleFruitFilter"
-      >
-        <SelectTrigger class="w-44">
-          <SelectValue :placeholder="t('field.fruitPlaceholder')" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="__all__">{{ t("field.allFruits") }}</SelectItem>
-          <SelectItem v-for="fruit in store.availableFruits" :key="fruit" :value="fruit">
-            {{ formatFruitName(fruit) }}
-          </SelectItem>
-        </SelectContent>
-      </Select>
-      <Select
-        :model-value="store.ownerFilter !== null ? String(store.ownerFilter) : '__all__'"
-        @update:model-value="handleOwnerFilter"
-      >
-        <SelectTrigger class="w-44">
-          <SelectValue :placeholder="t('field.ownerPlaceholder')" />
-        </SelectTrigger>
-        <SelectContent>
-          <SelectItem value="__all__">{{ t("field.allOwners") }}</SelectItem>
-          <SelectItem value="0">{{ t("field.free") }}</SelectItem>
-          <SelectItem value="1">{{ t("field.myFarm") }}</SelectItem>
-        </SelectContent>
-      </Select>
-      <span class="text-sm text-muted-foreground">
-        {{ t("field.found", { count: store.filteredFields.length }) }}
-      </span>
-    </div>
-
-    <!-- Batch actions -->
-    <div v-if="store.selectedFieldIds.size > 0" class="flex flex-wrap items-center gap-2">
-      <span class="text-sm font-medium">
-        {{ t("field.selected", { count: store.selectedFieldIds.size }) }}
-      </span>
-      <Button variant="outline" size="sm" @click="handleBatchMaxGrowth">
-        <Sparkles class="size-4" />
-        {{ t("field.maxGrowth") }}
-      </Button>
-      <Button variant="outline" size="sm" @click="handleBatchRemoveWeeds">
-        <Bug class="size-4" />
-        {{ t("field.removeWeeds") }}
-      </Button>
-      <Button variant="outline" size="sm" @click="handleBatchRemoveStones">
-        <Gem class="size-4" />
-        {{ t("field.removeStones") }}
-      </Button>
-      <Button variant="outline" size="sm" @click="handleBatchMaxLime">
-        <Droplets class="size-4" />
-        {{ t("field.maxLime") }}
-      </Button>
-      <Button variant="outline" size="sm" @click="handleBatchMaxFertilizer">
-        <FlaskConical class="size-4" />
-        {{ t("field.maxFertilizer") }}
-      </Button>
-      <template v-if="store.hasDensityData">
-        <Button variant="outline" size="sm" @click="handleBatchMaxPlow">
-          <Tractor class="size-4" />
-          {{ t("field.maxPlow") }}
-        </Button>
-        <Button variant="outline" size="sm" @click="handleBatchSoilWork('plow')">
-          <Tractor class="size-4" />
-          {{ t("field.soilPlow") }}
-        </Button>
-        <Button variant="outline" size="sm" @click="handleBatchSoilWork('cultivate')">
-          <Shovel class="size-4" />
-          {{ t("field.soilCultivate") }}
-        </Button>
-        <Button variant="outline" size="sm" @click="handleBatchSoilWork('roll')">
-          <Tractor class="size-4" />
-          {{ t("field.soilRoll") }}
-        </Button>
-        <Button variant="outline" size="sm" @click="handleBatchSoilWork('mulch')">
-          <Shovel class="size-4" />
-          {{ t("field.soilMulch") }}
-        </Button>
-      </template>
-      <Button variant="ghost" size="sm" @click="store.deselectAll()">
-        {{ t("common.deselectAll") }}
-      </Button>
-    </div>
-
-    <!-- Table -->
-    <div v-if="store.filteredFields.length > 0" class="rounded-md border">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead class="w-10">
-              <Checkbox :model-value="allSelected" @update:model-value="toggleSelectAll" />
-            </TableHead>
-            <TableHead class="w-16">{{ t("field.id") }}</TableHead>
-            <TableHead>{{ t("field.fruit") }}</TableHead>
-            <TableHead>{{ t("field.growth") }}</TableHead>
-            <TableHead>{{ t("field.ground") }}</TableHead>
-            <TableHead v-if="store.hasDensityData">{{ t("field.treatments") }}</TableHead>
-            <TableHead>{{ t("field.owner") }}</TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          <TableRow
-            v-for="field in store.filteredFields"
-            :key="field.id"
-            class="cursor-pointer"
-            @click="openEditor(field)"
+      <!-- Filters -->
+      <div class="flex flex-wrap items-center gap-2">
+        <div
+          role="group"
+          :aria-label="t('field.owner')"
+          class="relative flex rounded-[11px] bg-hover p-[3px]"
+        >
+          <button
+            v-for="seg in ownerSegments"
+            :key="String(seg.value)"
+            type="button"
+            :aria-pressed="store.ownerFilter === seg.value"
+            class="relative h-8 rounded-lg px-3 text-[13px] transition-colors"
+            :class="store.ownerFilter === seg.value ? 'font-semibold' : 'text-muted-foreground hover:text-foreground'"
+            @click="store.ownerFilter = seg.value"
           >
-            <TableCell @click.stop>
-              <Checkbox
-                :model-value="store.selectedFieldIds.has(field.id)"
-                @update:model-value="store.toggleSelection(field.id)"
+            <motion.span
+              v-if="store.ownerFilter === seg.value"
+              layout-id="field-owner-segment"
+              class="absolute inset-0 rounded-lg bg-background shadow-sm"
+              :transition="{ type: 'spring', stiffness: 520, damping: 40 }"
+            />
+            <span class="relative">{{ seg.label }}</span>
+          </button>
+        </div>
+        <Select
+          :model-value="store.fruitFilter ?? '__all__'"
+          @update:model-value="handleFruitFilter"
+        >
+          <SelectTrigger class="h-[38px] w-44" :aria-label="t('field.fruitPlaceholder')">
+            <SelectValue :placeholder="t('field.fruitPlaceholder')" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="__all__">{{ t("field.allFruits") }}</SelectItem>
+            <SelectItem v-for="fruit in store.availableFruits" :key="fruit" :value="fruit">
+              {{ formatFruitName(fruit) }}
+            </SelectItem>
+          </SelectContent>
+        </Select>
+        <div class="relative min-w-[160px] flex-1">
+          <Search class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
+          <Input
+            v-model="store.searchQuery"
+            type="search"
+            :aria-label="t('field.searchPlaceholder')"
+            :placeholder="t('field.searchPlaceholder')"
+            class="h-[38px] pl-9"
+          />
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3 px-1 text-[13px] text-muted-foreground">
+        <Checkbox
+          :model-value="allSelected"
+          :aria-label="t('fieldUi.checkAll')"
+          @update:model-value="toggleSelectAll"
+        />
+        <span aria-live="polite">{{ t("field.found", { count: store.filteredFields.length }) }}</span>
+      </div>
+
+      <!-- Rows -->
+      <ul
+        v-if="rows.length > 0"
+        :aria-label="t('fieldUi.list')"
+        class="flex flex-col pb-20"
+        @keydown="onListKeydown"
+      >
+        <li
+          v-for="row in rows"
+          :key="row.id"
+          class="relative flex h-14 items-center gap-1 pl-2"
+        >
+          <motion.span
+            v-if="row.id === selectedId"
+            layout-id="field-row-active"
+            class="absolute inset-0 rounded-xl bg-primary-soft"
+            :transition="{ type: 'spring', stiffness: 480, damping: 40 }"
+          />
+          <Checkbox
+            class="relative"
+            :model-value="store.selectedFieldIds.has(row.id)"
+            :aria-label="t('fieldUi.check', { id: row.id })"
+            @update:model-value="store.toggleSelection(row.id)"
+          />
+          <button
+            :id="`field-row-${row.id}`"
+            type="button"
+            :aria-current="row.id === selectedId ? 'true' : undefined"
+            class="relative flex h-[52px] min-w-0 flex-1 items-center gap-3 rounded-[10px] px-2.5 text-left transition-colors hover:bg-hover"
+            @click="selectedId = row.id"
+          >
+            <span class="size-[30px] shrink-0 rounded-lg" :style="{ background: row.color }" aria-hidden="true" />
+            <span class="flex min-w-0 flex-1 flex-col leading-snug">
+              <span class="flex items-center gap-1.5" :class="row.id === selectedId ? 'font-semibold' : 'font-medium'">
+                {{ t("farmland.fieldNumber", { id: row.id }) }}
+                <span
+                  v-if="row.pending"
+                  class="size-[7px] rounded-[2px] bg-ready"
+                  :title="t('fieldUi.modified')"
+                />
+                <span v-if="row.pending" class="sr-only">{{ t("fieldUi.modified") }}</span>
+              </span>
+              <span class="truncate text-[13px] text-muted-foreground">
+                {{ row.crop }}<template v-if="row.stage"> · <span :class="row.ready ? 'text-ready' : 'text-primary-text'">{{ row.stage }}</span></template>
+              </span>
+            </span>
+            <span
+              v-if="row.issues"
+              class="hidden max-w-[150px] truncate rounded-full bg-destructive-soft px-2 py-0.5 text-xs font-medium text-destructive xl:inline"
+              :title="row.issues"
+            >
+              {{ row.issues }}
+            </span>
+            <span
+              v-if="row.mine"
+              class="rounded-full bg-primary-soft px-2 py-0.5 text-xs font-semibold text-primary-text"
+            >
+              {{ t("fieldUi.mine") }}
+            </span>
+            <span class="h-[5px] w-14 shrink-0 overflow-hidden rounded-full bg-border" aria-hidden="true">
+              <span
+                class="block h-full rounded-full transition-[width] duration-500 ease-spring"
+                :class="row.ready ? 'bg-ready' : 'bg-primary'"
+                :style="{ width: row.pct + '%' }"
               />
-            </TableCell>
-            <TableCell class="font-mono">{{ field.id }}</TableCell>
+            </span>
+          </button>
+        </li>
+      </ul>
 
-            <!-- Fruit -->
-            <TableCell>
-              <div class="flex items-center gap-2">
-                <Sprout class="size-4 text-muted-foreground" />
-                <template v-if="store.hasDensityData">
-                  <span>{{ densityFruit(field.id) }}</span>
-                  <Badge
-                    v-if="(store.getFieldDensity(field.id)?.fruitDistribution?.length ?? 0) > 1"
-                    variant="outline"
-                    class="text-xs"
-                  >
-                    +{{ (store.getFieldDensity(field.id)?.fruitDistribution?.length ?? 1) - 1 }}
-                  </Badge>
-                </template>
-                <template v-else-if="densityExpected">
-                  <div class="h-4 w-20 animate-pulse rounded bg-muted" />
-                </template>
-                <template v-else>
-                  <span>{{ field.fruitType !== "UNKNOWN" ? t(`fillTypes.${field.fruitType}`, field.fruitType) : t("field.none") }}</span>
-                  <Badge
-                    v-if="field.plannedFruit !== 'FALLOW' && field.plannedFruit !== field.fruitType"
-                    variant="outline"
-                    class="text-xs"
-                  >
-                    {{ t(`fillTypes.${field.plannedFruit}`, field.plannedFruit) }}
-                  </Badge>
-                </template>
-              </div>
-            </TableCell>
+      <!-- Empty state -->
+      <div v-else-if="store.fields.length === 0" class="py-12 text-center">
+        <Sprout class="mx-auto size-12 text-muted-foreground/50" />
+        <p class="mt-4 text-muted-foreground">{{ t("field.empty") }}</p>
+      </div>
 
-            <!-- Growth -->
-            <TableCell>
+      <!-- No matches -->
+      <div v-else class="py-12 text-center">
+        <p class="text-muted-foreground">{{ t("field.noMatch") }}</p>
+      </div>
+
+      <!-- Batch actions dock -->
+      <AnimatePresence>
+        <motion.div
+          v-if="store.selectedFieldIds.size > 0"
+          role="toolbar"
+          :aria-label="t('field.selected', { count: store.selectedFieldIds.size })"
+          class="glass-strong sticky bottom-4 z-10 mx-auto flex max-w-full flex-wrap items-center gap-1 rounded-2xl py-1.5 pl-4 pr-1.5"
+          :initial="{ opacity: 0, y: 24, scale: 0.96 }"
+          :animate="{ opacity: 1, y: 0, scale: 1 }"
+          :exit="{ opacity: 0, y: 24, scale: 0.96 }"
+          :transition="{ type: 'spring', stiffness: 420, damping: 34 }"
+        >
+          <span class="mr-1.5 whitespace-nowrap font-semibold">
+            {{ t("field.selected", { count: store.selectedFieldIds.size }) }}
+          </span>
+          <Button variant="ghost" size="sm" class="h-9" @click="handleBatchMaxGrowth">
+            <Sparkles class="size-4" />
+            {{ t("field.maxGrowth") }}
+          </Button>
+          <Button variant="ghost" size="sm" class="h-9" @click="handleBatchMaxLime">
+            <Droplets class="size-4" />
+            {{ t("field.maxLime") }}
+          </Button>
+          <Button variant="ghost" size="sm" class="h-9" @click="handleBatchMaxFertilizer">
+            <FlaskConical class="size-4" />
+            {{ t("field.maxFertilizer") }}
+          </Button>
+          <DropdownMenu>
+            <DropdownMenuTrigger as-child>
+              <Button variant="ghost" size="sm" class="h-9">
+                <Ellipsis class="size-4" />
+                {{ t("fieldUi.more") }}
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" class="w-56">
+              <DropdownMenuItem @select="handleBatchRemoveWeeds">
+                <Bug class="size-4" />
+                {{ t("field.removeWeeds") }}
+              </DropdownMenuItem>
+              <DropdownMenuItem @select="handleBatchRemoveStones">
+                <Gem class="size-4" />
+                {{ t("field.removeStones") }}
+              </DropdownMenuItem>
               <template v-if="store.hasDensityData">
-                <div v-if="store.getFieldDensity(field.id)?.dominantFruit" class="flex items-center gap-2">
-                  <div class="h-2 w-20 rounded-full bg-muted">
-                    <div
-                      class="h-2 rounded-full"
-                      :class="densityGrowthPercent(field.id) >= 100 ? 'bg-green-500' : 'bg-amber-500'"
-                      :style="{ width: Math.min(densityGrowthPercent(field.id), 100) + '%' }"
-                    />
-                  </div>
-                  <span class="font-mono text-xs text-muted-foreground">
-                    {{ densityGrowthPercent(field.id) }}%
-                  </span>
-                </div>
-                <span v-else class="text-muted-foreground">-</span>
+                <DropdownMenuItem @select="handleBatchMaxPlow">
+                  <Tractor class="size-4" />
+                  {{ t("field.maxPlow") }}
+                </DropdownMenuItem>
+                <DropdownMenuSeparator />
+                <DropdownMenuItem @select="handleBatchSoilWork('plow')">
+                  <Tractor class="size-4" />
+                  {{ t("field.soilPlow") }}
+                </DropdownMenuItem>
+                <DropdownMenuItem @select="handleBatchSoilWork('cultivate')">
+                  <Shovel class="size-4" />
+                  {{ t("field.soilCultivate") }}
+                </DropdownMenuItem>
+                <DropdownMenuItem @select="handleBatchSoilWork('roll')">
+                  <Tractor class="size-4" />
+                  {{ t("field.soilRoll") }}
+                </DropdownMenuItem>
+                <DropdownMenuItem @select="handleBatchSoilWork('mulch')">
+                  <Shovel class="size-4" />
+                  {{ t("field.soilMulch") }}
+                </DropdownMenuItem>
               </template>
-              <template v-else-if="densityExpected">
-                <div class="h-2 w-20 animate-pulse rounded-full bg-muted" />
-              </template>
-              <template v-else>
-                <div v-if="field.fruitType !== 'UNKNOWN'" class="flex items-center gap-2">
-                  <div class="h-2 w-20 rounded-full bg-muted">
-                    <div
-                      class="h-2 rounded-full"
-                      :class="growthPercent(field.growthState, HARVEST_READY_STATES[field.fruitType]) >= 100 ? 'bg-green-500' : 'bg-amber-500'"
-                      :style="{ width: Math.min(growthPercent(field.growthState, HARVEST_READY_STATES[field.fruitType]), 100) + '%' }"
-                    />
-                  </div>
-                  <span class="font-mono text-xs text-muted-foreground">
-                    {{ field.growthState }}/{{ HARVEST_READY_STATES[field.fruitType] ?? MAX_GROWTH_STATE }}
-                  </span>
-                </div>
-                <span v-else class="text-muted-foreground">-</span>
-              </template>
-            </TableCell>
+            </DropdownMenuContent>
+          </DropdownMenu>
+          <Button
+            variant="ghost"
+            size="icon"
+            class="size-9"
+            :aria-label="t('common.deselectAll')"
+            :title="t('common.deselectAll')"
+            @click="store.deselectAll()"
+          >
+            <X class="size-4" />
+          </Button>
+        </motion.div>
+      </AnimatePresence>
+    </section>
 
-            <!-- Ground -->
-            <TableCell>
-              <template v-if="store.hasDensityData">
-                <Badge variant="secondary" class="text-xs">{{ densityGroundLabel(field.id) }}</Badge>
-              </template>
-              <template v-else-if="densityExpected">
-                <div class="h-5 w-16 animate-pulse rounded bg-muted" />
-              </template>
-              <template v-else>
-                <Badge variant="secondary" class="text-xs">{{ t(`groundTypes.${field.groundType}`, field.groundType) }}</Badge>
-              </template>
-            </TableCell>
-
-            <!-- Treatment status (density only) -->
-            <TableCell v-if="store.hasDensityData">
-              <Badge
-                v-if="treatmentBadge(field.id)"
-                :variant="treatmentBadge(field.id)!.variant"
-                class="text-xs"
-              >
-                {{ treatmentBadge(field.id)!.label }}
-              </Badge>
-              <span v-else class="text-xs text-green-600 dark:text-green-400">OK</span>
-            </TableCell>
-
-            <!-- Owner -->
-            <TableCell>
-              <Badge
-                :variant="farmlandMap.get(field.id) === 1 ? 'default' : 'outline'"
-                class="text-xs"
-              >
-                {{ ownerLabel(field.id) }}
-              </Badge>
-            </TableCell>
-          </TableRow>
-        </TableBody>
-      </Table>
-    </div>
-
-    <!-- Empty state -->
-    <div v-else-if="store.fields.length === 0" class="py-12 text-center">
-      <Sprout class="mx-auto size-12 text-muted-foreground/50" />
-      <p class="mt-4 text-muted-foreground">{{ t("field.empty") }}</p>
-    </div>
-
-    <!-- No matches -->
-    <div v-else class="py-12 text-center">
-      <p class="text-muted-foreground">{{ t("field.noMatch") }}</p>
-    </div>
-
-    <!-- Field Editor Sheet -->
-    <FieldEditor
-      :field="selectedField"
-      :open="editorOpen"
-      @update:open="editorOpen = $event"
-    />
+    <!-- Inspector -->
+    <aside
+      :aria-label="t('fieldUi.details')"
+      class="self-start rounded-2xl border bg-hover p-5 lg:sticky lg:top-6 lg:max-h-[calc(100vh-7rem)] lg:overflow-y-auto"
+    >
+      <AnimatePresence mode="wait" :initial="false">
+        <motion.div
+          :key="selectedField?.id ?? 'none'"
+          :initial="{ opacity: 0, x: 12 }"
+          :animate="{ opacity: 1, x: 0 }"
+          :exit="{ opacity: 0, x: -12 }"
+          :transition="{ duration: 0.2, ease: [0.32, 0.72, 0, 1] }"
+        >
+          <FieldEditor :field="selectedField" @prev="step(-1)" @next="step(1)" />
+        </motion.div>
+      </AnimatePresence>
+    </aside>
   </div>
 </template>
