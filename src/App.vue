@@ -55,5 +55,5 @@ onUnmounted(() => {
   <DisclaimerDialog />
   <ConfirmDiscardDialog />
   <UpdateDialog />
-  <Toaster rich-colors />
+  <Toaster rich-colors :theme="settings.theme" />
 </template>
