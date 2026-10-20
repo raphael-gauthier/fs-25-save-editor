@@ -1,17 +1,8 @@
 <script setup lang="ts">
-import { computed, nextTick, ref, watch, type Component } from "vue";
+import { computed, ref, watch, type Component } from "vue";
 import { useRouter } from "vue-router";
 import { useI18n } from "vue-i18n";
 import {
-  DialogContent,
-  DialogDescription,
-  DialogOverlay,
-  DialogPortal,
-  DialogRoot,
-  DialogTitle,
-} from "reka-ui";
-import {
-  Search,
   Save,
   Undo2,
   RotateCcw,
@@ -22,6 +13,22 @@ import {
   Tractor,
   type LucideIcon,
 } from "@lucide/vue";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+  CommandShortcut,
+} from "@/components/ui/command";
+import { Kbd, KbdGroup } from "@/components/ui/kbd";
 import { NAV_ITEMS } from "@/lib/navigation";
 import { useFieldStore } from "@/stores/field";
 import { useVehicleStore } from "@/stores/vehicle";
@@ -44,9 +51,11 @@ const fields = useFieldStore();
 const vehicles = useVehicleStore();
 const settings = useSettingsStore();
 
-interface Command {
+type Group = "actions" | "pages" | "fields" | "vehicles";
+
+interface PaletteCommand {
   id: string;
-  group: "actions" | "pages" | "fields" | "vehicles";
+  group: Group;
   label: string;
   hint?: string;
   icon: LucideIcon | Component;
@@ -54,9 +63,11 @@ interface Command {
   run: () => void;
 }
 
+/** What is typed in the search field: fields and vehicles only show once searching. */
 const query = ref("");
-const active = ref(0);
-const listEl = ref<HTMLElement | null>(null);
+watch(open, (isOpen) => {
+  if (isOpen) query.value = "";
+});
 
 function fruitName(name: string | null | undefined): string {
   if (!name) return t("field.none");
@@ -64,8 +75,8 @@ function fruitName(name: string | null | undefined): string {
   return unknown ? t("field.unknownFruit", { index: unknown[1] }) : t(`fillTypes.${name}`, name);
 }
 
-const commands = computed<Command[]>(() => {
-  const list: Command[] = [];
+const commands = computed<PaletteCommand[]>(() => {
+  const list: PaletteCommand[] = [];
   if (props.actions.canSave) {
     list.push(
       { id: "save", group: "actions", label: t("common.save"), icon: Save, shortcut: "Ctrl S", run: props.actions.save },
@@ -100,6 +111,7 @@ const commands = computed<Command[]>(() => {
       run: () => router.push(item.route),
     });
   }
+  if (!query.value.trim()) return list;
   for (const field of fields.fields) {
     const density = fields.getFieldDensity(field.id);
     const crop = density ? fruitName(density.dominantFruit) : fruitName(field.fruitType === "UNKNOWN" ? null : field.fruitType);
@@ -124,153 +136,72 @@ const commands = computed<Command[]>(() => {
   return list;
 });
 
-const normalize = (s: string) => s.toLowerCase().normalize("NFD").replace(/[̀-ͯ]/g, "");
+const groups = computed(() =>
+  (["actions", "pages", "fields", "vehicles"] as Group[])
+    .map((key) => ({ key, title: t(`palette.group.${key}`), items: commands.value.filter((c) => c.group === key) }))
+    .filter((g) => g.items.length > 0),
+);
 
-const results = computed(() => {
-  const q = normalize(query.value.trim());
-  const hits = q
-    ? commands.value.filter((c) => normalize(`${c.label} ${c.hint ?? ""}`).includes(q))
-    : commands.value.filter((c) => c.group === "actions" || c.group === "pages");
-  // Keep each group short so every group stays reachable
-  const perGroup: Record<string, number> = {};
-  return hits.filter((c) => (perGroup[c.group] = (perGroup[c.group] ?? 0) + 1) <= (q ? 8 : 20));
-});
-
-const groups = computed(() => {
-  const order: Command["group"][] = ["actions", "pages", "fields", "vehicles"];
-  return order
-    .map((g) => ({
-      key: g,
-      title: t(`palette.group.${g}`),
-      items: results.value.map((c, index) => ({ c, index })).filter(({ c }) => c.group === g),
-    }))
-    .filter((g) => g.items.length > 0);
-});
-
-watch(query, () => (active.value = 0));
-watch(open, (isOpen) => {
-  if (isOpen) {
-    query.value = "";
-    active.value = 0;
-  }
-});
-
-function scrollActiveIntoView() {
-  nextTick(() => {
-    listEl.value?.querySelector(`#palette-opt-${active.value}`)?.scrollIntoView({ block: "nearest" });
-  });
-}
-
-function onKeydown(e: KeyboardEvent) {
-  const count = results.value.length;
-  if (e.key === "ArrowDown" && count) {
-    e.preventDefault();
-    active.value = (active.value + 1) % count;
-    scrollActiveIntoView();
-  } else if (e.key === "ArrowUp" && count) {
-    e.preventDefault();
-    active.value = (active.value - 1 + count) % count;
-    scrollActiveIntoView();
-  } else if (e.key === "Enter" && count) {
-    e.preventDefault();
-    runCommand(results.value[active.value]);
-  }
-}
-
-function runCommand(c: Command | undefined) {
-  if (!c) return;
+function runCommand(c: PaletteCommand) {
   open.value = false;
   c.run();
 }
 </script>
 
 <template>
-  <DialogRoot v-model:open="open">
-    <DialogPortal>
-      <DialogOverlay
-        class="fixed inset-0 z-50 bg-black/30 backdrop-blur-[6px] data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0"
-      />
-      <DialogContent
-        class="glass-strong fixed left-1/2 top-[12vh] z-50 flex w-[min(640px,calc(100%-2rem))] -translate-x-1/2 flex-col overflow-hidden rounded-[20px] duration-300 data-[state=open]:animate-in data-[state=closed]:animate-out data-[state=closed]:fade-out-0 data-[state=open]:fade-in-0 data-[state=closed]:zoom-out-[0.97] data-[state=open]:zoom-in-[0.97] data-[state=open]:slide-in-from-top-3"
-        @keydown="onKeydown"
-      >
-        <DialogTitle class="sr-only">{{ t("palette.title") }}</DialogTitle>
-        <DialogDescription class="sr-only">{{ t("palette.description") }}</DialogDescription>
-        <div class="flex h-[60px] items-center gap-3 border-b px-[18px]">
-          <Search class="size-[18px] shrink-0 text-muted-foreground" aria-hidden="true" />
-          <input
-            v-model="query"
-            type="text"
-            role="combobox"
-            aria-expanded="true"
-            aria-controls="palette-list"
-            aria-autocomplete="list"
-            :aria-activedescendant="results.length ? `palette-opt-${active}` : undefined"
-            :aria-label="t('palette.placeholder')"
-            :placeholder="t('palette.placeholder')"
-            autocomplete="off"
-            spellcheck="false"
-            class="h-11 min-w-0 flex-1 bg-transparent text-[17px] outline-none placeholder:text-muted-foreground"
-          />
-          <kbd class="rounded-md border px-1.5 py-0.5 text-xs text-muted-foreground">{{ t("palette.keyEsc") }}</kbd>
-        </div>
-
-        <div ref="listEl" class="max-h-[min(460px,60vh)] overflow-y-auto p-2">
-          <ul id="palette-list" role="listbox" :aria-label="t('palette.results')">
-            <li v-for="group in groups" :key="group.key" role="presentation">
-              <div role="presentation" class="px-3 pb-1 pt-2.5 text-xs font-semibold text-muted-foreground">
-                {{ group.title }}
-              </div>
-              <ul role="group" :aria-label="group.title">
-                <li
-                  v-for="{ c, index } in group.items"
-                  :id="`palette-opt-${index}`"
-                  :key="c.id"
-                  role="option"
-                  :aria-selected="index === active"
-                  class="relative flex min-h-11 cursor-pointer items-center gap-3 rounded-[11px] px-3"
-                  @mousemove="active = index"
-                  @click="runCommand(c)"
-                >
-                  <span
-                    v-if="index === active"
-                    class="absolute inset-0 rounded-[11px] bg-primary-soft"
-                    aria-hidden="true"
-                  />
-                  <span
-                    class="relative inline-flex size-7 shrink-0 items-center justify-center rounded-lg transition-colors"
-                    :class="index === active ? 'bg-primary text-primary-foreground' : 'bg-hover text-foreground'"
-                    aria-hidden="true"
-                  >
-                    <component :is="c.icon" class="size-[15px]" />
-                  </span>
-                  <span class="relative flex min-w-0 flex-1 flex-col leading-tight">
-                    <span class="truncate font-medium">{{ c.label }}</span>
-                    <span v-if="c.hint" class="truncate text-xs text-muted-foreground">{{ c.hint }}</span>
-                  </span>
-                  <kbd
-                    v-if="c.shortcut"
-                    class="relative rounded-md border px-1.5 py-0.5 text-xs text-muted-foreground"
-                  >{{ c.shortcut }}</kbd>
-                </li>
-              </ul>
-            </li>
-          </ul>
-          <p
-            v-if="results.length === 0"
-            role="status"
-            class="px-3 py-7 text-center text-muted-foreground"
-          >
+  <Dialog v-model:open="open">
+    <DialogContent
+      :show-close-button="false"
+      class="top-[12vh] w-[min(640px,calc(100%-2rem))] max-w-none translate-y-0 gap-0 overflow-hidden rounded-[20px] p-0 duration-300 sm:max-w-none"
+    >
+      <DialogTitle class="sr-only">{{ t("palette.title") }}</DialogTitle>
+      <DialogDescription class="sr-only">{{ t("palette.description") }}</DialogDescription>
+      <Command class="rounded-none bg-transparent">
+        <CommandInput
+          :placeholder="t('palette.placeholder')"
+          class="text-base"
+          @update:model-value="query = String($event ?? '')"
+        />
+        <CommandList class="max-h-[min(460px,60vh)] p-1.5">
+          <CommandEmpty class="py-7 text-muted-foreground">
             {{ t("palette.empty", { query }) }}
-          </p>
-        </div>
-
-        <div class="flex flex-wrap items-center gap-4 border-t px-[18px] py-2.5 text-xs text-muted-foreground">
-          <span><kbd class="font-semibold">↑ ↓</kbd> {{ t("palette.navigate") }}</span>
-          <span><kbd class="font-semibold">{{ t("palette.keyEnter") }}</kbd> {{ t("palette.open") }}</span>
-          <span><kbd class="font-semibold">Ctrl K</kbd> {{ t("palette.anywhere") }}</span>
-        </div>
-      </DialogContent>
-    </DialogPortal>
-  </DialogRoot>
+          </CommandEmpty>
+          <CommandGroup
+            v-for="group in groups"
+            :key="group.key"
+            :heading="group.title"
+            class="[&_[data-slot=command-group-heading]]:font-semibold"
+          >
+            <CommandItem
+              v-for="c in group.items"
+              :key="c.id"
+              :value="c.id"
+              class="group min-h-11 gap-3 rounded-[11px] px-3 data-[highlighted]:bg-primary-soft data-[highlighted]:text-foreground"
+              @select="runCommand(c)"
+            >
+              <span
+                class="inline-flex size-7 shrink-0 items-center justify-center rounded-lg bg-hover transition-colors group-data-[highlighted]:bg-primary group-data-[highlighted]:text-primary-foreground"
+                aria-hidden="true"
+              >
+                <component :is="c.icon" class="size-[15px] text-current" />
+              </span>
+              <span class="flex min-w-0 flex-1 flex-col leading-tight">
+                <span class="truncate font-medium">{{ c.label }}</span>
+                <span v-if="c.hint" class="truncate text-xs text-muted-foreground">{{ c.hint }}</span>
+              </span>
+              <CommandShortcut v-if="c.shortcut" class="tracking-normal">
+                <Kbd>{{ c.shortcut }}</Kbd>
+              </CommandShortcut>
+            </CommandItem>
+          </CommandGroup>
+        </CommandList>
+      </Command>
+      <div class="flex flex-wrap items-center gap-4 border-t px-4 py-2.5 text-xs text-muted-foreground">
+        <span class="inline-flex items-center gap-1.5"><KbdGroup><Kbd>↑</Kbd><Kbd>↓</Kbd></KbdGroup> {{ t("palette.navigate") }}</span>
+        <span class="inline-flex items-center gap-1.5"><Kbd>{{ t("palette.keyEnter") }}</Kbd> {{ t("palette.open") }}</span>
+        <span class="inline-flex items-center gap-1.5"><Kbd>{{ t("palette.keyEsc") }}</Kbd> {{ t("window.close") }}</span>
+        <span class="ml-auto inline-flex items-center gap-1.5"><Kbd>Ctrl K</Kbd> {{ t("palette.anywhere") }}</span>
+      </div>
+    </DialogContent>
+  </Dialog>
 </template>

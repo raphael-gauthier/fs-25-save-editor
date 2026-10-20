@@ -25,7 +25,7 @@ const { filterState } = useCommand()
 <template>
   <div
     data-slot="command-input-wrapper"
-    class="flex h-9 items-center gap-2 border-b px-3"
+    class="flex h-14 items-center gap-3 border-b px-4"
   >
     <Search class="size-4 shrink-0 opacity-50" />
     <ListboxFilter

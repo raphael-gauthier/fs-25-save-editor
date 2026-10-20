@@ -845,7 +845,6 @@
     "title": "Command palette",
     "description": "Search for an action, page, field or vehicle",
     "placeholder": "Search or run an action",
-    "results": "Results",
     "empty": "No results for “{query}”",
     "navigate": "navigate",
     "open": "open",

@@ -66,7 +66,8 @@ function filterItems() {
   filterState.filtered.count = itemCount
 }
 
-watch(() => filterState.search, () => {
+// Items that mount while a search is typed must be filtered too
+watch(() => [filterState.search, allItems.value.size], () => {
   filterItems()
 })
 

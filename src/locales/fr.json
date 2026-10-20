@@ -845,7 +845,6 @@
     "title": "Palette de commandes",
     "description": "Rechercher une action, une page, un champ ou un véhicule",
     "placeholder": "Rechercher ou lancer une action",
-    "results": "Résultats",
     "empty": "Aucun résultat pour « {query} »",
     "navigate": "naviguer",
     "open": "ouvrir",
