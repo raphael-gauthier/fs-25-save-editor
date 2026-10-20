@@ -61,18 +61,20 @@ It reads the same data the game does — including the binary density maps that 
 
 ### App
 - French and English, dark / light / system theme, advanced mode for the raw XML values
-- Checks GitHub Releases for a newer version at startup (can be turned off)
+- Updates itself: new versions are checked at startup (can be turned off), downloaded, verified against the release signature and installed in one click
 
 ## Requirements
 
-- **Windows 10 or 11** (Mica needs Windows 11; Windows 10 gets a plain background)
+- **Windows 10 or 11**, 64-bit (Mica needs Windows 11; Windows 10 gets a plain background)
 - **Farming Simulator 25** installed: the editor reads the game files for field data, crop stages, farmland prices, storage capacities and vehicle images. Point it to the game folder in Settings if it isn't detected.
 
-macOS and Linux builds are produced too but have not been tested yet.
+macOS and Linux are not supported yet.
 
 ## Installation
 
-Download the latest installer from the [Releases](https://github.com/raphael-gauthier/fs-25-save-editor/releases) page and run it.
+Download `FS25 Save Editor_x.y.z_x64-setup.exe` from the latest [release](https://github.com/raphael-gauthier/fs-25-save-editor/releases/latest) and run it. It installs for your user account, no administrator rights needed; later versions install themselves from inside the app.
+
+The installer is not code-signed, so Windows SmartScreen may warn about an unrecognized app: choose **More info**, then **Run anyway**.
 
 ## Usage
 
@@ -131,7 +133,18 @@ FS25_SAVE="<savegame folder>" FS25_GAME="<game install folder>" cargo test -- --
 
 ## Releasing
 
-Releases are built by GitHub Actions when a version tag is pushed.
+Releases are built by GitHub Actions when a version tag is pushed. The workflow type-checks, runs the Rust tests, builds the Windows installer and signs the update bundle the in-app updater verifies.
+
+**One-time setup:** add two repository secrets (Settings → Secrets and variables → Actions):
+
+| Secret | Value |
+|---|---|
+| `TAURI_SIGNING_PRIVATE_KEY` | content of the updater private key (`~/.tauri/fs25-save-editor.key`) |
+| `TAURI_SIGNING_PRIVATE_KEY_PASSWORD` | its password (`~/.tauri/fs25-save-editor.key.password`) |
+
+The matching public key is in `src-tauri/tauri.conf.json`. Keep the private key safe: without it, installed apps can't receive updates.
+
+**Each release:**
 
 1. Bump the version in `package.json`, `src-tauri/tauri.conf.json` and `src-tauri/Cargo.toml`, and commit it.
 2. Tag and push:
@@ -139,14 +152,8 @@ Releases are built by GitHub Actions when a version tag is pushed.
    git tag vX.Y.Z
    git push origin main --follow-tags
    ```
-3. The [Release workflow](.github/workflows/release.yml) builds Windows, macOS (Apple Silicon and Intel) and Linux, and creates a **draft release** with the installers attached.
-4. Review the draft on the [Releases](https://github.com/raphael-gauthier/fs-25-save-editor/releases) page, then publish it. The app's update check only sees published releases.
-
-| Platform | Files |
-|---|---|
-| Windows | `.msi` and `.exe` (NSIS) installers |
-| macOS (Apple Silicon / Intel) | `.dmg` |
-| Linux | `.deb` and `.AppImage` |
+3. The [Release workflow](.github/workflows/release.yml) creates a **draft release** with `FS25 Save Editor_X.Y.Z_x64-setup.exe`, its signature and `latest.json`.
+4. Review the draft on the [Releases](https://github.com/raphael-gauthier/fs-25-save-editor/releases) page and publish it. Installed apps only see published releases.
 
 ## Tech stack
 
