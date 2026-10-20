@@ -99,7 +99,7 @@ pnpm test:rust        # Rust tests (cargo test in src-tauri)
 - `src/components/layout/` — WindowTitleBar/WindowControls (frameless window chrome), AppHeader (editor title bar), AppSidebar, EditorLayout, CommandPalette (Ctrl K)
 - `src/lib/navigation.ts` — the editor's sections, shared by the sidebar and the palette
 - `src/stores/` — Pinia stores by domain (finance, vehicle, sale, field, building, mission, world, savegame, backup, settings)
-- `src/composables/` — useTheme, useWindow (Mica, window buttons), useTauri, useUnsavedChanges, useFieldTracking, useUpdateChecker
+- `src/composables/` — useTheme, useWindow (Mica, window buttons), useTauri, useUnsavedChanges, useUpdateChecker
 - `src/plugins/i18n.ts` — vue-i18n config (legacy: false)
 - `src/locales/` — fr.json, en.json
 - `src/lib/types.ts` — TypeScript types mirroring Rust structs
