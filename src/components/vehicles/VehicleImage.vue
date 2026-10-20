@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
 import { useVehicleImages } from "@/composables/useVehicleImages";
-import { Truck, Loader2 } from "@lucide/vue";
+import { Truck } from "@lucide/vue";
+import { Spinner } from "@/components/ui/spinner";
 
 const props = withDefaults(
   defineProps<{
@@ -67,7 +68,7 @@ function handleError() {
       class="size-full object-contain"
       @error="handleError"
     />
-    <Loader2 v-else-if="loading" :class="['text-muted-foreground animate-spin', iconSize]" />
+    <Spinner v-else-if="loading" :class="['text-muted-foreground', iconSize]" />
     <Truck v-else :class="['text-muted-foreground', iconSize]" />
   </div>
 </template>

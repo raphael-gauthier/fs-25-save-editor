@@ -2,7 +2,8 @@
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 import { toast } from "vue-sonner";
-import { Download, Loader2 } from "@lucide/vue";
+import { Download } from "@lucide/vue";
+import { Spinner } from "@/components/ui/spinner";
 import {
   Dialog,
   DialogContent,
@@ -72,7 +73,7 @@ async function install() {
           {{ t("update.later") }}
         </Button>
         <Button :disabled="installing" @click="install">
-          <Loader2 v-if="installing" class="size-4 animate-spin" />
+          <Spinner v-if="installing" />
           <Download v-else class="size-4" />
           {{ t("update.install") }}
         </Button>

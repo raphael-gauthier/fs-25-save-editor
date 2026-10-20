@@ -11,6 +11,8 @@ import { fruitColor } from "@/lib/fruitColors";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Info, Lock, Search, X } from "@lucide/vue";
 
@@ -183,15 +185,19 @@ const spring = { type: "spring", stiffness: 480, damping: 40 } as const;
 
       <template v-else>
         <div class="flex flex-wrap items-center gap-2">
-          <div role="group" :aria-label="t('farmland.owner')" class="relative flex rounded-[11px] bg-hover p-[3px]">
-            <button
+          <ToggleGroup
+            type="single"
+            :spacing="1"
+            :aria-label="t('farmland.owner')"
+            :model-value="ownerFilter"
+            class="rounded-[11px] bg-hover p-[3px]"
+            @update:model-value="(v) => v && (ownerFilter = v as OwnerFilter)"
+          >
+            <ToggleGroupItem
               v-for="filter in ownerFilters"
               :key="filter.value"
-              type="button"
-              :aria-pressed="ownerFilter === filter.value"
-              class="relative h-8 rounded-lg px-3 text-[13px] transition-colors"
-              :class="ownerFilter === filter.value ? 'font-semibold' : 'text-muted-foreground hover:text-foreground'"
-              @click="ownerFilter = filter.value"
+              :value="filter.value"
+              class="relative h-8 rounded-lg px-3 text-[13px] text-muted-foreground hover:bg-transparent hover:text-foreground data-[state=on]:bg-transparent data-[state=on]:font-semibold data-[state=on]:text-foreground"
             >
               <motion.span
                 v-if="ownerFilter === filter.value"
@@ -200,8 +206,8 @@ const spring = { type: "spring", stiffness: 480, damping: 40 } as const;
                 :transition="spring"
               />
               <span class="relative">{{ t(filter.labelKey) }}</span>
-            </button>
-          </div>
+            </ToggleGroupItem>
+          </ToggleGroup>
           <div class="relative min-w-[160px] flex-1">
             <Search class="pointer-events-none absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" aria-hidden="true" />
             <Input
@@ -288,12 +294,9 @@ const spring = { type: "spring", stiffness: 480, damping: 40 } as const;
           :transition="{ duration: 0.2, ease: [0.32, 0.72, 0, 1] }"
         >
           <div class="flex flex-col gap-1">
-            <span
-              class="self-start rounded-full px-2.5 py-0.5 text-xs font-semibold"
-              :class="trade.ownerOf(focused.id) === PLAYER_FARM_ID ? 'bg-primary-soft text-primary-text' : 'bg-card'"
-            >
+            <Badge :variant="trade.ownerOf(focused.id) === PLAYER_FARM_ID ? 'soft' : 'muted'" class="self-start">
               {{ ownerLabel(focused.id) }}
-            </span>
+            </Badge>
             <h3 class="text-[28px] font-semibold tracking-tight">{{ t("farmland.id") }} {{ focused.id }}</h3>
             <span class="text-muted-foreground">{{ fieldLabel(focused.id) }}</span>
           </div>
@@ -341,13 +344,13 @@ const spring = { type: "spring", stiffness: 480, damping: 40 } as const;
             <span class="whitespace-nowrap text-[13px] text-muted-foreground">
               {{ t("farmlandUi.parcels", { count: landAfter.length }, landAfter.length) }}
             </span>
-            <span
+            <Badge
               v-if="Math.abs(landDelta) >= 0.005"
-              class="ml-auto whitespace-nowrap rounded-full px-2 py-0.5 text-xs font-semibold tabular"
-              :class="landDelta > 0 ? 'bg-primary-soft text-primary-text' : 'bg-ready-soft text-ready'"
+              :variant="landDelta > 0 ? 'soft' : 'warning'"
+              class="ml-auto tabular"
             >
               {{ landDelta > 0 ? "+" : "−" }}{{ ha(Math.abs(landDelta)) }} ha
-            </span>
+            </Badge>
           </div>
           <div
             role="img"

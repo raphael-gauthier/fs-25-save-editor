@@ -8,6 +8,7 @@ import { formatMoney } from "@/lib/utils";
 import { groupObjects } from "@/lib/storageChanges";
 import { fruitColor } from "@/lib/fruitColors";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import {
   Select,
@@ -222,12 +223,9 @@ const spring = { type: "spring", stiffness: 480, damping: 40 } as const;
               <span class="flex items-center justify-between gap-2">
                 <span class="flex min-w-0 items-center gap-2 truncate" :class="entry.key === focusKey ? 'font-semibold' : 'font-medium'">
                   {{ entry.p.displayName }}
-                  <span
-                    v-if="entry.type === 'silo' && entry.storage.kind === 'extension'"
-                    class="rounded-full bg-card px-2 py-px text-[11px] font-semibold text-muted-foreground"
-                  >
+                  <Badge v-if="entry.type === 'silo' && entry.storage.kind === 'extension'" variant="muted">
                     {{ t("storage.extension") }}
-                  </span>
+                  </Badge>
                 </span>
                 <span v-if="percent(entry) !== null" class="text-[13px] text-muted-foreground tabular">
                   {{ Math.round(percent(entry)!) }} %

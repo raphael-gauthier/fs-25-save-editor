@@ -18,6 +18,7 @@ import {
 import { Skeleton } from "@/components/ui/skeleton";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
 import WindowTitleBar from "@/components/layout/WindowTitleBar.vue";
 import {
   FolderOpen,
@@ -277,12 +278,9 @@ const tiles = computed(() => (selected.value ? mosaic(selected.value.mapTitle) :
 
             <div class="flex flex-wrap items-end justify-between gap-4">
               <div class="flex flex-col gap-1">
-                <span
-                  v-if="slotOf(selected)"
-                  class="self-start rounded-full bg-hover px-2.5 py-0.5 text-xs font-semibold text-muted-foreground"
-                >
+                <Badge v-if="slotOf(selected)" variant="muted" class="self-start">
                   {{ t("launcher.slot", { n: slotOf(selected) }) }}
-                </span>
+                </Badge>
                 <h2 class="text-4xl font-semibold leading-tight tracking-[-0.03em]">{{ selected.mapTitle }}</h2>
                 <span class="text-muted-foreground">
                   {{ selected.name }} · {{ t("launcher.savedOn", { date: selected.saveDate }) }}

@@ -16,6 +16,11 @@ export const badgeVariants = cva(
          "border-transparent bg-destructive text-white [a&]:hover:bg-destructive/90 focus-visible:ring-destructive/20 dark:focus-visible:ring-destructive/40 dark:bg-destructive/60",
         outline:
           "text-foreground [a&]:hover:bg-accent [a&]:hover:text-accent-foreground",
+        // Tinted chips of the glass theme
+        soft: "border-transparent bg-primary-soft font-semibold text-primary-text",
+        warning: "border-transparent bg-ready-soft font-semibold text-ready",
+        danger: "border-transparent bg-destructive-soft text-destructive",
+        muted: "border-transparent bg-hover font-semibold text-muted-foreground",
       },
     },
     defaultVariants: {

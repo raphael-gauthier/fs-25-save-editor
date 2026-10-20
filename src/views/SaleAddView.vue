@@ -23,7 +23,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { ArrowLeft, Search, Plus, Loader2, AlertTriangle } from "@lucide/vue";
+import { ArrowLeft, Search, Plus, AlertTriangle } from "@lucide/vue";
+import { Spinner } from "@/components/ui/spinner";
 
 const { t } = useI18n();
 const router = useRouter();
@@ -208,7 +209,7 @@ onMounted(async () => {
       v-else-if="isLoading"
       class="flex flex-col items-center gap-4 py-16"
     >
-      <Loader2 class="size-8 animate-spin text-muted-foreground" />
+      <Spinner class="size-8 text-muted-foreground" />
       <p class="text-sm text-muted-foreground">{{ t("sale.catalogLoading") }}</p>
     </div>
 

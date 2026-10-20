@@ -14,6 +14,9 @@ import FieldEditor from "@/components/fields/FieldEditor.vue";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+import { Spinner } from "@/components/ui/spinner";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Select,
@@ -36,7 +39,6 @@ import {
   Gem,
   Droplets,
   FlaskConical,
-  Loader2,
   Info,
   Tractor,
   Shovel,
@@ -301,7 +303,7 @@ function toggleSelectAll() {
         role="status"
         class="flex items-center gap-2 text-sm text-muted-foreground"
       >
-        <Loader2 class="size-4 animate-spin" />
+        <Spinner />
         {{ t("field.densityLoading") }}
       </div>
 
@@ -311,7 +313,7 @@ function toggleSelectAll() {
         <AlertDescription>{{ t("field.densityError", { details: store.densityError }) }}</AlertDescription>
       </Alert>
       <Alert v-if="store.densityFromCache && store.densityLoading">
-        <Loader2 class="size-4 animate-spin" />
+        <Spinner />
         <AlertDescription>{{ t("field.densityCacheRefreshing") }}</AlertDescription>
       </Alert>
       <Alert v-else-if="store.densityFromCache && store.densityError">
@@ -325,19 +327,19 @@ function toggleSelectAll() {
 
       <!-- Filters -->
       <div class="flex flex-wrap items-center gap-2">
-        <div
-          role="group"
+        <ToggleGroup
+          type="single"
+          :spacing="1"
           :aria-label="t('field.owner')"
-          class="relative flex rounded-[11px] bg-hover p-[3px]"
+          :model-value="String(store.ownerFilter)"
+          class="rounded-[11px] bg-hover p-[3px]"
+          @update:model-value="(v) => v && (store.ownerFilter = v === 'null' ? null : Number(v))"
         >
-          <button
+          <ToggleGroupItem
             v-for="seg in ownerSegments"
             :key="String(seg.value)"
-            type="button"
-            :aria-pressed="store.ownerFilter === seg.value"
-            class="relative h-8 rounded-lg px-3 text-[13px] transition-colors"
-            :class="store.ownerFilter === seg.value ? 'font-semibold' : 'text-muted-foreground hover:text-foreground'"
-            @click="store.ownerFilter = seg.value"
+            :value="String(seg.value)"
+            class="relative h-8 rounded-lg px-3 text-[13px] text-muted-foreground hover:bg-transparent hover:text-foreground data-[state=on]:bg-transparent data-[state=on]:font-semibold data-[state=on]:text-foreground"
           >
             <motion.span
               v-if="store.ownerFilter === seg.value"
@@ -346,8 +348,8 @@ function toggleSelectAll() {
               :transition="{ type: 'spring', stiffness: 520, damping: 40 }"
             />
             <span class="relative">{{ seg.label }}</span>
-          </button>
-        </div>
+          </ToggleGroupItem>
+        </ToggleGroup>
         <Select
           :model-value="store.fruitFilter ?? '__all__'"
           @update:model-value="handleFruitFilter"
@@ -429,19 +431,15 @@ function toggleSelectAll() {
                 {{ row.crop }}<template v-if="row.stage"> · <span :class="row.ready ? 'text-ready' : 'text-primary-text'">{{ row.stage }}</span></template>
               </span>
             </span>
-            <span
+            <Badge
               v-if="row.issues"
-              class="hidden max-w-[150px] truncate rounded-full bg-destructive-soft px-2 py-0.5 text-xs font-medium text-destructive xl:inline"
+              variant="danger"
+              class="hidden max-w-[150px] truncate xl:inline-flex"
               :title="row.issues"
             >
               {{ row.issues }}
-            </span>
-            <span
-              v-if="row.mine"
-              class="rounded-full bg-primary-soft px-2 py-0.5 text-xs font-semibold text-primary-text"
-            >
-              {{ t("fieldUi.mine") }}
-            </span>
+            </Badge>
+            <Badge v-if="row.mine" variant="soft">{{ t("fieldUi.mine") }}</Badge>
             <span class="h-[5px] w-14 shrink-0 overflow-hidden rounded-full bg-border" aria-hidden="true">
               <span
                 class="block h-full rounded-full transition-[width] duration-500 ease-spring"

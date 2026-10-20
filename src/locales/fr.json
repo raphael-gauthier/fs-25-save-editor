@@ -14,7 +14,8 @@
     "back": "Retour à la sélection",
     "noData": "Aucune donnée disponible",
     "more": "Plus",
-    "deselectAll": "Désélectionner tout"
+    "deselectAll": "Désélectionner tout",
+    "loading": "Chargement"
   },
   "sidebar": {
     "finance": "Finances",

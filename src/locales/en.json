@@ -14,7 +14,8 @@
     "back": "Back to selection",
     "noData": "No data available",
     "more": "More",
-    "deselectAll": "Deselect all"
+    "deselectAll": "Deselect all",
+    "loading": "Loading"
   },
   "sidebar": {
     "finance": "Finances",

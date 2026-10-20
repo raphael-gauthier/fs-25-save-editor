@@ -5,6 +5,7 @@ import { toast } from "vue-sonner";
 import { translateError } from "@/composables/useTauri";
 import { useBackupStore } from "@/stores/backup";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   Table,
@@ -28,7 +29,6 @@ import {
   FolderOpen,
   Trash2,
   RotateCcw,
-  Loader2,
 } from "@lucide/vue";
 
 const { t } = useI18n();
@@ -156,7 +156,7 @@ async function executeConfirmAction() {
           {{ t("backup.openFolder") }}
         </Button>
         <Button @click="handleCreate" :disabled="store.isCreating">
-          <Loader2 v-if="store.isCreating" class="size-4 animate-spin" />
+          <Spinner v-if="store.isCreating" />
           <Download v-else class="size-4" />
           {{ t("backup.create") }}
         </Button>

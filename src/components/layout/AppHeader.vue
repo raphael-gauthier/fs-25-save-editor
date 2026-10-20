@@ -5,7 +5,10 @@ import { useI18n } from "vue-i18n";
 import { useEventListener } from "@vueuse/core";
 import { toast } from "vue-sonner";
 import { Button } from "@/components/ui/button";
-import { ChevronRight, Loader2, RotateCcw, Search } from "@lucide/vue";
+import { ChevronRight, RotateCcw, Search } from "@lucide/vue";
+import { Badge } from "@/components/ui/badge";
+import { Kbd } from "@/components/ui/kbd";
+import { Spinner } from "@/components/ui/spinner";
 import { useSavegameStore } from "@/stores/savegame";
 import { useFinanceStore } from "@/stores/finance";
 import { useVehicleStore } from "@/stores/vehicle";
@@ -260,7 +263,7 @@ async function handleReload() {
     >
       <Search class="size-[15px] shrink-0" aria-hidden="true" />
       <span class="flex-1 truncate text-left">{{ t("palette.placeholder") }}</span>
-      <kbd class="rounded-[5px] border px-1.5 text-xs">Ctrl K</kbd>
+      <Kbd>Ctrl K</Kbd>
     </button>
 
     <CommandPalette
@@ -269,14 +272,10 @@ async function handleReload() {
     />
 
     <template #actions>
-      <span
-        v-if="isDirty"
-        role="status"
-        class="inline-flex items-center gap-1.5 rounded-full bg-ready-soft px-2.5 py-1 text-[13px] font-semibold text-ready"
-      >
+      <Badge v-if="isDirty" role="status" variant="warning" class="gap-1.5 px-2.5 py-1 text-[13px]">
         <span class="size-[7px] rounded-[2px] bg-current" aria-hidden="true" />
         {{ t("dirtyTracking.pendingCount", { count: changeCount }, changeCount) }}
-      </span>
+      </Badge>
       <Button
         v-if="isDirty"
         variant="ghost"
@@ -293,9 +292,9 @@ async function handleReload() {
         {{ t("dirtyTracking.discardChanges") }}
       </Button>
       <Button size="sm" class="h-9 gap-2" :disabled="!isDirty || isSaving" @click="handleSave">
-        <Loader2 v-if="isSaving" class="size-4 animate-spin" />
+        <Spinner v-if="isSaving" />
         {{ t("common.save") }}
-        <kbd class="rounded bg-primary-foreground/20 px-1.5 text-[11px] font-medium">Ctrl S</kbd>
+        <Kbd class="bg-primary-foreground/20 text-primary-foreground">Ctrl S</Kbd>
       </Button>
     </template>
   </WindowTitleBar>
