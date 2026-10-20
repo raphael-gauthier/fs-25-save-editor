@@ -72,6 +72,8 @@
   --glass-strong: rgb(255 255 255 / 0.84);
   --edge: rgb(255 255 255 / 0.78);
   --hover: rgb(21 24 28 / 0.05);
+  --scrollbar: rgb(21 24 28 / 0.18);
+  --scrollbar-hover: rgb(21 24 28 / 0.38);
   --shadow-panel: 0 1px 2px rgb(15 20 25 / 0.06), 0 18px 50px -18px rgb(15 20 25 / 0.3);
   --background: #f4f5f2;
   --foreground: #15181c;
@@ -120,6 +122,8 @@
   --glass-strong: rgb(30 33 38 / 0.86);
   --edge: rgb(255 255 255 / 0.08);
   --hover: rgb(255 255 255 / 0.06);
+  --scrollbar: rgb(255 255 255 / 0.16);
+  --scrollbar-hover: rgb(255 255 255 / 0.34);
   --shadow-panel: 0 1px 2px rgb(0 0 0 / 0.4), 0 24px 60px -20px rgb(0 0 0 / 0.75);
   --background: #111317;
   --foreground: #edeff2;
@@ -181,6 +185,33 @@
   :focus-visible {
     outline: 2px solid var(--ring);
     outline-offset: 2px;
+  }
+
+  /* Thin rounded scrollbars that float over the glass and firm up on hover */
+  ::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+  }
+  ::-webkit-scrollbar-track,
+  ::-webkit-scrollbar-corner {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background-color: var(--scrollbar);
+    background-clip: padding-box;
+    border: 3.5px solid transparent;
+    border-radius: 999px;
+    min-height: 40px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background-color: var(--scrollbar-hover);
+    border-width: 2.5px;
+  }
+  ::-webkit-scrollbar-thumb:active {
+    background-color: var(--primary);
+  }
+  ::-webkit-scrollbar-button {
+    display: none;
   }
 }
 
