@@ -24,7 +24,7 @@ import { useUpdateChecker } from "@/composables/useUpdateChecker";
 const { t } = useI18n();
 const settings = useSettingsStore();
 const { detectGamePath, clearDiskCache, getCacheSize } = useVehicleImages();
-const { isChecking, checkForUpdates } = useUpdateChecker();
+const { isChecking, lastCheckError, checkForUpdates } = useUpdateChecker();
 
 const cacheSize = ref(0);
 const checkResult = ref<"up-to-date" | "error" | null>(null);
@@ -84,7 +84,7 @@ async function onManualCheck() {
   try {
     const result = await checkForUpdates();
     if (!result) {
-      checkResult.value = "up-to-date";
+      checkResult.value = lastCheckError.value ? "error" : "up-to-date";
     }
     // If result !== null, the composable updates updateAvailable
     // and UpdateDialog shows automatically
@@ -259,8 +259,8 @@ function handleMaxBackupsInput(event: Event) {
               </p>
             </div>
             <Switch
-              :checked="settings.checkForUpdatesOnStartup"
-              @update:checked="settings.setCheckForUpdatesOnStartup"
+              :model-value="settings.checkForUpdatesOnStartup"
+              @update:model-value="settings.setCheckForUpdatesOnStartup"
             />
           </div>
 

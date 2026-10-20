@@ -300,8 +300,8 @@ function getStationIds(): string[] {
           />
           <div class="flex items-center gap-2">
             <Switch
-              :checked="store.showAllProducts"
-              @update:checked="store.showAllProducts = $event"
+              :model-value="store.showAllProducts"
+              @update:model-value="store.showAllProducts = $event"
             />
             <Label class="text-sm">{{ t("economy.showAll") }}</Label>
           </div>
