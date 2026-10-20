@@ -5,7 +5,7 @@ use quick_xml::{Reader, Writer};
 
 use crate::error::AppError;
 use crate::writers::replace_xml_file;
-use crate::models::changes::{ObjectCopy, ObjectStorageChange, PlaceableChange, ProductionStockChange, SiloStockChange};
+use crate::models::changes::{ObjectStorageChange, PlaceableChange, ProductionStockChange};
 use crate::models::placeable::SiloStorageKind;
 
 /// Applies a list of placeable changes to placeables.xml.
@@ -535,6 +535,7 @@ fn write_event(
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::models::changes::{ObjectCopy, SiloStockChange};
     use crate::parsers::placeable::parse_placeables;
 
     fn setup_fixture(name: &str) -> std::path::PathBuf {
