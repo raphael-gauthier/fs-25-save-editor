@@ -96,7 +96,7 @@ function handleResetAge() {
         <DropdownMenuTrigger as-child>
           <Button variant="ghost" size="sm">
             {{ t("common.more") }}
-            <ChevronDown class="ml-1 size-4" />
+            <ChevronDown class="size-4" />
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent>
@@ -119,8 +119,8 @@ function handleResetAge() {
 
     <Button
       variant="ghost"
-      size="icon"
-      class="ml-auto size-8"
+      size="icon-sm"
+      class="ml-auto"
       @click="store.deselectAll()"
     >
       <X class="size-4" />

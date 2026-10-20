@@ -202,8 +202,7 @@ async function executeConfirmAction() {
               <div class="flex justify-end gap-1">
                 <Button
                   variant="ghost"
-                  size="icon"
-                  class="size-8"
+                  size="icon-sm"
                   :title="t('backup.restore')"
                   @click="confirmRestore(backup.name)"
                 >
@@ -211,8 +210,8 @@ async function executeConfirmAction() {
                 </Button>
                 <Button
                   variant="ghost"
-                  size="icon"
-                  class="size-8 text-destructive hover:text-destructive"
+                  size="icon-sm"
+                  class="text-destructive hover:text-destructive"
                   :title="t('backup.delete')"
                   @click="confirmDelete(backup.name)"
                 >

@@ -283,7 +283,6 @@ async function handleReload() {
           v-if="isDirty"
           variant="ghost"
           size="icon"
-          class="size-9"
           :disabled="isReloading"
           :aria-label="t('dirtyTracking.reloadFromDisk')"
           @click="handleReload"

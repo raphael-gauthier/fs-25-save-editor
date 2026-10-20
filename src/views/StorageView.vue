@@ -358,7 +358,6 @@ const spring = { type: "spring", stiffness: 480, damping: 40 } as const;
                   <Button
                     size="icon"
                     variant="ghost"
-                    class="size-9"
                     :aria-label="t('storageUi.emptyProduct', { product: fillTypeLabel(stock.fillType) })"
                     @click="setLevel(focused.p, focused.storage, stock.fillType, 0)"
                   >
@@ -435,9 +434,8 @@ const spring = { type: "spring", stiffness: 480, damping: 40 } as const;
                 </span>
                 <div role="group" :aria-label="fillTypeLabel(group.object.fillType)" class="flex items-center gap-1">
                   <Button
-                    size="icon"
+                    size="icon-sm"
                     variant="outline"
-                    class="size-8"
                     :aria-label="t('storage.remove')"
                     @click="store.changeObjectCount(focused.p.index, group.key, -1)"
                   >
@@ -445,9 +443,8 @@ const spring = { type: "spring", stiffness: 480, damping: 40 } as const;
                   </Button>
                   <span class="w-9 text-center font-semibold tabular">{{ group.indices.length }}</span>
                   <Button
-                    size="icon"
+                    size="icon-sm"
                     variant="outline"
-                    class="size-8"
                     :aria-label="t('storage.add')"
                     :disabled="!canAdd(focused.p, 1)"
                     @click="store.changeObjectCount(focused.p.index, group.key, 1)"

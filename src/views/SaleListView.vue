@@ -15,7 +15,6 @@ import { Badge } from "@/components/ui/badge";
 import {
   Tooltip,
   TooltipContent,
-  TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import {
@@ -117,7 +116,7 @@ function formatPercent(value: number): string {
           {{ t("sale.subtitle") }}
         </p>
       </div>
-      <TooltipProvider v-if="!settings.gamePath">
+      <template v-if="!settings.gamePath">
         <Tooltip>
           <TooltipTrigger as-child>
             <Button variant="outline" disabled>
@@ -129,7 +128,7 @@ function formatPercent(value: number): string {
             <p>{{ t("sale.noGamePath") }}</p>
           </TooltipContent>
         </Tooltip>
-      </TooltipProvider>
+      </template>
       <Button v-else variant="outline" @click="router.push({ name: 'sale-add' })">
         <Plus class="size-4" />
         {{ t("sale.addVehicle") }}

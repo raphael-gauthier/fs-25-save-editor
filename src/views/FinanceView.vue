@@ -22,7 +22,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { Banknote, RotateCcw } from "@lucide/vue";
 
 const { t } = useI18n();
@@ -193,7 +193,7 @@ const sortedDailyFinances = computed(() =>
               <span class="text-sm text-muted-foreground">
                 {{ formatMoney(finance.money) }} $
               </span>
-              <TooltipProvider v-if="isMoneyModified">
+              <template v-if="isMoneyModified">
                 <Tooltip>
                   <TooltipTrigger as-child>
                     <span class="size-2 rounded-full bg-amber-500" />
@@ -202,7 +202,7 @@ const sortedDailyFinances = computed(() =>
                     {{ t("dirtyTracking.originalValue", { value: formatMoney(finance.originalMoney) + " $" }) }}
                   </TooltipContent>
                 </Tooltip>
-              </TooltipProvider>
+              </template>
             </div>
             <div class="flex flex-wrap gap-2">
               <Button variant="outline" size="sm" @click="finance.addMoney(10000)">
@@ -236,7 +236,7 @@ const sortedDailyFinances = computed(() =>
               <span class="text-sm text-muted-foreground">
                 {{ formatMoney(finance.loan) }} $
               </span>
-              <TooltipProvider v-if="isLoanModified">
+              <template v-if="isLoanModified">
                 <Tooltip>
                   <TooltipTrigger as-child>
                     <span class="size-2 rounded-full bg-amber-500" />
@@ -245,7 +245,7 @@ const sortedDailyFinances = computed(() =>
                     {{ t("dirtyTracking.originalValue", { value: formatMoney(finance.originalLoan) + " $" }) }}
                   </TooltipContent>
                 </Tooltip>
-              </TooltipProvider>
+              </template>
             </div>
             <AlertDialog v-model:open="showRepayDialog">
               <AlertDialogTrigger as-child>

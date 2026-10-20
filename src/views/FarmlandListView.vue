@@ -414,8 +414,7 @@ const spring = { type: "spring", stiffness: 480, damping: 40 } as const;
           <WithTooltip :label="t('common.deselectAll')" side="top">
             <Button
               variant="ghost"
-              size="icon"
-              class="size-10"
+              size="icon-lg"
               :aria-label="t('common.deselectAll')"
               @click="selected = new Set()"
             >

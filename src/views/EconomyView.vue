@@ -194,7 +194,7 @@ function getStationIds(): string[] {
             {{ t("economy.found", { count: store.activeGreatDemands.length }) }}
           </span>
           <Button size="sm" @click="openAddDialog">
-            <Plus class="mr-2 size-4" />
+            <Plus class="size-4" />
             {{ t("economy.addDemand") }}
           </Button>
         </div>

@@ -9,6 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
+import { Spinner } from "@/components/ui/spinner";
 import { Switch } from "@/components/ui/switch";
 import {
   Select,
@@ -271,8 +272,8 @@ function handleMaxBackupsInput(event: Event) {
               :disabled="isChecking"
               @click="onManualCheck"
             >
-              <RefreshCw v-if="isChecking" class="mr-2 h-4 w-4 animate-spin" />
-              <RefreshCw v-else class="mr-2 h-4 w-4" />
+              <Spinner v-if="isChecking" />
+              <RefreshCw v-else class="size-4" />
               {{ t("settings.checkNow") }}
             </Button>
             <span v-if="checkResult === 'up-to-date'" class="text-sm text-green-600 dark:text-green-400">

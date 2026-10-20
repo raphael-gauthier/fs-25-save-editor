@@ -535,7 +535,6 @@ function toggleSelectAll() {
             <Button
               variant="ghost"
               size="icon"
-              class="size-9"
               :aria-label="t('common.deselectAll')"
               @click="store.deselectAll()"
             >

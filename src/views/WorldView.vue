@@ -241,7 +241,7 @@ function handleWetnessChange(value: number[] | undefined) {
                     {{ formatDuration(event.duration) }}
                   </TableCell>
                   <TableCell>
-                    <Button variant="ghost" size="icon" class="size-8" @click="store.deleteWeatherEvent(index)">
+                    <Button variant="ghost" size="icon-sm" @click="store.deleteWeatherEvent(index)">
                       <Trash2 class="size-4 text-destructive" />
                     </Button>
                   </TableCell>

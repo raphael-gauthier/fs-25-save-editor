@@ -357,12 +357,12 @@ function formatFruitName(name: string): string {
       </div>
       <div class="flex shrink-0 gap-0.5">
         <WithTooltip :label="t('fieldUi.prev')">
-          <Button variant="ghost" size="icon" class="size-9" :aria-label="t('fieldUi.prev')" @click="emit('prev')">
+          <Button variant="ghost" size="icon" :aria-label="t('fieldUi.prev')" @click="emit('prev')">
             <ChevronUp class="size-4" />
           </Button>
         </WithTooltip>
         <WithTooltip :label="t('fieldUi.next')">
-          <Button variant="ghost" size="icon" class="size-9" :aria-label="t('fieldUi.next')" @click="emit('next')">
+          <Button variant="ghost" size="icon" :aria-label="t('fieldUi.next')" @click="emit('next')">
             <ChevronDown class="size-4" />
           </Button>
         </WithTooltip>
