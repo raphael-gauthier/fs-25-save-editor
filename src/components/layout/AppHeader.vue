@@ -5,7 +5,7 @@ import { useI18n } from "vue-i18n";
 import { useEventListener } from "@vueuse/core";
 import { toast } from "vue-sonner";
 import { Button } from "@/components/ui/button";
-import { ChevronRight, Loader2, RotateCcw } from "@lucide/vue";
+import { ChevronRight, Loader2, RotateCcw, Search } from "@lucide/vue";
 import { useSavegameStore } from "@/stores/savegame";
 import { useFinanceStore } from "@/stores/finance";
 import { useVehicleStore } from "@/stores/vehicle";
@@ -23,6 +23,7 @@ import { useTauri, translateError } from "@/composables/useTauri";
 import { useUnsavedChanges } from "@/composables/useUnsavedChanges";
 import type { SaveResult } from "@/lib/types";
 import WindowTitleBar from "./WindowTitleBar.vue";
+import CommandPalette from "./CommandPalette.vue";
 
 const { t } = useI18n();
 const route = useRoute();
@@ -45,13 +46,17 @@ const { isDirty, changeCount, collectAllChanges, confirmDiscardIfDirty, resetAll
 
 const isSaving = ref(false);
 const isReloading = ref(false);
+const paletteOpen = ref(false);
 
 // Global keyboard shortcuts
 useEventListener(document, "keydown", (e: KeyboardEvent) => {
   const mod = e.ctrlKey || e.metaKey;
   if (!mod) return;
 
-  if (e.key === "s") {
+  if (e.key === "k") {
+    e.preventDefault();
+    paletteOpen.value = !paletteOpen.value;
+  } else if (e.key === "s") {
     e.preventDefault();
     if (isDirty.value) handleSave();
   } else if (e.key === "z" && !e.shiftKey) {
@@ -246,7 +251,22 @@ async function handleReload() {
       </template>
     </nav>
 
-    <slot />
+    <button
+      type="button"
+      class="mx-auto flex h-[34px] w-full max-w-[400px] min-w-0 items-center gap-2.5 rounded-[10px] border bg-glass pl-3 pr-2 text-[13px] text-muted-foreground transition-colors hover:bg-hover"
+      :aria-label="t('palette.title')"
+      aria-keyshortcuts="Control+K"
+      @click="paletteOpen = true"
+    >
+      <Search class="size-[15px] shrink-0" aria-hidden="true" />
+      <span class="flex-1 truncate text-left">{{ t("palette.placeholder") }}</span>
+      <kbd class="rounded-[5px] border px-1.5 text-xs">Ctrl K</kbd>
+    </button>
+
+    <CommandPalette
+      v-model:open="paletteOpen"
+      :actions="{ save: handleSave, discard: handleDiscard, reload: handleReload, canSave: isDirty }"
+    />
 
     <template #actions>
       <span

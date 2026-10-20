@@ -890,5 +890,29 @@
     "close": "Fermer",
     "toggleTheme": "Changer de thème",
     "breadcrumb": "Fil d'Ariane"
+  },
+  "palette": {
+    "title": "Palette de commandes",
+    "description": "Rechercher une action, une page, un champ ou un véhicule",
+    "placeholder": "Rechercher ou lancer une action",
+    "results": "Résultats",
+    "empty": "Aucun résultat pour « {query} »",
+    "navigate": "naviguer",
+    "open": "ouvrir",
+    "anywhere": "depuis n'importe où",
+    "field": "Champ {id}",
+    "lightTheme": "Passer en thème clair",
+    "darkTheme": "Passer en thème sombre",
+    "advancedOn": "Activer le mode avancé",
+    "advancedOff": "Désactiver le mode avancé",
+    "otherSave": "Changer de partie",
+    "group": {
+      "actions": "Actions",
+      "pages": "Aller à",
+      "fields": "Champs",
+      "vehicles": "Véhicules"
+    },
+    "keyEsc": "Échap",
+    "keyEnter": "Entrée"
   }
 }

@@ -890,5 +890,29 @@
     "close": "Close",
     "toggleTheme": "Switch theme",
     "breadcrumb": "Breadcrumb"
+  },
+  "palette": {
+    "title": "Command palette",
+    "description": "Search for an action, page, field or vehicle",
+    "placeholder": "Search or run an action",
+    "results": "Results",
+    "empty": "No results for “{query}”",
+    "navigate": "navigate",
+    "open": "open",
+    "anywhere": "from anywhere",
+    "field": "Field {id}",
+    "lightTheme": "Switch to light theme",
+    "darkTheme": "Switch to dark theme",
+    "advancedOn": "Turn on advanced mode",
+    "advancedOff": "Turn off advanced mode",
+    "otherSave": "Switch save",
+    "group": {
+      "actions": "Actions",
+      "pages": "Go to",
+      "fields": "Fields",
+      "vehicles": "Vehicles"
+    },
+    "keyEsc": "Esc",
+    "keyEnter": "Enter"
   }
 }

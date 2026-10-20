@@ -4,37 +4,12 @@ import { useRoute } from "vue-router";
 import { useI18n } from "vue-i18n";
 import { useStorage } from "@vueuse/core";
 import { motion } from "motion-v";
-import {
-  Banknote,
-  Tractor,
-  ShoppingCart,
-  Wheat,
-  LandPlot,
-  Warehouse,
-  SlidersHorizontal,
-  Cloud,
-  Building2,
-  ClipboardList,
-  Trophy,
-  TrendingUp,
-  Archive,
-  Settings,
-  PiggyBank,
-  PanelLeftClose,
-  PanelLeftOpen,
-  type LucideIcon,
-} from "@lucide/vue";
+import { PanelLeftClose, PanelLeftOpen } from "@lucide/vue";
+import { NAV_GROUPS, UTIL_NAV, type NavItem } from "@/lib/navigation";
 import { useFinanceStore } from "@/stores/finance";
 import { useVehicleStore } from "@/stores/vehicle";
 import { useSavegameStore } from "@/stores/savegame";
 import { formatMoney } from "@/lib/utils";
-
-interface NavItem {
-  labelKey: string;
-  icon: LucideIcon;
-  route: string;
-  count?: number;
-}
 
 const { t } = useI18n();
 const route = useRoute();
@@ -44,51 +19,12 @@ const savegame = useSavegameStore();
 
 const collapsed = useStorage("sidebar-collapsed", false);
 
-const groups = computed<{ titleKey: string; items: NavItem[] }[]>(() => [
-  {
-    titleKey: "sidebar.groupFarm",
-    items: [
-      { labelKey: "sidebar.finance", icon: Banknote, route: "/editor/finance" },
-      {
-        labelKey: "sidebar.vehicles",
-        icon: Tractor,
-        route: "/editor/vehicles",
-        count: vehicles.playerVehicles.length || undefined,
-      },
-      { labelKey: "sidebar.sales", icon: ShoppingCart, route: "/editor/sales" },
-    ],
-  },
-  {
-    titleKey: "sidebar.groupLand",
-    items: [
-      { labelKey: "sidebar.fields", icon: Wheat, route: "/editor/fields" },
-      { labelKey: "sidebar.farmlands", icon: LandPlot, route: "/editor/farmlands" },
-    ],
-  },
-  {
-    titleKey: "sidebar.groupOperation",
-    items: [
-      { labelKey: "sidebar.buildings", icon: Building2, route: "/editor/buildings" },
-      { labelKey: "sidebar.storage", icon: Warehouse, route: "/editor/storage" },
-      { labelKey: "sidebar.animals", icon: PiggyBank, route: "/editor/animals" },
-    ],
-  },
-  {
-    titleKey: "sidebar.groupWorld",
-    items: [
-      { labelKey: "sidebar.world", icon: Cloud, route: "/editor/world" },
-      { labelKey: "sidebar.game", icon: SlidersHorizontal, route: "/editor/game" },
-      { labelKey: "sidebar.missions", icon: ClipboardList, route: "/editor/missions" },
-      { labelKey: "sidebar.collectibles", icon: Trophy, route: "/editor/collectibles" },
-      { labelKey: "sidebar.economy", icon: TrendingUp, route: "/editor/economy" },
-    ],
-  },
-]);
+/** Item counts shown beside a section's name */
+const counts = computed<Record<string, number | undefined>>(() => ({
+  "/editor/vehicles": vehicles.playerVehicles.length || undefined,
+}));
 
-const utilNav: NavItem[] = [
-  { labelKey: "sidebar.backups", icon: Archive, route: "/editor/backups" },
-  { labelKey: "sidebar.settings", icon: Settings, route: "/editor/settings" },
-];
+const utilNav: NavItem[] = UTIL_NAV;
 
 const farmName = computed(() => savegame.currentSavegame?.career.savegameName ?? "");
 
@@ -108,7 +44,7 @@ const spring = { type: "spring", stiffness: 520, damping: 42, mass: 0.9 } as con
     :transition="spring"
   >
     <div class="flex min-h-0 flex-1 flex-col gap-3.5 overflow-y-auto overflow-x-hidden">
-      <div v-for="group in groups" :key="group.titleKey" class="flex flex-col gap-px">
+      <div v-for="group in NAV_GROUPS" :key="group.titleKey" class="flex flex-col gap-px">
         <span
           class="h-5 truncate px-2.5 text-xs font-semibold text-muted-foreground transition-opacity"
           :class="collapsed ? 'opacity-0' : 'opacity-100'"
@@ -134,10 +70,10 @@ const spring = { type: "spring", stiffness: 520, damping: 42, mass: 0.9 } as con
           <component :is="item.icon" class="relative size-[17px] shrink-0" aria-hidden="true" />
           <span class="relative flex-1 truncate" :class="{ 'sr-only': collapsed }">{{ t(item.labelKey) }}</span>
           <span
-            v-if="item.count && !collapsed"
+            v-if="counts[item.route] && !collapsed"
             class="relative text-xs font-normal text-muted-foreground tabular"
           >
-            {{ item.count }}
+            {{ counts[item.route] }}
           </span>
         </router-link>
       </div>
